@@ -1,0 +1,28 @@
+server:
+    port: 8443
+    ssl:
+        key-store: classpath:omnix.p12
+        key-store-type: PKCS12
+        key-store-password: Password!23
+        key-password: Password!23
+        key-store-provider: SUN
+        key-alias: omnix
+        enabled: true
+        protocol: TLS
+
+spring:
+    application:
+        name: trustfort-gateway
+    cloud:
+        config:
+            uri: http://trustfort-config:8888
+            name: config-server
+trust:
+    store: classpath:omnix.p12
+    store.password: Password!23
+    
+eureka:
+    client:
+        registerWithEureka: true
+        fetchRegistry: true     
+        

@@ -1,0 +1,22 @@
+device:
+  mismatch: Your device requires permissions to perform this action.
+password:
+    expired: Your password has expired. Contact the administrator
+    mismatch: You have supplied invalid passcode.
+    voilated: Login failed. Too many attempts. Contact the administrator
+    success: Successful.
+pin:
+    expired: Your password has expired. Contact the administrator
+    mismatch: You have supplied invalid PIN.
+    voilated: Login failed. Too many attempts. Contact the administrator
+    success: Successful.
+    
+username:
+    disabled: The user account {0} is disabled. Contact the administrator
+    exist: Exception! A user with the username {0} already exist
+    inuse: Exception! The channel user {0} is in use
+    not:
+        exist: Exception! No record found matching the username {0}
+    notexist: Exception! No record found matching the username {0}
+    notnull: Exception! Username is required
+

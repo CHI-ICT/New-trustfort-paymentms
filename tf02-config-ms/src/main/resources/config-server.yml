@@ -1,0 +1,215 @@
+#area: dev | uat | live
+area: dev
+#cron: true | false 
+cron: true
+server:
+  error:
+    include-message: never
+    include-binding-errors: always
+    include-exception: false
+    include-stacktrace: never
+  tomcat:
+    basedir: C:/trustfort/logs
+    accesslog:
+        enabled: true
+  temp:
+    dir: C:/trustfort/temp
+  connection-timeout: 120000
+
+logging:
+  file:
+    path: C:/trustfort/logs/trustfort.log
+  level:
+    root: INFO
+                    
+jwt:
+  security:
+    key: SSQV7Y9oEYOfPXkC3vCYRi8cM5hE8N7QqQzyKyAP0UeLa0Q0qxJ23qKqEsJ5Zy8P
+  access:
+    validity: 60000
+  signing:
+    key: SSQV7Y9oEYOfPXkC3vCYRi8cM5hE8N7QqQzyKyAP0UeLa0Q0qxJ23qKqEsJ5Zy8P
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+  operationsSorter: alpha
+  tagsSorter: alpha
+  pathsToMatch: /trustfort/api/account/**, /trustfort/api/customer/**, /trustfort/api/teller/**, /trustfort/api/funds-transfer/**, /trustfort/api/user/**, /trustfort/api/token/**, /trustfort/api/qrpayment/**, /trustfort/api/savings/**
+          
+zuul:
+  max:
+    host:
+      connections: 500
+  host:
+    socket-timeout-millis: 300000
+    connect-timeout-millis: 300000
+  strip-prefix: true
+  sensitiveHeaders: Cookie,Set-Cookie
+  ignored-services: "*"
+  prefix: /trustfort/api/v1
+  routes:
+    configService:
+      serviceId: trustfort-config
+      url: http://localhost:8888
+    gatewayService:
+      serviceId: trustfort-gateway
+      url: http://localhost:8443
+    adminService:
+      serviceId: trustfort-admin
+      url: http://localhost:1004
+    paymentService:
+      serviceId: trustfort-payment
+      url: http://localhost:1005
+  rateLimit:
+    enabled: true
+    repository: JPA
+    key-prefix: rate
+    behind-proxy: true
+    policy-list:
+      gatewayService:
+        - limit: 5000
+          refresh-interval: 60
+          type:
+            - origin
+      adminService:
+        - limit: 5000
+          refresh-interval: 60
+          type:
+            - origin
+      paymentService:
+        - limit: 5000
+          refresh-interval: 60
+          type:
+            - origin          
+spring:
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: false
+  config:
+    activate:
+      profile: dev
+    location: C:/trustfort/config/
+  datasource:
+    driverClassName: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false      
+        
+default-tenant:
+  id: trustfort
+  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+  url: jdbc:postgresql://192.168.0.2:5432/trustfort
+chi-tenant:
+  id: chi
+  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+  url: jdbc:postgresql://192.168.0.2:5432/chi_db
+cla-tenant:
+  id: cla
+  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+  url: jdbc:postgresql://192.168.0.2:5432/cla_db
+hmo-tenant:
+  id: hmo
+  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+  url: jdbc:postgresql://192.168.0.2:5432/hmo_db
+hfc-tenant:
+  id: hfc
+  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+  url: jdbc:postgresql://192.168.0.2:5432/hfc_db
+chh-tenant:
+  id: chh
+  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+  url: jdbc:postgresql://192.168.0.2:5432/chh_db
+        
+eureka:
+  client:
+    fetchRegistry: true
+    registerWithEureka: true
+    serviceUrl:
+        defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
+  server:
+    wait-time-in-ms-when-sync-empty: 0   
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 1000000000
+        readTimeout: 1000000000      
+hystrix:
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: false
+        isolation:
+          thread:
+            timeoutInMilliseconds: 300000                   
+ribbon:
+  OkToRetryOnAllOperations: true
+  ReadTimeout: 5000000
+  ConnectTimeout: 5000000
+  MaxAutoRetries: 3
+  MaxAutoRetriesNextServer: 3
+  eureka:
+    enabled: false        
+password:
+  change:
+    days: 30
+  max:
+    tries: 3
+pin:
+  max:
+    tries: 3
+answer:
+  max:
+    tries: 3
+mail:
+  username: fclcorebanking@fastcredit-ng.com
+  password: Tour1sm&&12345
+  smtp:
+    host: smtp.office365.com
+    port: 587
+    auth: "true"
+    protocol: "smtps"
+    starttls:
+      required: "true"
+      enable: "true"
+    EnableSSL:
+      enable: "false"
+    ssl:
+      trust: smtp.office365.com
+  transport:    
+    protocol: "smtp"
+start:
+  morning: 6
+  afternoon: 13
+  evening: 19
+  night: 24
+end:
+  morning: 12
+  afternoon: 18
+  evening: 23
+  night: 5 
+otp:
+  expiry:
+    insec: 600
+issuer: CHH
+default:
+  app-user: TRUSTFORT001
+  app-pass: AmSecret5x
+  group-name: PORTAL
+    
