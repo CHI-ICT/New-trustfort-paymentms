@@ -58,28 +58,27 @@ public class AppConfig extends WebMvcConfigurerAdapter {
     Environment env;
     protected Logger logger;
 
-    
-   @Bean
+
+    @Bean
     public DataSource multiTenantDataSource() {
         Map<Object, Object> dataSources = new HashMap<>();
 
         // Configure default tenants (this can be fetched dynamically from a registry)
         dataSources.put(env.getProperty("default-tenant.id"), MultiTenantDataSource.createDataSource(
-                "jdbc:postgresql://localhost:5432/trustfort", env.getProperty("default-tenant.db-user"), env.getProperty("default-tenant.db-pass")));
+                env.getProperty("default-tenant.url"), env.getProperty("default-tenant.db-user"), env.getProperty("default-tenant.db-pass")));
         dataSources.put(env.getProperty("chi-tenant.id"), MultiTenantDataSource.createDataSource(
-                "jdbc:postgresql://localhost:5432/chi_db", env.getProperty("chi-tenant.db-user"), env.getProperty("chi-tenant.db-pass")));
+                env.getProperty("chi-tenant.url"), env.getProperty("chi-tenant.db-user"), env.getProperty("chi-tenant.db-pass")));
         dataSources.put(env.getProperty("hmo-tenant.id"), MultiTenantDataSource.createDataSource(
-                "jdbc:postgresql://localhost:5432/hmo_db", env.getProperty("hmo-tenant.db-user"), env.getProperty("hmo-tenant.db-pass")));
+                env.getProperty("hmo-tenant.url"), env.getProperty("hmo-tenant.db-user"), env.getProperty("hmo-tenant.db-pass")));
         dataSources.put(env.getProperty("cla-tenant.id"), MultiTenantDataSource.createDataSource(
-                "jdbc:postgresql://localhost:5432/cla_db", env.getProperty("cla-tenant.db-user"), env.getProperty("cla-tenant.db-pass")));
+                env.getProperty("cla-tenant.url"), env.getProperty("cla-tenant.db-user"), env.getProperty("cla-tenant.db-pass")));
         dataSources.put(env.getProperty("hfc-tenant.id"), MultiTenantDataSource.createDataSource(
-                "jdbc:postgresql://localhost:5432/hfc_db", env.getProperty("hfc-tenant.db-user"), env.getProperty("hfc-tenant.db-pass")));
-         dataSources.put(env.getProperty("chh-tenant.id"), MultiTenantDataSource.createDataSource(
-                "jdbc:postgresql://localhost:5432/chh_db", env.getProperty("chh-tenant.db-user"), env.getProperty("chh-tenant.db-pass")));
+                env.getProperty("hfc-tenant.url"), env.getProperty("hfc-tenant.db-user"), env.getProperty("hfc-tenant.db-pass")));
+        dataSources.put(env.getProperty("chh-tenant.id"), MultiTenantDataSource.createDataSource(
+                env.getProperty("chh-tenant.url"), env.getProperty("chh-tenant.db-user"), env.getProperty("chh-tenant.db-pass")));
 
         return new MultiTenantDataSource(dataSources);
     }
-    
 
     @Bean
     public ResourceBundleMessageSource messageSource() {

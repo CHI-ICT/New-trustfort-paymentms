@@ -240,4 +240,13 @@ public class AppUserRepositoryImpl implements AppUserRepository {
         return userActivity;
     }
 
+
+    @Override
+    public boolean userExistsById(long appUserId) {
+        Long count = em.createQuery("SELECT COUNT(a) FROM AppUser a WHERE a.id = :appUserId", Long.class)
+                .setParameter("appUserId", appUserId)
+                .getSingleResult();
+        return count > 0;
+    }
+
 }

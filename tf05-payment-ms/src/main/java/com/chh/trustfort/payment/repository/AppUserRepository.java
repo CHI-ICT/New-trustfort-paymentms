@@ -62,4 +62,6 @@ public interface AppUserRepository {
     
     public AppUserActivity createUserActivity( AppUserActivity userActivity);
 
+    boolean userExistsById(long appUserId);
+
 }

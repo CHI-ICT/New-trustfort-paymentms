@@ -1,15 +1,53 @@
+
 server:
     port: 1005
-    
+
 spring:
     application:
         name: trustfort-payment
     cloud:
         config:
-            uri: http://trustfort-config:8888
+            uri: http://localhost:8888
             name: config-server
-            
+
+            springdoc:
+                api-docs:
+                    enabled: true
+                swagger-ui:
+                    enabled: true
+
+
 eureka:
     client:
         registerWithEureka: true
         fetchRegistry: true
+default-tenant:
+    id: trustfort
+    db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+    db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+    url: jdbc:postgresql://192.168.0.2:5432/trustfort
+chi-tenant:
+    id: chi
+    db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+    db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+    url: jdbc:postgresql://192.168.0.2:5432/chi_db
+cla-tenant:
+    id: cla
+    db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+    db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+    url: jdbc:postgresql://192.168.0.2:5432/cla_db
+hmo-tenant:
+    id: hmo
+    db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+    db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+    url: jdbc:postgresql://192.168.0.2:5432/hmo_db
+hfc-tenant:
+    id: hfc
+    db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+    db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+    url: jdbc:postgresql://192.168.0.2:5432/hfc_db
+chh-tenant:
+    id: chh
+    db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+    db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+    url: jdbc:postgresql://192.168.0.2:5432/chh_db

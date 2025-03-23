@@ -15,6 +15,7 @@ import com.chh.trustfort.payment.payload.LockFundsRequestPayload;
 import com.chh.trustfort.payment.payload.UnfreezeWalletRequestPayload;
 import com.chh.trustfort.payment.payload.UnlockFundsRequestPayload;
 import com.chh.trustfort.payment.payload.WithdrawFundsRequestPayload;
+import com.chh.trustfort.payment.repository.AppUserRepository;
 import com.chh.trustfort.payment.repository.WalletRepository;
 import com.chh.trustfort.payment.security.AesService;
 import com.google.gson.Gson;
@@ -37,16 +38,28 @@ public class WalletServiceImpl implements WalletService {
     private WalletRepository walletRepository;
 
     @Autowired
+    private AppUserRepository appUserRepository;
+
+    @Autowired
     WalletUtil walletUtil;
 
     @Autowired
-    AesService aesService;
+    private AesService aesService;
+
+//    @Autowired
+//    AesService aesService;
+
+//    @Autowired
+//    MessageSource messageSource;
 
     @Autowired
-    MessageSource messageSource;
+    private MessageSource messageSource;
+
+//    @Autowired
+//    Gson gson;
 
     @Autowired
-    Gson gson;
+    private Gson gson;
 
     @Override
     public String createWallet(@Valid CreateWalletRequestPayload requestPayload, AppUser appUser) {
@@ -54,6 +67,22 @@ public class WalletServiceImpl implements WalletService {
         CreateWalletResponsePayload oResponse = new CreateWalletResponsePayload();
         oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
         oResponse.setResponseMessage(messageSource.getMessage("failed", new Object[0], Locale.ENGLISH));
+
+        // ✅ Extract the ID from Users object
+        Long ownerId = requestPayload.getOwner().getId();
+
+        // ✅ Check if user exists
+        if (!appUserRepository.userExistsById(ownerId)) {
+            oResponse.setResponseMessage(messageSource.getMessage("user.not.found", null, Locale.ENGLISH));
+            return aesService.encrypt(gson.toJson(oResponse), appUser);
+        }
+
+        // ✅ Check if wallet already exists
+        if (walletRepository.existsByOwner(ownerId)) {
+            oResponse.setResponseMessage(messageSource.getMessage("wallet.already.exists", null, Locale.ENGLISH));
+            return aesService.encrypt(gson.toJson(oResponse), appUser);
+        }
+
 
         Wallet wallet = new Wallet();
         wallet.setWalletId(walletRepository.generateWalletId());
@@ -64,10 +93,16 @@ public class WalletServiceImpl implements WalletService {
 
         wallet = walletRepository.createWallet(wallet);
 
+        // Validate wallet creation
         if (walletUtil.validateWalletId(wallet.getWalletId())) {
-            oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
-            oResponse.setResponseMessage(messageSource.getMessage("failed", new Object[0], Locale.ENGLISH));
+            oResponse.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+            oResponse.setResponseMessage(messageSource.getMessage("wallet.created.success", null, Locale.ENGLISH));
         }
+
+//        if (walletUtil.validateWalletId(wallet.getWalletId())) {
+//            oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+//            oResponse.setResponseMessage(messageSource.getMessage("failed", new Object[0], Locale.ENGLISH));
+//        }
 
         return aesService.encrypt(gson.toJson(oResponse), appUser);
     }

@@ -18,17 +18,16 @@ import com.chh.trustfort.payment.service.WalletService;
 import com.google.gson.Gson;
 import java.time.LocalDate;
 import javax.servlet.http.HttpServletRequest;
+
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  *
@@ -36,6 +35,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RefreshScope
+@Tag(name = "Wallet API", description = "Handles wallet operations")
+@SecurityRequirement(name = "bearerAuth")
+@RequestMapping(ApiPath.BASE_API)
 public class WalletController {
 
     @Autowired
@@ -52,7 +54,7 @@ public class WalletController {
     /*
         Create Wallet API
      */
-    @PostMapping(value = ApiPath.CREATE_WALLET, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = ApiPath.CREATE_WALLET, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> processCreateWalletRequest(@RequestBody String requestPayload, HttpServletRequest httpRequest) throws Exception {
 
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(Role.CFREATE_WALLET.getValue(), requestPayload, httpRequest, ID_TOKEN);
@@ -250,5 +252,11 @@ public class WalletController {
         Object response = walletService.unlockFunds(oUnlockFundsRequestPayload, request.appUser);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> testApi() {
+        return ResponseEntity.ok("Wallet API is working");
+    }
+
 
 }

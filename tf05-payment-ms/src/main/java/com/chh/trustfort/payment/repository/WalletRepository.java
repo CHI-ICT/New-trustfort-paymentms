@@ -50,4 +50,11 @@ public class WalletRepository  {
         return wallet;
     }
 
+    public boolean existsByOwner(Long ownerId) {
+        Long count = em.createQuery("SELECT COUNT(w) FROM Wallet w WHERE w.owner = :ownerId", Long.class)
+                .setParameter("ownerId", ownerId)
+                .getSingleResult();
+        return count > 0;
+    }
+
 }
