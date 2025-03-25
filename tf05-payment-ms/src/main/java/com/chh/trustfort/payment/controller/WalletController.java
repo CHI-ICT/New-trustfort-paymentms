@@ -15,12 +15,15 @@ import com.chh.trustfort.payment.payload.UnfreezeWalletRequestPayload;
 import com.chh.trustfort.payment.payload.UnlockFundsRequestPayload;
 import com.chh.trustfort.payment.payload.WithdrawFundsRequestPayload;
 import com.chh.trustfort.payment.service.WalletService;
+import com.chh.trustfort.payment.service.WalletServiceImpl;
 import com.google.gson.Gson;
 import java.time.LocalDate;
 import javax.servlet.http.HttpServletRequest;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -39,6 +42,8 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "bearerAuth")
 @RequestMapping(ApiPath.BASE_API)
 public class WalletController {
+
+    private static final Logger log = LoggerFactory.getLogger(WalletController.class);
 
     @Autowired
     RequestManager requestManager;
@@ -60,6 +65,14 @@ public class WalletController {
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(Role.CFREATE_WALLET.getValue(), requestPayload, httpRequest, ID_TOKEN);
         if (request.isError) {
             return new ResponseEntity<>(request.payload, HttpStatus.OK);
+        }
+
+        // Debugging log
+        if (request.appUser == null) {
+            log.error("Request validation failed: AppUser is null");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed: User not found");
+        } else {
+            log.info("Authenticated user: " + request.appUser.getUserName());
         }
 
         CreateWalletRequestPayload oCreateWalletRequestPayload = gson.fromJson(request.payload, CreateWalletRequestPayload.class);

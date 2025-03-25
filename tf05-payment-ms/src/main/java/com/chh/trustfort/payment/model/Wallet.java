@@ -46,7 +46,8 @@ public class Wallet implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private Users owner;
+    private AppUser owner;
+
 
     @Column(name = "balance", nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
@@ -67,4 +68,8 @@ public class Wallet implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     @UpdateTimestamp
     private Date updatedAt;
+
+    @Column(name = "serialnumber", nullable = false)
+    private Long serialNumber;
+
 }

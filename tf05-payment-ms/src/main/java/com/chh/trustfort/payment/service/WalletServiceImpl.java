@@ -4,6 +4,7 @@ import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.component.WalletUtil;
 import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.model.AppUser;
+import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.payload.CloseWalletRequestPayload;
 import com.chh.trustfort.payment.payload.CreateWalletRequestPayload;
@@ -26,6 +27,9 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  *
@@ -33,79 +37,75 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class WalletServiceImpl implements WalletService {
+    private static final Logger log = LoggerFactory.getLogger(WalletServiceImpl.class);
 
     @Autowired
     private WalletRepository walletRepository;
 
     @Autowired
-    private AppUserRepository appUserRepository;
+    private AppUserService appUserService;
 
     @Autowired
-    WalletUtil walletUtil;
+    private WalletUtil walletUtil;
 
     @Autowired
     private AesService aesService;
 
-//    @Autowired
-//    AesService aesService;
-
-//    @Autowired
-//    MessageSource messageSource;
-
     @Autowired
     private MessageSource messageSource;
-
-//    @Autowired
-//    Gson gson;
 
     @Autowired
     private Gson gson;
 
     @Override
     public String createWallet(@Valid CreateWalletRequestPayload requestPayload, AppUser appUser) {
+        log.info("Creating wallet for user ID: {}", requestPayload.getOwner().getId());
 
         CreateWalletResponsePayload oResponse = new CreateWalletResponsePayload();
         oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
-        oResponse.setResponseMessage(messageSource.getMessage("failed", new Object[0], Locale.ENGLISH));
+        oResponse.setResponseMessage(messageSource.getMessage("failed", null, Locale.ENGLISH));
 
-        // ✅ Extract the ID from Users object
+        // ✅ Extract and validate owner
         Long ownerId = requestPayload.getOwner().getId();
+        AppUser owner = appUserService.getUserById(ownerId);
 
-        // ✅ Check if user exists
-        if (!appUserRepository.userExistsById(ownerId)) {
+        if (owner == null) {
+            log.warn("User not found: {}", ownerId);
             oResponse.setResponseMessage(messageSource.getMessage("user.not.found", null, Locale.ENGLISH));
-            return aesService.encrypt(gson.toJson(oResponse), appUser);
+            return aesService.encrypt(gson.toJson(oResponse), String.valueOf(appUser));
         }
 
-        // ✅ Check if wallet already exists
-        if (walletRepository.existsByOwner(ownerId)) {
+        // ✅ Check if the user already has a wallet
+        if (walletRepository.existsByOwner(owner)) {
+            log.warn("Wallet already exists for user ID: {}", ownerId);
             oResponse.setResponseMessage(messageSource.getMessage("wallet.already.exists", null, Locale.ENGLISH));
-            return aesService.encrypt(gson.toJson(oResponse), appUser);
+            return aesService.encrypt(gson.toJson(oResponse), appUser.getEcred());
         }
 
-
+        // Create and persist wallet
         Wallet wallet = new Wallet();
-        wallet.setWalletId(walletRepository.generateWalletId());
-        wallet.setOwner(requestPayload.getOwner());
+        String generatedId = walletRepository.generateWalletId();
+        wallet.setWalletId(generatedId);
+        // ***** NEW: Set the serial number so that it’s not null *****
+        wallet.setSerialNumber(Long.valueOf(generatedId));
+        wallet.setOwner(owner);
         wallet.setCurrency(requestPayload.getCurrency());
         wallet.setBalance(BigDecimal.ZERO);
         wallet.setStatus(WalletStatus.ACTIVE);
-
         wallet = walletRepository.createWallet(wallet);
 
-        // Validate wallet creation
+        log.info("Wallet created successfully with ID: {}", wallet.getWalletId());
+
+        // ✅ Validate wallet creation
         if (walletUtil.validateWalletId(wallet.getWalletId())) {
             oResponse.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
             oResponse.setResponseMessage(messageSource.getMessage("wallet.created.success", null, Locale.ENGLISH));
         }
 
-//        if (walletUtil.validateWalletId(wallet.getWalletId())) {
-//            oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
-//            oResponse.setResponseMessage(messageSource.getMessage("failed", new Object[0], Locale.ENGLISH));
-//        }
 
-        return aesService.encrypt(gson.toJson(oResponse), appUser);
+        return aesService.encrypt(gson.toJson(oResponse), appUser.getEcred());
     }
+
 
     @Override
     public String fundWallet(FundWalletRequestPayload payload, AppUser appUser) {

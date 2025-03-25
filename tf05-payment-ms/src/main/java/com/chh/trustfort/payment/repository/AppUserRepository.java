@@ -24,6 +24,8 @@ public interface AppUserRepository {
 
     public AppUser createAppUser(AppUser user);
 
+    public AppUser save(AppUser user);
+
     public List<AppUser> getAppUserList();
 
     public AppUser updateAppUser(AppUser appUser);

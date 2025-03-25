@@ -60,6 +60,18 @@ public class AppUserRepositoryImpl implements AppUserRepository {
     }
 
     @Override
+    public AppUser save(AppUser user) {
+        if (user.getId() == null) {
+            em.persist(user);  // Insert new record
+        } else {
+            user = em.merge(user);  // Update existing record
+        }
+        em.flush();
+        return user;
+    }
+
+
+    @Override
     public List<AppUser> getAppUserList() {
         TypedQuery<AppUser> query = em.createQuery("SELECT t FROM AppUser t", AppUser.class);
         List<AppUser> record = query.getResultList();
@@ -97,8 +109,9 @@ public class AppUserRepositoryImpl implements AppUserRepository {
     @Override
     public String getEncryptionKey(String userName) {
         @SuppressWarnings("JPQLValidation")
-        TypedQuery<String> query = em.createQuery("SELECT t.encryptionKey FROM AppUser t WHERE t.userName = :userName", String.class)
-                .setParameter("userName", userName);
+        TypedQuery<String> query = em.createQuery(
+                        "SELECT t.encryptionKey FROM AppUser t WHERE LOWER(t.userName) = LOWER(:userName)", String.class)
+                .setParameter("userName", userName.toLowerCase());
         List<String> record = query.getResultList();
         if (record.isEmpty()) {
             return null;
@@ -108,15 +121,14 @@ public class AppUserRepositoryImpl implements AppUserRepository {
 
     @Override
     public List<String> getAppUserRoleNameByGroup(AppUserGroup oAppUserGroup) {
-        @SuppressWarnings("JPQLValidation")
-        TypedQuery<String> query = em.createQuery("SELECT t.appUserRole.roleName FROM AppUserRoleMap t WHERE t.appUserGroup = :oAppUserGroup", String.class)
+        TypedQuery<String> query = em.createQuery(
+                        "SELECT t.appUserRole.roleName FROM AppUserRoleMap t WHERE t.appUserGroup = :oAppUserGroup",
+                        String.class)
                 .setParameter("oAppUserGroup", oAppUserGroup);
         List<String> record = query.getResultList();
-        if (record.isEmpty()) {
-            return null;
-        }
-        return record;
+        return record.isEmpty() ? null : record;
     }
+
 
     @Override
     public List<String> getAppUserRoleDescriptionByGroup(AppUserGroup oAppUserGroup) {

@@ -1,51 +1,71 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.component.ResponseCode;
+import com.chh.trustfort.payment.component.WalletUtil;
+import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.jwt.JwtTokenUtil;
 import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.model.AppUserActivity;
+import com.chh.trustfort.payment.model.Wallet;
+import com.chh.trustfort.payment.payload.CreateWalletRequestPayload;
+import com.chh.trustfort.payment.payload.CreateWalletResponsePayload;
 import com.chh.trustfort.payment.payload.OmniResponsePayload;
 import com.chh.trustfort.payment.payload.UserActivityPayload;
 import com.chh.trustfort.payment.repository.AppUserRepository;
+import com.chh.trustfort.payment.repository.WalletRepository;
+import com.chh.trustfort.payment.security.AesService;
 import com.google.gson.Gson;
+import org.jasypt.encryption.StringEncryptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.MessageSource;
+import org.springframework.stereotype.Service;
+
+import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.MessageSource;
-import org.springframework.stereotype.Service;
-import org.jasypt.encryption.StringEncryptor;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
 
-/**
- *
- * @author Daniel Ofoleta
- */
 @Service
 public class GenericServiceImpl implements GenericService {
 
-    @Autowired
-    JwtTokenUtil jwtToken;
+    private static final Logger log = LoggerFactory.getLogger(GenericServiceImpl.class);
 
     @Autowired
-    Gson gson;
+    private JwtTokenUtil jwtToken;
 
     @Autowired
-    MessageSource messageSource;
+    private StringEncryptor stringEncryptor;
 
     @Autowired
-    AppUserRepository appUserRepository;
+    private Gson gson;
 
+    @Autowired
+    private MessageSource messageSource;
+
+    @Autowired
+    private WalletRepository walletRepository;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private ApplicationContext context;
+
+    @Autowired
+    private WalletUtil walletUtil;
+
+    @Autowired
+    private AesService aesService;
+
+    @Value("${admin.ip}")
     private String adminIP;
+
     @Value("${start.morning}")
     private String startMorning;
     @Value("${end.morning}")
@@ -62,10 +82,41 @@ public class GenericServiceImpl implements GenericService {
     private String startNight;
     @Value("${end.night}")
     private String endNight;
-    Logger logger = LoggerFactory.getLogger(GenericServiceImpl.class);
 
-    @Autowired
-    private ApplicationContext context;
+    @Override
+    public String createWallet(@Valid CreateWalletRequestPayload requestPayload, AppUser appUser) {
+        log.info("Creating wallet for user ID: {}", appUser.getId());
+
+        CreateWalletResponsePayload oResponse = new CreateWalletResponsePayload();
+        oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+        oResponse.setResponseMessage(messageSource.getMessage("failed", null, Locale.ENGLISH));
+
+        if (walletRepository.existsByOwner(appUser)) {
+            log.warn("Wallet already exists for user ID: {}", appUser.getId());
+            oResponse.setResponseMessage(messageSource.getMessage("wallet.already.exists", null, Locale.ENGLISH));
+            return aesService.encrypt(gson.toJson(oResponse), appUser.getEcred());
+        }
+
+        Wallet wallet = new Wallet();
+        wallet.setWalletId(walletRepository.generateWalletId());
+        wallet.setOwner(appUser);
+        wallet.setCurrency(requestPayload.getCurrency());
+        wallet.setBalance(BigDecimal.ZERO);
+        wallet.setStatus(WalletStatus.ACTIVE);
+        wallet = walletRepository.createWallet(wallet);
+
+        log.info("Wallet created successfully with ID: {}", wallet.getWalletId());
+
+        if (walletUtil.validateWalletId(wallet.getWalletId())) {
+            oResponse.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+            oResponse.setResponseMessage(messageSource.getMessage("wallet.created.success", null, Locale.ENGLISH));
+        }
+
+        return aesService.encrypt(gson.toJson(oResponse), appUser.getEcred());
+    }
+
+
+
 
     @Override
     public void createUserActivity(UserActivityPayload requestPayload, AppUser appUser) {
@@ -79,33 +130,36 @@ public class GenericServiceImpl implements GenericService {
             userActivity.setStatus(requestPayload.getStatus());
             userActivity.setIpAddress(appUser.getIpAddress());
 
-            appUserRepository.createUserActivity(userActivity);
+            appUserRepository.save(userActivity.getAppUser()); // Ensure this method exists in repository
+
         } catch (Exception ex) {
-            logger.debug("User Activity Error [" + appUser + "]-[" + ex.getMessage() + "]");
+            log.error("User Activity Error [{}] - [{}]", appUser, ex.getMessage());
         }
     }
 
     @Override
     public String checkAdminIP(String ipAddress) {
-        OmniResponsePayload ex = new OmniResponsePayload();
+        OmniResponsePayload responsePayload = new OmniResponsePayload();
         String[] ipAddresses = adminIP.split(",");
-        boolean remoteIPAccepted = true;
+
+        boolean remoteIPAccepted = false;
         for (String ip : ipAddresses) {
-            if (ipAddress.trim().equals(ip)) {
+            if (ipAddress.trim().equals(ip.trim())) {
                 remoteIPAccepted = true;
+                break;
             }
         }
+
         if (!remoteIPAccepted) {
-            ex.setResponseCode(ResponseCode.IP_BANNED.getResponseCode());
-            ex.setResponseMessage(messageSource.getMessage("appMessages.ip.banned", new Object[0], Locale.ENGLISH));
-            String response = gson.toJson(ex);
-            return response;
+            responsePayload.setResponseCode(ResponseCode.IP_BANNED.getResponseCode());
+            responsePayload.setResponseMessage(messageSource.getMessage("appMessages.ip.banned", null, Locale.ENGLISH));
+            return gson.toJson(responsePayload);
         }
         return null;
     }
 
     @Override
-    public String generateEncryptionKey(boolean encrypResponse) {
+    public String generateEncryptionKey(boolean encryptResponse) {
         try {
             int leftLimit = 48; // numeral '0'
             int rightLimit = 122; // letter 'z'
@@ -117,14 +171,16 @@ public class GenericServiceImpl implements GenericService {
                     .limit(targetStringLength)
                     .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                     .toString();
-            if (encrypResponse) {
-                StringEncryptor oStringEncryptor = (StringEncryptor) context.getBean("jasyptStringEncryptor");
-                return oStringEncryptor.encrypt(generatedString);
+
+            if (encryptResponse) {
+                StringEncryptor encryptor = context.getBean("jasyptStringEncryptor", StringEncryptor.class);
+                return encryptor.encrypt(generatedString);
             } else {
                 return generatedString;
             }
 
         } catch (BeansException ex) {
+            log.error("Encryption Error: {}", ex.getMessage());
             return null;
         }
     }
@@ -132,27 +188,26 @@ public class GenericServiceImpl implements GenericService {
     @Override
     public String generateEcred() {
         try {
-            int leftLimit = 48; // numeral '0'
-            int rightLimit = 122; // letter 'z'
-            int targetStringLength = 32;
             Random random = new Random();
+            int targetStringLength = 32;
 
-            String encryptionKey = random.ints(leftLimit, rightLimit + 1)
+            String encryptionKey = random.ints(48, 122 + 1)
                     .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
                     .limit(targetStringLength)
                     .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                     .toString();
 
-            String iv = random.ints(leftLimit, rightLimit + 1)
+            String iv = random.ints(48, 122 + 1)
                     .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
                     .limit(targetStringLength)
                     .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                     .toString();
 
-            StringEncryptor oStringEncryptor = (StringEncryptor) context.getBean("jasyptStringEncryptor");
-            return oStringEncryptor.encrypt(encryptionKey.concat("/").concat(iv));
+            StringEncryptor encryptor = context.getBean("jasyptStringEncryptor", StringEncryptor.class);
+            return encryptor.encrypt(encryptionKey.concat("/").concat(iv));
 
         } catch (BeansException ex) {
+            log.error("Ecred Generation Error: {}", ex.getMessage());
             return null;
         }
     }
@@ -160,73 +215,39 @@ public class GenericServiceImpl implements GenericService {
     @Override
     public void generateLog(AppUser appUser, String token, String logMessage, String logType, String logLevel, String requestId) {
         try {
-            String requestBy = jwtToken.getUserNameFromToken(token, appUser.getEncryptionKey());
-            String remoteIP = jwtToken.getIPFromToken(token, appUser.getEncryptionKey());
-            String channel = jwtToken.getChannelFromToken(token, appUser.getEncryptionKey());
+            // Decrypt the encryption key for this user
+            String decryptedKey = stringEncryptor.decrypt(appUser.getEncryptionKey());
 
-            StringBuilder strBuilder = new StringBuilder();
-            strBuilder.append(logType.toUpperCase(Locale.ENGLISH));
-            strBuilder.append(" - ");
-            strBuilder.append("[").append(remoteIP).append(":").append(channel.toUpperCase(Locale.ENGLISH)).append(":").append(requestBy.toUpperCase(Locale.ENGLISH)).append("]");
-            strBuilder.append("[").append(appUser.getChannel().toUpperCase(Locale.ENGLISH).toUpperCase(Locale.ENGLISH)).append(":").append(requestId.toUpperCase(Locale.ENGLISH)).append("]");
-            strBuilder.append("[").append(logMessage).append("]");
+            String requestBy = jwtToken.getUserNameFromToken(token, decryptedKey);
+            String remoteIP = jwtToken.getIPFromToken(token, decryptedKey);
+            String channel = jwtToken.getChannelFromToken(token, decryptedKey);
 
-            if ("INFO".equalsIgnoreCase(logLevel.trim())) {
-                if (logger.isInfoEnabled()) {
-                    logger.info(strBuilder.toString());
-                }
+            String logEntry = String.format("%s - [%s:%s:%s][%s:%s][%s]",
+                    logType.toUpperCase(Locale.ENGLISH), remoteIP, channel, requestBy, appUser.getChannel(), requestId, logMessage);
+
+            if ("INFO".equalsIgnoreCase(logLevel.trim()) && log.isInfoEnabled()) {
+                log.info(logEntry);
             }
-
-            if ("DEBUG".equalsIgnoreCase(logLevel.trim())) {
-                if (logger.isDebugEnabled()) {
-                    logger.error(strBuilder.toString());
-                }
+            if ("DEBUG".equalsIgnoreCase(logLevel.trim()) && log.isDebugEnabled()) {
+                log.debug(logEntry);
             }
-
         } catch (Exception ex) {
-            if (logger.isDebugEnabled()) {
-                logger.debug(ex.getMessage());
-            }
+            log.error("Log Generation Error: {}", ex.getMessage());
         }
     }
 
+
     @Override
     public char getTimePeriod() {
-        char timePeriod = 'M';
         int hour = LocalDateTime.now().getHour();
-        int morningStart = Integer.parseInt(startMorning);
-        int morningEnd = Integer.parseInt(endMorning);
-        int afternoonStart = Integer.parseInt(startAfternoon);
-        int afternoonEnd = Integer.parseInt(endAfternoon);
-        int eveningStart = Integer.parseInt(startEvening);
-        int eveningEnd = Integer.parseInt(endEvening);
-        int nightStart = Integer.parseInt(startNight);
-        int nightEnd = Integer.parseInt(endNight);
-        //Check the the period of the day
-        if (hour >= morningStart && hour <= morningEnd) {
-            timePeriod = 'M';
-        }
-        if (hour >= afternoonStart && hour <= afternoonEnd) {
-            timePeriod = 'A';
-        }
-        if (hour >= eveningStart && hour <= eveningEnd) {
-            timePeriod = 'E';
-        }
-        if (hour >= nightStart && hour <= nightEnd) {
-            timePeriod = 'N';
-        }
-        return timePeriod;
+        if (hour >= Integer.parseInt(startMorning) && hour <= Integer.parseInt(endMorning)) return 'M';
+        if (hour >= Integer.parseInt(startAfternoon) && hour <= Integer.parseInt(endAfternoon)) return 'A';
+        if (hour >= Integer.parseInt(startEvening) && hour <= Integer.parseInt(endEvening)) return 'E';
+        return 'N';
     }
 
     @Override
     public String formatDateWithHyphen(String dateToFormat) {
-        StringBuilder newDate = new StringBuilder(dateToFormat);
-        if (dateToFormat.length() == 8) {
-            newDate.insert(4, "-").insert(7, "-");
-            return newDate.toString();
-        }
-
-        return "";
+        return (dateToFormat.length() == 8) ? dateToFormat.substring(0, 4) + "-" + dateToFormat.substring(4, 6) + "-" + dateToFormat.substring(6) : "";
     }
-
 }
