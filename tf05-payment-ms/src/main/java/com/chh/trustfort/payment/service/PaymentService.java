@@ -2,7 +2,8 @@ package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.jwt.JwtTokenUtil;
 import com.chh.trustfort.payment.model.AppUser;
-import com.chh.trustfort.payment.payload.PaymentRequestPayload;
+import com.chh.trustfort.payment.model.Users;
+import com.chh.trustfort.payment.payload.PaymentReferenceRequestPayload;
 import com.chh.trustfort.payment.payload.QuoteRequestPayload;
 import com.chh.trustfort.payment.security.AesService;
 import org.slf4j.Logger;
@@ -25,12 +26,12 @@ public class PaymentService {
 
     Logger logger = LoggerFactory.getLogger(PaymentService.class);
 
-    public String generateQuote(AppUser appUser, QuoteRequestPayload requestPayload) {
+    public String generateQuote(Users users, QuoteRequestPayload requestPayload) {
 
         return "";
     }
 
-    public String processPayment(AppUser appUser, PaymentRequestPayload requestPayload) {
+    public String processPayment(Users users, PaymentReferenceRequestPayload requestPayload) {
 
         return "";
     }

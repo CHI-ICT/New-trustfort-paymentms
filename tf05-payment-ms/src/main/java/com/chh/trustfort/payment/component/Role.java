@@ -10,7 +10,7 @@ package com.chh.trustfort.payment.component;
  * @author Daniel Ofoleta
  */
 public enum Role {
-    CFREATE_WALLET("C_WAL"),
+    CREATE_WALLET("C_WAL"),
     FUND_WALLET("F_WAL"),
     FETCH_WALLET("W_FET"),
     TRANSFER_FUNDS("T_FND"),
@@ -21,9 +21,26 @@ public enum Role {
     UNFREEZE_WALLET("W_UFR"),
     CLOSE_WALLET("W_CLS"),
     LOCK_FUNDS("L_FND"),
-    UNLOCK_FUNDS("U_FND")
-    
-    ;
+    UNLOCK_FUNDS("U_FND"),
+    CREDIT_COMMISSION("CREDIT_COMMISSION"),
+    VIEW_COMMISSION("VIEW_COMMISSION"),
+    GENERATE_PAYMENT_REFERENCE("G_REF"),
+    GENERATE_OTP("G_OTP"),
+    MOCK_FCMB_BASE("M_FCMB"),
+    SIMULATE_TRANSFER_STATUS("S_TS"),
+    FUND_WEBHOOK("F_WH"),
+    VALIDATE_PIN("V_PN"),
+    SETUP_PIN("S_PN"),
+    HANDLE_WEBHOOK("H_WB"),
+    HANDLE_FCMB_WEBHOOK("H_FWB"),
+    INITIATE_CARD_PAYMENT("I_CP"),
+    GENERATE_ACCOUNT("G_AT"),
+    CONFIRM_TRANSFER("C_TF"),
+    CONFIRM_BANK_TRANSFER("C_BT"),
+    VERIFY_FLW_TRANSACTION("V_FT");
+
+
+
 
     private final String role;
 

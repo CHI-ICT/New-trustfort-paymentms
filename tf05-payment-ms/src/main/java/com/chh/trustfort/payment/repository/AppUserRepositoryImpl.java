@@ -5,11 +5,8 @@
  */
 package com.chh.trustfort.payment.repository;
 
-import com.chh.trustfort.payment.model.AppUser;
-import com.chh.trustfort.payment.model.AppUserActivity;
-import com.chh.trustfort.payment.model.AppUserGroup;
-import com.chh.trustfort.payment.model.AppUserRole;
-import com.chh.trustfort.payment.model.AppUserRoleMap;
+import com.chh.trustfort.payment.model.*;
+
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -120,7 +117,7 @@ public class AppUserRepositoryImpl implements AppUserRepository {
     }
 
     @Override
-    public List<String> getAppUserRoleNameByGroup(AppUserGroup oAppUserGroup) {
+    public List<String> getAppUserRoleNameByGroup(UserGroup oAppUserGroup) {
         TypedQuery<String> query = em.createQuery(
                         "SELECT t.appUserRole.roleName FROM AppUserRoleMap t WHERE t.appUserGroup = :oAppUserGroup",
                         String.class)

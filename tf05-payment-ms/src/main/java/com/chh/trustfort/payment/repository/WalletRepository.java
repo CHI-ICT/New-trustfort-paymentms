@@ -1,10 +1,11 @@
 package com.chh.trustfort.payment.repository;
 
 import com.chh.trustfort.payment.exception.WalletException;
-import com.chh.trustfort.payment.model.AppUser;
+import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.component.WalletUtil;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigInteger;
+import java.util.Optional;
 
 @Transactional
 @Repository
@@ -29,23 +31,26 @@ public class WalletRepository {
         try {
             // Retrieve the current serial number from the database.
             BigInteger serialNumberBI = (BigInteger) em.createNativeQuery(
-                            "SELECT serial_number FROM wallet_serial WHERE id = 1")
+                            "SELECT COALESCE(MAX(serial_number), 99999) FROM wallet_serial WHERE id = 1")
                     .getSingleResult();
-            long serialNumber = serialNumberBI.longValue();
+            long serialNumber = serialNumberBI.longValue() + 1; // Increment by 1
 
             // Validate serial number retrieval
             if (serialNumber <= 0) {
                 throw new WalletException("Failed to retrieve a valid serial number for wallet generation.");
             }
 
-            // Convert serial number to String and calculate the check digit.
-            String serial = String.valueOf(serialNumber);
-            int checkDigit = walletUtil.calculateCheckDigit(serial);
+            // Construct the Wallet ID with "WAL-" prefix
+            String walletId = "WAL-" + serialNumber;
+
+//            // Convert serial number to String and calculate the check digit.
+//            String serial = String.valueOf(serialNumber);
+//            int checkDigit = walletUtil.calculateCheckDigit(serial);
 
             // Update the serial number in the database (cast parameter to bigint).
             int updatedRows = em.createNativeQuery(
                             "UPDATE wallet_serial SET serial_number = :newSerial WHERE id = 1")
-                    .setParameter("newSerial", serialNumber + 1)
+                    .setParameter("newSerial", serialNumber )
                     .executeUpdate();
 
 
@@ -53,7 +58,7 @@ public class WalletRepository {
                 throw new WalletException("Failed to update serial number in wallet_serial table.");
             }
 
-            String walletId = serial + checkDigit;
+//            String walletId = serial + checkDigit;
             log.info("Generated Wallet ID: {}", walletId);
             return walletId;
         } catch (Exception e) {
@@ -63,7 +68,7 @@ public class WalletRepository {
     }
 
     public Wallet createWallet(Wallet wallet) {
-        log.info("Creating wallet for owner: {}", wallet.getOwner().getId());
+        log.info("Creating wallet for users: {}", wallet.getUsers().getId());
         em.persist(wallet);
         em.flush();
         log.info("Wallet created with ID: {}", wallet.getWalletId());
@@ -78,10 +83,44 @@ public class WalletRepository {
         return wallet;
     }
 
-    public boolean existsByOwner(AppUser owner) {
-        Long count = em.createQuery("SELECT COUNT(w) FROM Wallet w WHERE w.owner = :owner", Long.class)
-                .setParameter("owner", owner)
+    public boolean existsByOwner(Users users) {
+        Long count = em.createQuery("SELECT COUNT(w) FROM Wallet w WHERE w.users = :users", Long.class)
+                .setParameter("users", users)
                 .getSingleResult();
         return count > 0;
     }
+    public Optional<Wallet> findByWalletId(String walletId) {
+        try {
+            return Optional.ofNullable(
+                    em.createQuery("SELECT w FROM Wallet w WHERE w.walletId = :walletId", Wallet.class)
+                            .setParameter("walletId", walletId)
+                            .getSingleResult()
+            );
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
+    }
+    public Optional<Wallet> findByAccountNumber(String accountNumber) {
+        try {
+            Wallet wallet = em.createQuery("SELECT w FROM Wallet w WHERE w.accountNumber = :accountNumber", Wallet.class)
+                    .setParameter("accountNumber", accountNumber)
+                    .getSingleResult();
+            return Optional.of(wallet);
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<Wallet> findByEmailAddress(String emailAddress) {
+        try {
+            Wallet wallet = em.createQuery("SELECT w FROM Wallet w WHERE w.users.emailAddress = :emailAddress", Wallet.class)
+                    .setParameter("emailAddress", emailAddress)
+                    .getSingleResult();
+            return Optional.of(wallet);
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
+    }
+
+
 }

@@ -1,11 +1,13 @@
 package com.chh.trustfort.payment.component;
 
 import com.chh.trustfort.payment.Quintuple;
+import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.payload.OmniResponsePayload;
 import com.chh.trustfort.payment.payload.TokenData;
 import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.repository.AppUserRepository;
 import com.chh.trustfort.payment.jwt.JwtTokenUtil;
+import com.chh.trustfort.payment.repository.UsersRepository;
 import com.chh.trustfort.payment.security.AesService;
 import com.google.gson.Gson;
 import org.apache.commons.codec.binary.Base64;
@@ -32,12 +34,13 @@ public class RequestManager {
     private AesService aesService;
 
     @Autowired
-    private AppUserRepository appUserRepository;
+    private UsersRepository usersRepository;
 
     @Autowired
     private StringEncryptor stringEncryptor;
 
-    public Quintuple<Boolean, String, String, AppUser, String> validateRequest(
+
+    public Quintuple<Boolean, String, String, Users, String> validateRequest(
             String role, String requestBody, HttpServletRequest httpRequest, String idToken) {
 
         log.info("Validating request for role: {}", role);
@@ -61,26 +64,26 @@ public class RequestManager {
         log.info("Token Subject (Username): {}", tokenData.getSub());
 
         // Fetch user from database
-        AppUser appUser = appUserRepository.getAppUserByUserName(tokenData.getSub());
-        if (appUser == null) {
+        Users users = usersRepository.getUserByUserName(tokenData.getSub());
+        if (users == null) {
             log.error("User not found for username: {}", tokenData.getSub());
             return unauthorizedResponse("User not found.");
         }
-        log.info("Authenticated User: {}", appUser.getUserName());
+        log.info("Authenticated User: {}", users.getUserName());
 
-        // For JWT operations, use the decrypted encryption key from the 'encryption_key' field.
+        // Decrypt the stored encryption key for JWT operations.
         String decryptedKey;
         try {
-            decryptedKey = stringEncryptor.decrypt(appUser.getEncryptionKey());
+            decryptedKey = stringEncryptor.decrypt(users.getEncryptionKey());
         } catch (Exception e) {
-            log.error("Error decrypting encryption key for user: {}", appUser.getUserName());
+            log.error("Error decrypting encryption key for user: {}", users.getUserName());
             return unauthorizedResponse("Encryption key error.");
         }
 
         // Validate the token using the decrypted key.
         boolean isExpired = jwtTokenUtil.isTokenExpired(token, decryptedKey);
         if (isExpired) {
-            log.error("Token expired for user: {}", appUser.getUserName());
+            log.error("Token expired for user: {}", users.getUserName());
             return unauthorizedResponse("Your token has expired.");
         }
 
@@ -89,8 +92,8 @@ public class RequestManager {
             return unauthorizedResponse("You do not have the required permissions to perform this action.");
         }
 
-        // If session validation is enabled, check the ID token.
-        if (appUser.isAuthenticateSession()) {
+        // Session validation if enabled.
+        if (users.isAuthenticateSession()) {
             if (idToken == null) {
                 idToken = httpRequest.getHeader("ID-TOKEN");
             }
@@ -103,17 +106,18 @@ public class RequestManager {
         }
 
         // Determine whether to decrypt the request body.
-        // If the payload starts with '{', assume it is plain JSON.
+        // If the payload starts with '{' or matches a known plain pattern (e.g., wallet IDs starting with "WAL-"), then assume it's plain.
+        String trimmed = requestBody.trim();
         String decryptedBody;
-        if (requestBody.trim().startsWith("{")) {
+        if (trimmed.startsWith("{") || trimmed.startsWith("WAL-")) {
             decryptedBody = requestBody;
         } else {
-            // Otherwise, decrypt using the ecred (which should be in "key/iv" format)
-            decryptedBody = aesService.decrypt(requestBody, appUser.getEcred());
+            decryptedBody = aesService.decrypt(requestBody, users.getEcred());
         }
 
-        return new Quintuple<>(false, token, idToken, appUser, decryptedBody);
+        return new Quintuple<>(false, token, idToken, users, decryptedBody);
     }
+
 
     private TokenData getTokenData(String token) {
         try {
@@ -129,7 +133,7 @@ public class RequestManager {
         }
     }
 
-    private Quintuple<Boolean, String, String, AppUser, String> unauthorizedResponse(String message) {
+    private Quintuple<Boolean, String, String, Users, String> unauthorizedResponse(String message) {
         OmniResponsePayload oResponse = new OmniResponsePayload();
         oResponse.setResponseMessage(message);
         String responseJson = gson.toJson(oResponse);

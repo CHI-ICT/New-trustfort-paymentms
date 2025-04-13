@@ -17,12 +17,6 @@ public class AesServiceImpl implements AesService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AesServiceImpl.class);
 
-    /**
-     * Encrypts the plaintext using AES/CBC/PKCS5Padding.
-     * The provided keyWithIv should be in the format "keyPart/ivPart".
-     * The keyPart is converted into a 16-byte key by applying MD5,
-     * and the ivPart is adjusted to 16 bytes.
-     */
     @Override
     public String encrypt(String plaintext, String keyWithIv) {
         if (keyWithIv == null || keyWithIv.trim().isEmpty()) {
@@ -48,11 +42,7 @@ public class AesServiceImpl implements AesService {
                 ivBytes = hexStringToByteArray(ivPart);
             } else {
                 ivBytes = ivPart.getBytes(StandardCharsets.UTF_8);
-                if (ivBytes.length < 16) {
-                    ivBytes = Arrays.copyOf(ivBytes, 16);
-                } else if (ivBytes.length > 16) {
-                    ivBytes = Arrays.copyOf(ivBytes, 16);
-                }
+                ivBytes = Arrays.copyOf(ivBytes, 16);
             }
             IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 
@@ -60,17 +50,14 @@ public class AesServiceImpl implements AesService {
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivSpec);
 
             byte[] encryptedBytes = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(encryptedBytes);
+            // Use URL-safe Base64 encoder so that the output is safe for URLs (i.e. '-' instead of '+', '_' instead of '/')
+            return Base64.getUrlEncoder().encodeToString(encryptedBytes);
         } catch (Exception e) {
             LOGGER.error("Encryption failed: {}", e.getMessage());
-            throw new RuntimeException("Encryption failed");
+            throw new RuntimeException("Encryption failed", e);
         }
     }
 
-    /**
-     * Decrypts the cipherText using AES/CBC/PKCS5Padding.
-     * The provided keyWithIv is processed in the same way as in encrypt().
-     */
     @Override
     public String decrypt(String cipherText, String keyWithIv) {
         if (keyWithIv == null || keyWithIv.trim().isEmpty()) {
@@ -96,28 +83,30 @@ public class AesServiceImpl implements AesService {
                 ivBytes = hexStringToByteArray(ivPart);
             } else {
                 ivBytes = ivPart.getBytes(StandardCharsets.UTF_8);
-                if (ivBytes.length < 16) {
-                    ivBytes = Arrays.copyOf(ivBytes, 16);
-                } else if (ivBytes.length > 16) {
-                    ivBytes = Arrays.copyOf(ivBytes, 16);
-                }
+                ivBytes = Arrays.copyOf(ivBytes, 16);
             }
             IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivSpec);
 
-            byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(cipherText));
+            // Use URL-safe Base64 decoder
+            byte[] decodedBytes;
+            try {
+                decodedBytes = Base64.getUrlDecoder().decode(cipherText);
+            } catch (IllegalArgumentException e) {
+                LOGGER.error("Base64 Decoding Error: Invalid input. {}", e.getMessage());
+                throw new RuntimeException("Base64 Decoding Error: Invalid input.", e);
+            }
+
+            byte[] decryptedBytes = cipher.doFinal(decodedBytes);
             return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
             LOGGER.error("Decryption failed: {}", e.getMessage());
-            throw new RuntimeException("Decryption failed");
+            throw new RuntimeException("Decryption failed", e);
         }
     }
 
-    /**
-     * Converts a hexadecimal string into a byte array.
-     */
     public static byte[] hexStringToByteArray(String s) {
         int len = s.length();
         byte[] data = new byte[len / 2];

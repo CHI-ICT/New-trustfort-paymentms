@@ -2,7 +2,9 @@ package com.chh.trustfort.payment.jwt;
 
 import com.chh.trustfort.payment.component.Role; // Use wallet role enum from here
 import com.chh.trustfort.payment.model.AppUser;
+import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.repository.AppUserRepository;
+import com.chh.trustfort.payment.repository.UsersRepository;
 import io.jsonwebtoken.*;
 import org.jasypt.encryption.StringEncryptor;
 import org.slf4j.Logger;
@@ -25,6 +27,10 @@ public class JwtTokenUtil implements Serializable {
     private AppUserRepository userRepository;
 
     @Autowired
+    private UsersRepository usersRepository;
+
+
+    @Autowired
     private StringEncryptor stringEncryptor; // Injected encryptor
 
     @Value("${jwt.issuer}")
@@ -38,33 +44,128 @@ public class JwtTokenUtil implements Serializable {
      * Generates a JWT token for a user.
      */
     public String doGenerateToken(String subject, String remoteIP) {
-        AppUser appUser = userRepository.getAppUserByUserName(subject);
-        if (appUser == null) {
+        Users users = usersRepository.getUserByUserName(subject);
+        if (users == null) {
             log.error("User not found: {}", subject);
             return null;
         }
-        log.info("Generating token for user: {}", appUser.getUserName());
+        log.info("Generating token for user: {}", users.getUserName());
 
         try {
             // Decrypt the stored encryption key for signing (this key is used for JWT)
-            String encryptKey = stringEncryptor.decrypt(appUser.getEncryptionKey());
+            String encryptKey = stringEncryptor.decrypt(users.getEncryptionKey());
             log.info("Using Encryption Key for Signing: {}", encryptKey);
 
             Claims claims = Jwts.claims().setSubject(subject);
-            // Retrieve roles from DB and ensure the wallet role is present
-            List<String> roles = userRepository.getAppUserRoleNameByGroup(appUser.getAppUserGroup());
-            if (roles == null) {
-                roles = new ArrayList<>();
-            }
-            if (!roles.contains(Role.CFREATE_WALLET.getValue())) {
-                roles.add(Role.CFREATE_WALLET.getValue());
-            }
-            claims.put("roles", roles);
+
             claims.put("auth", encryptKey);
-            claims.put("Channel", appUser.getChannel());
             claims.put("IP", remoteIP);
             claims.put("uniqueId", UUID.randomUUID().toString());
             claims.put("issuedAt", System.currentTimeMillis());
+
+
+            // Fetch roles dynamically from DB
+            List<String> roles = userRepository.getAppUserRoleNameByGroup(users.getUserGroup());
+
+// Ensure at least one role is present
+            if (roles == null || roles.isEmpty()) {
+                roles = new ArrayList<>();
+            }
+            // ✅ Assign commission roles correctly
+
+
+// ✅ Ensure both `C_WAL` and `W_BAL` exist
+            if (!roles.contains(Role.CREATE_WALLET.getValue())) {
+                roles.add(Role.CREATE_WALLET.getValue());
+            }
+            if (!roles.contains(Role.CHECK_BALANCE.getValue())) {
+                roles.add(Role.CHECK_BALANCE.getValue());
+            }
+            if (!roles.contains(Role.FUND_WALLET.getValue())) {
+                roles.add(Role.FUND_WALLET.getValue());
+            }
+            if (!roles.contains(Role.FETCH_WALLET.getValue())) {
+                roles.add(Role.FETCH_WALLET.getValue());
+            }
+            if (!roles.contains(Role.TRANSFER_FUNDS.getValue())) {
+                roles.add(Role.TRANSFER_FUNDS.getValue());
+            }
+            if (!roles.contains(Role.TRANSACTION_HISTORY.getValue())) {
+                roles.add(Role.TRANSACTION_HISTORY.getValue());
+            }
+            if (!roles.contains(Role.WITHDRAW_FUNDS.getValue())) {
+                roles.add(Role.WITHDRAW_FUNDS.getValue());
+            }
+            if (!roles.contains(Role.CREDIT_COMMISSION.getValue())) {
+                roles.add(Role.CREDIT_COMMISSION.getValue());
+            }
+            if (!roles.contains(Role.VIEW_COMMISSION.getValue())) {
+                roles.add(Role.VIEW_COMMISSION.getValue());
+            }
+            if (!roles.contains(Role.FREEZE_WALLET.getValue())) {
+                roles.add(Role.FREEZE_WALLET.getValue());
+            }
+            if (!roles.contains(Role.UNFREEZE_WALLET.getValue())) {
+                roles.add(Role.UNFREEZE_WALLET.getValue());
+            }
+            if (!roles.contains(Role.CLOSE_WALLET.getValue())) {
+                roles.add(Role.CLOSE_WALLET.getValue());
+            }
+            if (!roles.contains(Role.LOCK_FUNDS.getValue())) {
+                roles.add(Role.LOCK_FUNDS.getValue());
+            }
+            if (!roles.contains(Role.UNLOCK_FUNDS.getValue())) {
+                roles.add(Role.UNLOCK_FUNDS.getValue());
+            }
+            if (!roles.contains(Role.GENERATE_PAYMENT_REFERENCE.getValue())) {
+                roles.add(Role.GENERATE_PAYMENT_REFERENCE.getValue());
+            }
+            if (!roles.contains(Role.GENERATE_OTP.getValue())) {
+                roles.add(Role.GENERATE_OTP.getValue());
+            }
+            if (!roles.contains(Role.MOCK_FCMB_BASE.getValue())) {
+                roles.add(Role.MOCK_FCMB_BASE.getValue());
+            }
+            if (!roles.contains(Role.SIMULATE_TRANSFER_STATUS.getValue())) {
+                roles.add(Role.SIMULATE_TRANSFER_STATUS.getValue());
+            }
+            if (!roles.contains(Role.FUND_WEBHOOK.getValue())) {
+                roles.add(Role.FUND_WEBHOOK.getValue());
+            }
+            if (!roles.contains(Role.SETUP_PIN.getValue())) {
+                roles.add(Role.SETUP_PIN.getValue());
+            }
+            if (!roles.contains(Role.VALIDATE_PIN.getValue())) {
+                roles.add(Role.VALIDATE_PIN.getValue());
+            }
+            if (!roles.contains(Role.HANDLE_WEBHOOK.getValue())) {
+                roles.add(Role.HANDLE_WEBHOOK.getValue());
+            }
+            if (!roles.contains(Role.INITIATE_CARD_PAYMENT.getValue())) {
+                roles.add(Role.INITIATE_CARD_PAYMENT.getValue());
+            }
+            if (!roles.contains(Role.HANDLE_FCMB_WEBHOOK.getValue())) {
+                roles.add(Role.HANDLE_FCMB_WEBHOOK.getValue());
+            }
+            if (!roles.contains(Role.GENERATE_ACCOUNT.getValue())) {
+                roles.add(Role.GENERATE_ACCOUNT.getValue());
+            }
+            if (!roles.contains(Role.CONFIRM_TRANSFER.getValue())) {
+                roles.add(Role.CONFIRM_TRANSFER.getValue());
+            }
+            if (!roles.contains(Role.CONFIRM_BANK_TRANSFER.getValue())) {
+                roles.add(Role.CONFIRM_BANK_TRANSFER.getValue());
+            }
+            if (!roles.contains(Role.VERIFY_FLW_TRANSACTION.getValue())) {
+                roles.add(Role.VERIFY_FLW_TRANSACTION.getValue());
+            }
+
+
+
+
+            claims.put("roles", roles);
+
+
 
             Date issuedAt = new Date();
             Date expirationDate = Date.from(Instant.now().plus(12, ChronoUnit.HOURS));

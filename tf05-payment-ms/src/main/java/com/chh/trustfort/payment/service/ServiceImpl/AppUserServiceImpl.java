@@ -1,7 +1,8 @@
-package com.chh.trustfort.payment.service;
+package com.chh.trustfort.payment.service.ServiceImpl;
 
 import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.repository.AppUserRepository;
+import com.chh.trustfort.payment.service.AppUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

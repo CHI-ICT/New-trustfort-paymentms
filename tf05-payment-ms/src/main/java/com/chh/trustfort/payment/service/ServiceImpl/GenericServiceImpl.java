@@ -1,4 +1,4 @@
-package com.chh.trustfort.payment.service;
+package com.chh.trustfort.payment.service.ServiceImpl;
 
 import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.component.WalletUtil;
@@ -6,6 +6,7 @@ import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.jwt.JwtTokenUtil;
 import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.model.AppUserActivity;
+import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.payload.CreateWalletRequestPayload;
 import com.chh.trustfort.payment.payload.CreateWalletResponsePayload;
@@ -14,6 +15,7 @@ import com.chh.trustfort.payment.payload.UserActivityPayload;
 import com.chh.trustfort.payment.repository.AppUserRepository;
 import com.chh.trustfort.payment.repository.WalletRepository;
 import com.chh.trustfort.payment.security.AesService;
+import com.chh.trustfort.payment.service.GenericService;
 import com.google.gson.Gson;
 import org.jasypt.encryption.StringEncryptor;
 import org.slf4j.Logger;
@@ -84,22 +86,22 @@ public class GenericServiceImpl implements GenericService {
     private String endNight;
 
     @Override
-    public String createWallet(@Valid CreateWalletRequestPayload requestPayload, AppUser appUser) {
-        log.info("Creating wallet for user ID: {}", appUser.getId());
+    public String createWallet(@Valid CreateWalletRequestPayload requestPayload, Users users) {
+        log.info("Creating wallet for user ID: {}", users.getId());
 
         CreateWalletResponsePayload oResponse = new CreateWalletResponsePayload();
         oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
         oResponse.setResponseMessage(messageSource.getMessage("failed", null, Locale.ENGLISH));
 
-        if (walletRepository.existsByOwner(appUser)) {
-            log.warn("Wallet already exists for user ID: {}", appUser.getId());
+        if (walletRepository.existsByOwner(users)) {
+            log.warn("Wallet already exists for user ID: {}", users.getId());
             oResponse.setResponseMessage(messageSource.getMessage("wallet.already.exists", null, Locale.ENGLISH));
-            return aesService.encrypt(gson.toJson(oResponse), appUser.getEcred());
+            return aesService.encrypt(gson.toJson(oResponse), users.getEcred());
         }
 
         Wallet wallet = new Wallet();
         wallet.setWalletId(walletRepository.generateWalletId());
-        wallet.setOwner(appUser);
+        wallet.setUsers(users);
         wallet.setCurrency(requestPayload.getCurrency());
         wallet.setBalance(BigDecimal.ZERO);
         wallet.setStatus(WalletStatus.ACTIVE);
@@ -112,7 +114,7 @@ public class GenericServiceImpl implements GenericService {
             oResponse.setResponseMessage(messageSource.getMessage("wallet.created.success", null, Locale.ENGLISH));
         }
 
-        return aesService.encrypt(gson.toJson(oResponse), appUser.getEcred());
+        return aesService.encrypt(gson.toJson(oResponse), users.getEcred());
     }
 
 

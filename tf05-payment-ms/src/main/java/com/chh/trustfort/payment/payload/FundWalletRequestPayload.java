@@ -9,7 +9,7 @@ import lombok.Data;
  */
 @Data
 public class FundWalletRequestPayload {
-    BigDecimal amount;
-    String walletId;
-    
+    private String walletId;
+    private BigDecimal amount;
+    private String narration;
 }

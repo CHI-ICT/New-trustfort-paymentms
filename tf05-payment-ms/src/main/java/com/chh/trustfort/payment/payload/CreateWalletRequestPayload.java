@@ -10,7 +10,5 @@ import lombok.Data;
 
 @Data
 public class CreateWalletRequestPayload {
-    private String walletId;
-    private Users owner;
     private String currency;
 }

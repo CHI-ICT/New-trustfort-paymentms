@@ -1,6 +1,7 @@
 package com.chh.trustfort.payment.controller;
 
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -11,7 +12,5 @@ import org.springframework.web.bind.annotation.RestController;
 @RefreshScope
 public class PaymentController {
 
+    }
 
-
-
-}

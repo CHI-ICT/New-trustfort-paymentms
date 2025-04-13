@@ -18,7 +18,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 )
 @SpringBootApplication(scanBasePackages = "com.chh.trustfort.payment")
 @EntityScan("com.chh.trustfort.payment.model") // Ensure Hibernate finds AppUser entity
-@EnableJpaRepositories("com.chh.trustfort.payment.repository") // Ensure it finds your repositories
+//@EnableJpaRepositories("com.chh.trustfort.payment.repository") // Ensure it finds your repositories
 //@SpringBootApplication
 @Import(AppConfig.class)
 @EnableHystrixDashboard
