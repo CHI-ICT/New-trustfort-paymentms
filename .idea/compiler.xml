@@ -7,25 +7,19 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="tf02-config-ms" />
+        <module name="tf05-payment-ms" />
         <module name="tf01-discovery-ms" />
-        <module name="tf04-admin-ms" />
+        <module name="tf02-config-ms" />
         <module name="tf03-gateway-ms" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="tf01-discovery-ms" target="11" />
-      <module name="tf02-config-ms" target="11" />
-      <module name="tf03-gateway-ms" target="11" />
-      <module name="tf04-admin-ms" target="11" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="tf01-discovery-ms" options="-parameters" />
       <module name="tf02-config-ms" options="-parameters" />
       <module name="tf03-gateway-ms" options="-parameters" />
-      <module name="tf04-admin-ms" options="-parameters" />
+      <module name="tf05-payment-ms" options="-parameters" />
     </option>
   </component>
 </project>

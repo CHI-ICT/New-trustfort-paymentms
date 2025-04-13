@@ -2,14 +2,9 @@ package com.chh.trustfort.payment.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
+
+import com.chh.trustfort.payment.component.UserClass;
 import lombok.Data;
 
 /**
@@ -39,9 +34,10 @@ public class Users implements Serializable {
     
      @Column(name = "pin", nullable = false, length = 225)
     private String pin;
-     
-     @Column(name = "biometricData", nullable = false, length = 225)
+
+    @Column(name = "biometricData", nullable = true, length = 225)
     private String biometricData;
+
 
     @Column(name = "email_address", nullable = false, unique = true, length = 80)
     private String emailAddress;
@@ -54,10 +50,12 @@ public class Users implements Serializable {
     
     @Column(name = "user_type", nullable = false, length = 1)
     private String user_type="I";
-    
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "user_class", nullable = false, length = 30)
-    private String user_class;
-    
+    private UserClass userClass;
+
+
     @Column(name = "tenant_id", nullable = true, length = 15)
     private String tenantId;
     
@@ -78,6 +76,9 @@ public class Users implements Serializable {
     
     @Column(name = "approved_by", nullable = true, length = 30)
     private String approvedBy;
+
+    @Column(name = "auth_sission", nullable = false)
+    private boolean authenticateSession = false;
     
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
@@ -87,5 +88,26 @@ public class Users implements Serializable {
     
     @Column(name = "passcode_tries", nullable = false)
     private int passcodeTries = 0;
+
+    @Column(name = "ecred", nullable = true, length = 120)
+    private String ecred;
+
+    @Column(name = "encryption_key", nullable = false, length = 120)
+    private String encryptionKey;
+
+    private String phoneNumber;
+
+    private String walletId;
+
+    @Column(name = "transaction_pin")
+    private String transactionPin;
+
+    @OneToOne(mappedBy = "users") // or "user" depending on your Wallet field name
+    private Wallet wallet;
+
+    public Wallet getWallet() {
+        return wallet;
+    }
+
 
 }

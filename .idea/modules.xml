@@ -3,9 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Trustfort.iml" filepath="$PROJECT_DIR$/.idea/Trustfort.iml" />
-      <module fileurl="file://$PROJECT_DIR$/tf01-discovery-ms/tf01-discovery-ms.iml" filepath="$PROJECT_DIR$/tf01-discovery-ms/tf01-discovery-ms.iml" />
-      <module fileurl="file://$PROJECT_DIR$/tf02-config-ms/tf02-config-ms.iml" filepath="$PROJECT_DIR$/tf02-config-ms/tf02-config-ms.iml" />
-      <module fileurl="file://$PROJECT_DIR$/tf03-gateway-ms/tf03-gateway-ms.iml" filepath="$PROJECT_DIR$/tf03-gateway-ms/tf03-gateway-ms.iml" />
       <module fileurl="file://$PROJECT_DIR$/tf04-admin-ms/tf04-admin-ms.iml" filepath="$PROJECT_DIR$/tf04-admin-ms/tf04-admin-ms.iml" />
     </modules>
   </component>

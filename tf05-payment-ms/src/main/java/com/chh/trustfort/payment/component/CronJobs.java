@@ -18,8 +18,12 @@ public class CronJobs {
     @Autowired
     private ApplicationContext context;
 
-    @Value("${cron}")
+//    @Value("${cron}")
+//    private boolean runCronJob;
+
+    @Value("${cron:true}")  // Default value is 'true' if not defined
     private boolean runCronJob;
+
 
     @Scheduled(fixedDelay = 30000, initialDelay = 1000)
     public void processscheduledTasks() {

@@ -5,11 +5,8 @@
  */
 package com.chh.trustfort.payment.repository;
 
-import com.chh.trustfort.payment.model.AppUserRole;
-import com.chh.trustfort.payment.model.AppUser;
-import com.chh.trustfort.payment.model.AppUserActivity;
-import com.chh.trustfort.payment.model.AppUserGroup;
-import com.chh.trustfort.payment.model.AppUserRoleMap;
+import com.chh.trustfort.payment.model.*;
+
 import java.util.List;
 
 /**
@@ -24,6 +21,8 @@ public interface AppUserRepository {
 
     public AppUser createAppUser(AppUser user);
 
+    public AppUser save(AppUser user);
+
     public List<AppUser> getAppUserList();
 
     public AppUser updateAppUser(AppUser appUser);
@@ -34,7 +33,7 @@ public interface AppUserRepository {
 
     public String getEncryptionKey(String userName);
 
-    public List<String> getAppUserRoleNameByGroup(AppUserGroup oAppUserGroup);
+    public List<String> getAppUserRoleNameByGroup(UserGroup oAppUserGroup);
 
     public List<String> getAppUserRoleDescriptionByGroup(AppUserGroup oAppUserGroup);
 
@@ -61,5 +60,7 @@ public interface AppUserRepository {
     public AppUserRoleMap createAppUserRoleMap(AppUserRoleMap oAppUserRoleMap);
     
     public AppUserActivity createUserActivity( AppUserActivity userActivity);
+
+    boolean userExistsById(long appUserId);
 
 }

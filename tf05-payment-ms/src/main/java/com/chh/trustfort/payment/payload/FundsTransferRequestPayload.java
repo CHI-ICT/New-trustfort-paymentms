@@ -1,15 +1,13 @@
 package com.chh.trustfort.payment.payload;
 
-import java.math.BigDecimal;
 import lombok.Data;
-
-/**
- *
- * @author DOfoleta
- */
+import java.math.BigDecimal;
 
 @Data
 public class FundsTransferRequestPayload {
-    BigDecimal amount;
-    String walletId;
+    private String senderWalletId;
+    private String receiverWalletId;
+    private BigDecimal amount;
+    private String narration;
+    private String transactionPin;
 }
