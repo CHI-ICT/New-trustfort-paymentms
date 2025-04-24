@@ -1,0 +1,15 @@
+#server:
+#    port: 1005
+#
+#spring:
+#    application:
+#        name: trustfort-payment
+#    cloud:
+#        config:
+#            uri: http://trustfort-config:8888
+#            name: config-server
+#
+#eureka:
+#    client:
+#        registerWithEureka: true
+#        fetchRegistry: true

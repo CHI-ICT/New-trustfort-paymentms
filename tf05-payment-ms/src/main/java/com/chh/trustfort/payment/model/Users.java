@@ -6,6 +6,9 @@ import javax.persistence.*;
 
 import com.chh.trustfort.payment.component.UserClass;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  *
@@ -13,6 +16,9 @@ import lombok.Data;
  */
 @Data
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
 @Table(name = "users")
 @SuppressWarnings("PersistenceUnitPresent")
 public class Users implements Serializable {
