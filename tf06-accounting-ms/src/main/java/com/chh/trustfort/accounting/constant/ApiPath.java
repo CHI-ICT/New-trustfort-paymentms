@@ -44,8 +44,20 @@ public class ApiPath {
     public static final String EXPORT_CASH_FLOW ="/cash-flow/export";
     public static final String EXPORT_EQUITY_STATEMENT ="/equity/export";
     public static final String EXPORT_ALL_STATEMENTS="/export/all";
+<<<<<<< HEAD
+    public static final String RECONCILE_TAX="/tax/reconciliation";
+    public static final String TAX_FINANCE="/finance/tax";
+    public static final String FILING_REPORT="/filing-report";
+    public static final String RECONCILIATION ="/reconciliation";
+    public static final String EXPORT_FILING_REPORT ="/export-filing-report";
+    public static final String ALERTS ="/alerts";
+    public static final String SYNC_BANK_INFLOW ="/sync";
+    public static final String GENERATE_RECEIPT="/generate";
+    public static final String ALERT_PENDING_RECEIPTS = "/alerts/pending-receipts";
+=======
 
     
     
+>>>>>>> 433fa6006bb5e7a12e876861edcbefb115b3ca5e
     
 }

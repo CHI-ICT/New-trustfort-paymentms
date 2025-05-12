@@ -56,10 +56,8 @@ public class ApiPath {
 
     public static final String HANDLE_FCMB_WEBHOOK = "/handleFcmbWebhook";
 
-
     //=======================================================PIN======================================
     public static final String VALIDATE_PIN = "/validate-pin";
-
     public static final String SETUP_PIN = "/setup-pin";
 
     //=======================================================CARD PAYMENT======================================
@@ -71,6 +69,7 @@ public class ApiPath {
     public static final String CONFIRM_BANK_TRANSFER = "/confirm-bank-transfer";
     public static final String VERIFY_FLW_TRANSACTION = "/verify-transaction";
     public static final String GENERATE_BALANCE_SHEET ="/generate-income-statement";
+    public static final String TEST_EMAIL_NOTIFICATION="/send-test-email";
 
 
 }

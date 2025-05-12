@@ -219,7 +219,33 @@ public class JwtTokenUtil implements Serializable {
             if (!roles.contains(Role.EXPORT_ALL_STATEMENTS.getValue())) {
                 roles.add(Role.EXPORT_ALL_STATEMENTS.getValue());
             }
-
+            if (!roles.contains(Role.RECONCILE_TAX.getValue())) {
+                roles.add(Role.RECONCILE_TAX.getValue());
+            }
+            if (!roles.contains(Role.TAX_FINANCE.getValue())) {
+                roles.add(Role.TAX_FINANCE.getValue());
+            }
+            if (!roles.contains(Role.FILING_REPORT.getValue())) {
+                roles.add(Role.FILING_REPORT.getValue());
+            }
+            if (!roles.contains(Role.RECONCILIATION.getValue())) {
+                roles.add(Role.RECONCILIATION.getValue());
+            }
+            if (!roles.contains(Role.EXPORT_FILING_REPORT.getValue())) {
+                roles.add(Role.EXPORT_FILING_REPORT.getValue());
+            }
+            if (!roles.contains(Role.ALERTS.getValue())) {
+                roles.add(Role.ALERTS.getValue());
+            }
+            if (!roles.contains(Role.SYNC_BANK_INFLOW.getValue())) {
+                roles.add(Role.SYNC_BANK_INFLOW.getValue());
+            }
+            if (!roles.contains(Role.GENERATE_RECEIPT.getValue())) {
+                roles.add(Role.GENERATE_RECEIPT.getValue());
+            }
+            if (!roles.contains(Role.ALERT_PENDING_RECEIPTS.getValue())) {
+                roles.add(Role.ALERT_PENDING_RECEIPTS.getValue());
+            }
 
 
 

@@ -33,11 +33,11 @@ public class NotificationServiceImpl implements NotificationService {
         email.setBody(message);
 
         try {
-            emailService.sendEmail(email);
             log.info("Preparing to send email to {} with subject {}", to, subject);
-            log.info("Email successfully sent to: {}", to);
+            emailService.sendEmail(email);
+            log.info("✅ Email successfully sent to: {}", to);
         } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
+            log.error("❌ Failed to send email to {}: {}", to, e.getMessage(), e);
         }
     }
 
