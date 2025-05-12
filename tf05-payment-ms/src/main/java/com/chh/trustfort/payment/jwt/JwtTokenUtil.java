@@ -159,6 +159,9 @@ public class JwtTokenUtil implements Serializable {
             if (!roles.contains(Role.VERIFY_FLW_TRANSACTION.getValue())) {
                 roles.add(Role.VERIFY_FLW_TRANSACTION.getValue());
             }
+            if (!roles.contains(Role.GENERATE_BALANCE_SHEET.getValue())) {
+                roles.add(Role.GENERATE_BALANCE_SHEET.getValue());
+            }
 
 
 

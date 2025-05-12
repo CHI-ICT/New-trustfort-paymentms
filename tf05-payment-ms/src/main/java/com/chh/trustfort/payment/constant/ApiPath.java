@@ -70,6 +70,7 @@ public class ApiPath {
     public static final String CONFIRM_TRANSFER = "/confirm-transfer";
     public static final String CONFIRM_BANK_TRANSFER = "/confirm-bank-transfer";
     public static final String VERIFY_FLW_TRANSACTION = "/verify-transaction";
+    public static final String GENERATE_BALANCE_SHEET ="/generate-income-statement";
 
 
 }

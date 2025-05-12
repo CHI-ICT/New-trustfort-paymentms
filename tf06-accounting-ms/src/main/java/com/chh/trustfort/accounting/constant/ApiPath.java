@@ -31,6 +31,20 @@ public class ApiPath {
     public static final String CLOSE_WALLET= "/close-wallet";
     public static final String LOCK_FUNDS= "/lock-funds";
     public static final String UNLOCK_FUNDS= "/unlock-funds";
+    public static final String GENERATE_BALANCE_SHEET="/balance-sheet";
+    public static final String GENERATE_INCOME_STATEMENT="/generate-income-statement";
+    public static final String JOURNAL_ENTRY ="/journal-entry";
+    public static final String CREATE_CHART_OF_ACCOUNT ="/create-chart-of-account";
+    public static final String CASH_FLOW_STATEMENT ="/api/finance/cash-flow";
+    public static final String EQUITY_STATEMENT ="/api/finance/equity-statement";
+    public static final String GET_INCOME_STATEMENT ="/statements/income";
+    public static final String VALIDATE_STATEMENT_INTEGRITY ="/integrity";
+    public static final String EXPORT_INCOME_STATEMENT="/income/export";
+    public static final String EXPORT_BALANCE_SHEET ="/balance-sheet/export";
+    public static final String EXPORT_CASH_FLOW ="/cash-flow/export";
+    public static final String EXPORT_EQUITY_STATEMENT ="/equity/export";
+    public static final String EXPORT_ALL_STATEMENTS="/export/all";
+
     
     
     

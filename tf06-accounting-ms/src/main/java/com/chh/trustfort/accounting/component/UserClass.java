@@ -16,6 +16,10 @@ public enum UserClass {
     AGENT("AG"),
     BROKER("BR"),
     REINSURANCE("RE");
+
+
+
+    private final String role;
     
  
     
@@ -25,11 +29,9 @@ public enum UserClass {
         this.role= role;
     }
 
-    
 
     public String getValue() {
         return this.role;
     }
 
-    
 }

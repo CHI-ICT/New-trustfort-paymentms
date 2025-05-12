@@ -8,7 +8,13 @@ import com.chh.trustfort.accounting.model.AppUser;
  */
 public interface AesService {
 
+    //    String encrypt(String username, String data);
+//    String decrypt(String username, String encryptedData);
+    String encrypt(String plaintext, String keyWithIv);
+    String decrypt(String cipherText, String keyWithIv);
+
     public String decrypt(String cipherText, AppUser appUser);
 
     public String encrypt(String plaintext, AppUser appUser);
+
 }

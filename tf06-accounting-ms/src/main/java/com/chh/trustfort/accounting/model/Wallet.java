@@ -4,6 +4,8 @@ import com.chh.trustfort.accounting.enums.WalletStatus;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import javax.persistence.*;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -44,6 +46,16 @@ public class Wallet implements Serializable {
     @Column(name = "wallet_id", unique = true, nullable = false)
     private String walletId;
 
+
+//    @ManyToOne
+//    @JoinColumn(name = "AppUser_id", nullable = false)
+//    private AppUser owner;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users users;
+
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private Users owner;
@@ -67,4 +79,15 @@ public class Wallet implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     @UpdateTimestamp
     private Date updatedAt;
+
+    @Column(name = "serialnumber", nullable = false)
+    private Long serialNumber;
+
+//    @Version
+//    @Column(name = "version")
+//    private Long version;
+
+    @Column(name = "account_number", unique = true)
+    private String accountNumber;
+
 }

@@ -1,9 +1,11 @@
 package com.chh.trustfort.payment.service.ServiceImpl;
 
 import com.chh.trustfort.payment.Responses.*;
+import com.chh.trustfort.payment.component.AccountingClient;
 import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.component.WalletUtil;
 import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
+import com.chh.trustfort.payment.dto.JournalEntryRequest;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
 import com.chh.trustfort.payment.enums.TransactionStatus;
 import com.chh.trustfort.payment.enums.TransactionType;
@@ -17,6 +19,7 @@ import com.chh.trustfort.payment.service.*;
 import com.google.gson.Gson;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import javax.validation.Valid;
@@ -60,6 +63,10 @@ public class WalletServiceImpl implements WalletService {
 
     @Autowired
     private UsersRepository usersRepository;
+
+    @Autowired
+    private AccountingClient accountingClient;
+
 
 //    @Autowired
 //    private FCMBIntegrationService fcmbIntegrationService;
@@ -255,6 +262,19 @@ public class WalletServiceImpl implements WalletService {
         ledgerEntry.setDescription("Wallet Funding");
         ledgerEntryRepository.save(ledgerEntry);
 
+        // Create and send journal entry
+        JournalEntryRequest journal = new JournalEntryRequest();
+        journal.setAccountCode("REV001"); // Replace with actual revenue account code
+        journal.setAmount(creditAmount);
+        journal.setDescription("Wallet Funding");
+        journal.setTransactionType("CREDIT");
+        journal.setDepartment("Wallet");
+        journal.setBusinessUnit("Retail");
+        journal.setTransactionDate(LocalDateTime.now());
+
+        accountingClient.postJournalEntry(journal);
+
+
         // Prepare success response
         SuccessResponse response = new SuccessResponse();
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
@@ -328,6 +348,30 @@ public class WalletServiceImpl implements WalletService {
         // Subtract the withdrawal amount from the wallet's balance
         wallet.setBalance(wallet.getBalance().subtract(withdrawalAmount));
 
+        JournalEntryRequest debitEntry = new JournalEntryRequest();
+        debitEntry.setAccountCode("CASH001"); // E.g., Cash Account
+        debitEntry.setAmount(payload.getAmount());
+        debitEntry.setDescription("Wallet Withdrawal");
+        debitEntry.setTransactionType("DEBIT");
+        debitEntry.setDepartment("Wallet");
+        debitEntry.setBusinessUnit("Retail");
+        debitEntry.setTransactionDate(LocalDateTime.now());
+
+        accountingClient.postJournalEntry(debitEntry);
+
+
+        JournalEntryRequest creditEntry = new JournalEntryRequest();
+        creditEntry.setAccountCode("BANK001"); // Settlement account code
+        creditEntry.setAmount(payload.getAmount());
+        creditEntry.setDescription("Transfer to FCMB");
+        creditEntry.setTransactionType("CREDIT");
+        creditEntry.setDepartment("Wallet");
+        creditEntry.setBusinessUnit("Retail");
+        creditEntry.setTransactionDate(LocalDateTime.now());
+
+        accountingClient.postJournalEntry(creditEntry);
+
+
         // Persist the updated wallet balance
         walletRepository.updateUser(wallet);
 
@@ -392,6 +436,7 @@ public class WalletServiceImpl implements WalletService {
 
         Wallet updatedWallet = walletRepository.findByWalletId(payload.getWalletId())
                 .orElseThrow(() -> new WalletException("Wallet not found after processing"));
+
         // Prepare success response
         SuccessResponse response = new SuccessResponse();
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
@@ -495,8 +540,34 @@ public class WalletServiceImpl implements WalletService {
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
         response.setResponseMessage("Transfer processed successfully");
         response.setNewBalance(senderWallet.getBalance()); // Optionally, return updated sender balance
+        // DEBIT sender
+        JournalEntryRequest senderDebit = new JournalEntryRequest();
+        senderDebit.setAccountCode("WALLET001"); // e.g., Sender Wallet Account
+        senderDebit.setAmount(payload.getAmount());
+        senderDebit.setDescription("Transfer to " + payload.getReceiverWalletId());
+        senderDebit.setTransactionType("DEBIT");
+        senderDebit.setDepartment("Wallet");
+        senderDebit.setBusinessUnit("Retail");
+        senderDebit.setTransactionDate(LocalDateTime.now());
+
+        accountingClient.postJournalEntry(senderDebit);
+
+// CREDIT receiver
+        JournalEntryRequest receiverCredit = new JournalEntryRequest();
+        receiverCredit.setAccountCode("WALLET001"); // e.g., Receiver Wallet Account
+        receiverCredit.setAmount(payload.getAmount());
+        receiverCredit.setDescription("Transfer from " + payload.getSenderWalletId());
+        receiverCredit.setTransactionType("CREDIT");
+        receiverCredit.setDepartment("Wallet");
+        receiverCredit.setBusinessUnit("Retail");
+        receiverCredit.setTransactionDate(LocalDateTime.now());
+
+        accountingClient.postJournalEntry(receiverCredit);
+
 //        return aesService.encrypt(gson.toJson(response), users.getEcred());
         return gson.toJson(response);
+
+
     }
 
 

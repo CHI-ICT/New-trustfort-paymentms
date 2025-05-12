@@ -1,101 +1,101 @@
-server:
-  port: 1005
-
-spring:
-  application:
-    name: trustfort-payment
-  cloud:
-    config:
-      uri: http://localhost:8888
-      name: config-server
-  jpa:
-    hibernate:
-      ddl-auto: validate
-  mail:
-    host: smtp.mailgun.org
-    port: 587
-    username: ENC(DUmbOXI2asfCn88YIKFMZn1k4WlWzQdL0pBFn6F8djY=)
-    password: ENC(RJDQIZ8jP+z/iHG4nKK9lAe0BicDagoGZ8doJxixQg0dXcaOlchobuT1wFAn2PNwOWzVthTrsobeuEdOJkS9Rw==)
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-    default-encoding: UTF-8
-
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    enabled: true
-
-jwt:
-  issuer: trustfort
-  secret: QmFzZTY0LWVuY29kZWQtc2VjcmV0LWtleQ==
-
-paystack:
-  secret:
-    key: sk_live_9aeeff47588ebfdcb313d3c5b746159e2e52b055
-
-flutterwave:
-  public:
-    key: FLWPUBK_TEST-ed4c3675ef7f33e36f298c566d5a1e4e-X
-  secret:
-    key: FLWSECK_TEST-7c9baeea2252b699d4a5c0a645f9f805-X
-  encryption:
-    key: FLWSECK_TESTc3dc5b987f2b
-
-cron: true
-issuer: trustfort
-start:
-  morning: "08:00"
-  afternoon: "12:01"
-  evening: "18:01"
-  night: "02:00"
-end:
-  morning: "12:00"
-  afternoon: "04:01"
-  evening: "21:00"
-  night: "05:00"
-
-admin:
-  ip: ${ADMIN_IP:127.0.0.1}
-
-# Tenant Database Configurations
-default-tenant:
-  id: trustfort
-  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
-  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/trustfort
-
-chi-tenant:
-  id: chi
-  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
-  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/chi_db
-
-cla-tenant:
-  id: cla
-  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
-  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/cla_db
-
-hmo-tenant:
-  id: hmo
-  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
-  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/hmo_db
-
-hfc-tenant:
-  id: hfc
-  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
-  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/hfc_db
-
-chh-tenant:
-  id: chh
-  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
-  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/chh_db
+#server:
+#  port: 1005
+#
+#spring:
+#  application:
+#    name: trustfort-payment
+#  cloud:
+#    config:
+#      uri: http://localhost:8888
+#      name: config-server
+#  jpa:
+#    hibernate:
+#      ddl-auto: validate
+#  mail:
+#    host: smtp.mailgun.org
+#    port: 587
+#    username: ENC(DUmbOXI2asfCn88YIKFMZn1k4WlWzQdL0pBFn6F8djY=)
+#    password: ENC(RJDQIZ8jP+z/iHG4nKK9lAe0BicDagoGZ8doJxixQg0dXcaOlchobuT1wFAn2PNwOWzVthTrsobeuEdOJkS9Rw==)
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
+#            required: true
+#    default-encoding: UTF-8
+#
+#springdoc:
+#  api-docs:
+#    enabled: true
+#  swagger-ui:
+#    enabled: true
+#
+#jwt:
+#  issuer: trustfort
+#  secret: QmFzZTY0LWVuY29kZWQtc2VjcmV0LWtleQ==
+#
+#paystack:
+#  secret:
+#    key: sk_live_9aeeff47588ebfdcb313d3c5b746159e2e52b055
+#
+#flutterwave:
+#  public:
+#    key: FLWPUBK_TEST-ed4c3675ef7f33e36f298c566d5a1e4e-X
+#  secret:
+#    key: FLWSECK_TEST-7c9baeea2252b699d4a5c0a645f9f805-X
+#  encryption:
+#    key: FLWSECK_TESTc3dc5b987f2b
+#
+#cron: true
+#issuer: trustfort
+#start:
+#  morning: "08:00"
+#  afternoon: "12:01"
+#  evening: "18:01"
+#  night: "02:00"
+#end:
+#  morning: "12:00"
+#  afternoon: "04:01"
+#  evening: "21:00"
+#  night: "05:00"
+#
+#admin:
+#  ip: ${ADMIN_IP:127.0.0.1}
+#
+## Tenant Database Configurations
+#default-tenant:
+#  id: trustfort
+#  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+#  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+#  url: jdbc:postgresql://192.168.0.2:5432/trustfort
+#
+#chi-tenant:
+#  id: chi
+#  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+#  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+#  url: jdbc:postgresql://192.168.0.2:5432/chi_db
+#
+#cla-tenant:
+#  id: cla
+#  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+#  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+#  url: jdbc:postgresql://192.168.0.2:5432/cla_db
+#
+#hmo-tenant:
+#  id: hmo
+#  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+#  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+#  url: jdbc:postgresql://192.168.0.2:5432/hmo_db
+#
+#hfc-tenant:
+#  id: hfc
+#  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+#  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+#  url: jdbc:postgresql://192.168.0.2:5432/hfc_db
+#
+#chh-tenant:
+#  id: chh
+#  db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
+#  db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
+#  url: jdbc:postgresql://192.168.0.2:5432/chh_db

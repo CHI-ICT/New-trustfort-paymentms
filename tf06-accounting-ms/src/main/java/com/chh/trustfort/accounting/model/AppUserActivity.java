@@ -53,3 +53,4 @@ public class AppUserActivity implements Serializable {
     @Column(name = "status", nullable = false)
     private char status;
 }
+

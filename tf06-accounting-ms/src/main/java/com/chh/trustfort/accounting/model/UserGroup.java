@@ -44,3 +44,4 @@ public class UserGroup implements Serializable {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }
+
