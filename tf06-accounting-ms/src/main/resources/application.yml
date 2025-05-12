@@ -1,6 +1,28 @@
+<<<<<<< HEAD
 server:
     port: 1006
 
+=======
+
+#server:
+#    port: 1005
+#
+#spring:
+#    application:
+#        name: trustfort-payment
+#    cloud:
+#        config:
+#            uri: http://trustfort-config:8888
+#            name: config-server
+#
+#eureka:
+#    client:
+#        registerWithEureka: true
+#        fetchRegistry: true
+server:
+    port: 1005
+    
+>>>>>>> 433fa6006bb5e7a12e876861edcbefb115b3ca5e
 spring:
     application:
         name: trustfort-payment
@@ -8,11 +30,16 @@ spring:
         config:
             uri: http://trustfort-config:8888
             name: config-server
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 433fa6006bb5e7a12e876861edcbefb115b3ca5e
 eureka:
     client:
         registerWithEureka: true
         fetchRegistry: true
+<<<<<<< HEAD
 email:
   notification:
     url: https://test.chiplc.com:8443/trustfort/api/v1/adminService/send-email?htmlStatus=true
@@ -20,3 +47,6 @@ email:
 jwt:
     issuer: trustfort
     secret: QmFzZTY0LWVuY29kZWQtc2VjcmV0LWtleQ==
+=======
+
+>>>>>>> 433fa6006bb5e7a12e876861edcbefb115b3ca5e

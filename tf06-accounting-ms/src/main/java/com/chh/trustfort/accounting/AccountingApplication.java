@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableEurekaClient
 @EnableFeignClients
 @EnableScheduling
+
 @EntityScan(basePackages = "com.chh.trustfort.accounting.model")
 @EnableJpaRepositories(basePackages = "com.chh.trustfort.accounting.repository")
 public class AccountingApplication {

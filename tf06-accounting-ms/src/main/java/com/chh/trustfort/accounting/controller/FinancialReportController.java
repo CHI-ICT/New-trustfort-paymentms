@@ -1,5 +1,6 @@
 package com.chh.trustfort.accounting.controller;
 
+
 import com.chh.trustfort.accounting.constant.ApiPath;
 import com.chh.trustfort.accounting.dto.*;
 import com.chh.trustfort.accounting.service.*;
@@ -226,5 +227,17 @@ public class FinancialReportController {
         zip.write(fileContent);
         zip.closeEntry();
     }
+
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ *
+ * @author dofoleta
+ */
+@RestController
+@RefreshScope
+public class FinancialReportController {
+
 
 }

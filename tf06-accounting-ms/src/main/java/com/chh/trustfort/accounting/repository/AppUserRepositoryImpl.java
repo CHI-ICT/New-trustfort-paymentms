@@ -7,6 +7,12 @@ package com.chh.trustfort.accounting.repository;
 
 import com.chh.trustfort.accounting.model.*;
 
+import com.chh.trustfort.accounting.model.AppUser;
+import com.chh.trustfort.accounting.model.AppUserActivity;
+import com.chh.trustfort.accounting.model.AppUserGroup;
+import com.chh.trustfort.accounting.model.AppUserRole;
+import com.chh.trustfort.accounting.model.AppUserRoleMap;
+
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -109,6 +115,8 @@ public class AppUserRepositoryImpl implements AppUserRepository {
         TypedQuery<String> query = em.createQuery(
                         "SELECT t.encryptionKey FROM AppUser t WHERE LOWER(t.userName) = LOWER(:userName)", String.class)
                 .setParameter("userName", userName.toLowerCase());
+        TypedQuery<String> query = em.createQuery("SELECT t.encryptionKey FROM AppUser t WHERE t.userName = :userName", String.class)
+                .setParameter("userName", userName);
         List<String> record = query.getResultList();
         if (record.isEmpty()) {
             return null;
@@ -126,6 +134,17 @@ public class AppUserRepositoryImpl implements AppUserRepository {
         return record.isEmpty() ? null : record;
     }
 
+
+    public List<String> getAppUserRoleNameByGroup(AppUserGroup oAppUserGroup) {
+        @SuppressWarnings("JPQLValidation")
+        TypedQuery<String> query = em.createQuery("SELECT t.appUserRole.roleName FROM AppUserRoleMap t WHERE t.appUserGroup = :oAppUserGroup", String.class)
+                .setParameter("oAppUserGroup", oAppUserGroup);
+        List<String> record = query.getResultList();
+        if (record.isEmpty()) {
+            return null;
+        }
+        return record;
+    }
 
     @Override
     public List<String> getAppUserRoleDescriptionByGroup(AppUserGroup oAppUserGroup) {

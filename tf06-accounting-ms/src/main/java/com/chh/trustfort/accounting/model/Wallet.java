@@ -6,6 +6,18 @@ import java.math.BigDecimal;
 import java.util.Date;
 import javax.persistence.*;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +46,7 @@ public class Wallet implements Serializable {
     @Column(name = "wallet_id", unique = true, nullable = false)
     private String walletId;
 
+
 //    @ManyToOne
 //    @JoinColumn(name = "AppUser_id", nullable = false)
 //    private AppUser owner;
@@ -42,6 +55,10 @@ public class Wallet implements Serializable {
     @JoinColumn(name = "user_id", nullable = false)
     private Users users;
 
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users owner;
 
     @Column(name = "balance", nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
