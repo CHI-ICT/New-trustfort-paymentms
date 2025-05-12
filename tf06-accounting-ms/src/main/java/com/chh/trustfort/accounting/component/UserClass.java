@@ -20,16 +20,18 @@ public enum UserClass {
 
 
     private final String role;
-
+    
+ 
+    
+    private final String role;
+    
     private UserClass(String role) {
         this.role= role;
     }
 
 
-
     public String getValue() {
         return this.role;
     }
-
 
 }

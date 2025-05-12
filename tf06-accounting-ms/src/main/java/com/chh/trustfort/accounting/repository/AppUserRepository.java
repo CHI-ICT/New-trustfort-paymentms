@@ -6,7 +6,11 @@
 package com.chh.trustfort.accounting.repository;
 
 import com.chh.trustfort.accounting.model.*;
-
+import com.chh.trustfort.accounting.model.AppUserRole;
+import com.chh.trustfort.accounting.model.AppUser;
+import com.chh.trustfort.accounting.model.AppUserActivity;
+import com.chh.trustfort.accounting.model.AppUserGroup;
+import com.chh.trustfort.accounting.model.AppUserRoleMap;
 import java.util.List;
 
 /**
@@ -22,7 +26,7 @@ public interface AppUserRepository {
     public AppUser createAppUser(AppUser user);
 
     public AppUser save(AppUser user);
-
+  
     public List<AppUser> getAppUserList();
 
     public AppUser updateAppUser(AppUser appUser);
@@ -34,6 +38,8 @@ public interface AppUserRepository {
     public String getEncryptionKey(String userName);
 
     public List<String> getAppUserRoleNameByGroup(UserGroup oAppUserGroup);
+
+    public List<String> getAppUserRoleNameByGroup(AppUserGroup oAppUserGroup);
 
     public List<String> getAppUserRoleDescriptionByGroup(AppUserGroup oAppUserGroup);
 
@@ -65,3 +71,9 @@ public interface AppUserRepository {
 
 }
 
+    
+    public AppUserRoleMap createAppUserRoleMap(AppUserRoleMap oAppUserRoleMap);
+    
+    public AppUserActivity createUserActivity( AppUserActivity userActivity);
+
+}

@@ -11,6 +11,7 @@ package com.chh.trustfort.accounting.component;
  */
 public enum Role {
     CREATE_WALLET("C_WAL"),
+    CFREATE_WALLET("C_WAL"),
     FUND_WALLET("F_WAL"),
     FETCH_WALLET("W_FET"),
     TRANSFER_FUNDS("T_FND"),
@@ -50,9 +51,7 @@ public enum Role {
     EXPORT_CASH_FLOW("E_C_F"),
     EXPORT_EQUITY_STATEMENT("E_E_S"),
     EXPORT_ALL_STATEMENTS("E_A_S");
-
-
-
+    UNLOCK_FUNDS("U_FND");
 
     private final String role;
 
