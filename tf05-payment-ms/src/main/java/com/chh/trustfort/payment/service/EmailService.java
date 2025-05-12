@@ -1,46 +1,52 @@
 package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.dto.EmailDetails;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 
+
 @Component
+@Slf4j
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender javaMailSender;
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${spring.mail.username}")
-    private String from;
+    @Value("${email.notification.url}")
+    private String emailApiUrl;
 
     public void sendEmail(EmailDetails emailDetails) {
-        Logger logger = LoggerFactory.getLogger(EmailDetails.class);
         try {
-            SimpleMailMessage mailMessage = new SimpleMailMessage();
-            mailMessage.setFrom(from);
-            mailMessage.setTo(emailDetails.getRecipient());
-            mailMessage.setSubject(emailDetails.getSubject());
-            mailMessage.setText(emailDetails.getBody());
-            javaMailSender.send(mailMessage);
-        } catch (MailException e) {
-            logger.error("Failed to send email: {}", e.getMessage());
-            throw new IllegalArgumentException(e);
+            MultiValueMap<String, Object> payload = new LinkedMultiValueMap<>();
+            payload.add("recipient", emailDetails.getRecipient());
+            payload.add("subject", emailDetails.getSubject());
+            payload.add("body", emailDetails.getBody());
+            payload.add("isAttachment", "false"); // if no file is attached
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+            HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(payload, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(emailApiUrl, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("✅ Email successfully sent to {}", emailDetails.getRecipient());
+            } else {
+                log.error("❌ Failed to send email to {}. Status: {}", emailDetails.getRecipient(), response.getStatusCode());
+            }
+        } catch (Exception e) {
+            log.error("❌ Exception occurred while sending email to {}: {}", emailDetails.getRecipient(), e.getMessage());
         }
-        System.out.println("Inside EmailService - Sending email to: " + emailDetails.getRecipient());
-
-    }
-
-    @PostConstruct
-    public void testDecryption() {
-        System.out.println("📧 Mailgun Username (Decrypted): " + from);
     }
 
 }

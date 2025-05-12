@@ -67,6 +67,9 @@ public class WalletServiceImpl implements WalletService {
     @Autowired
     private AccountingClient accountingClient;
 
+    @Autowired
+    private NotificationService notificationService;
+
 
 //    @Autowired
 //    private FCMBIntegrationService fcmbIntegrationService;
@@ -243,6 +246,7 @@ public class WalletServiceImpl implements WalletService {
             log.warn("Unauthorized access to wallet ID: {}", payload.getWalletId());
             ErrorResponse errorResponse = new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode());
 //            return aesService.encrypt(gson.toJson(errorResponse), users.getEcred());
+
             return gson.toJson(errorResponse);
         }
 
@@ -280,6 +284,10 @@ public class WalletServiceImpl implements WalletService {
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
         response.setResponseMessage("Wallet funded successfully");
         response.setNewBalance(wallet.getBalance());
+
+        notificationService.sendEmail(users.getEmailAddress(),
+                "🔺 Wallet Funded",
+                "Your wallet was credited with ₦" + creditAmount + " via manual funding.");
 
         log.info("Wallet ID: {} funded successfully. New balance: {}", wallet.getWalletId(), wallet.getBalance());
 //        return aesService.encrypt(gson.toJson(response), users.getEcred());
@@ -434,6 +442,15 @@ public class WalletServiceImpl implements WalletService {
         }
         ledgerEntryRepository.save(ledgerEntry);
 
+        String subject = "🔻 Debit Alert - Wallet Withdrawal";
+        String body = "Dear " + users.getWalletId() + ",\n\n" +
+                "Your wallet has been debited with ₦" + withdrawalAmount + " for withdrawal request.\n" +
+                "New Balance: ₦" + wallet.getBalance() + "\n\n" +
+                "Reference: " + transferCode + "\nThank you.";
+
+        notificationService.sendEmail(users.getEmailAddress(), subject, body);
+
+
         Wallet updatedWallet = walletRepository.findByWalletId(payload.getWalletId())
                 .orElseThrow(() -> new WalletException("Wallet not found after processing"));
 
@@ -445,6 +462,8 @@ public class WalletServiceImpl implements WalletService {
         log.info("Withdrawal processed for wallet ID: {}. New balance: {}", wallet.getWalletId(), wallet.getBalance());
 //        return aesService.encrypt(gson.toJson(response), users.getEcred());
         return gson.toJson(response);
+
+
     }
 
     @Override
@@ -563,6 +582,16 @@ public class WalletServiceImpl implements WalletService {
         receiverCredit.setTransactionDate(LocalDateTime.now());
 
         accountingClient.postJournalEntry(receiverCredit);
+
+        // Sender
+        notificationService.sendEmail(users.getEmailAddress(),
+                "🔻 Wallet Debit - Transfer",
+                "You transferred ₦" + transferAmount + " to " + receiverWallet.getWalletId());
+
+// Receiver
+        notificationService.sendEmail(receiverWallet.getUsers().getEmailAddress(),
+                "🔺 Wallet Credit - Incoming Transfer",
+                "You received ₦" + transferAmount + " from " + senderWallet.getWalletId());
 
 //        return aesService.encrypt(gson.toJson(response), users.getEcred());
         return gson.toJson(response);
