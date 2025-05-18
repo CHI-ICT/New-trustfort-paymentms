@@ -70,10 +70,3 @@ public interface AppUserRepository {
     boolean userExistsById(long appUserId);
 
 }
-
-    
-    public AppUserRoleMap createAppUserRoleMap(AppUserRoleMap oAppUserRoleMap);
-    
-    public AppUserActivity createUserActivity( AppUserActivity userActivity);
-
-}

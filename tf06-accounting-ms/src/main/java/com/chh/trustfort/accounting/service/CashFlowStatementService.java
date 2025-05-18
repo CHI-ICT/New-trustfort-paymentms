@@ -45,20 +45,19 @@ public class CashFlowStatementService {
                     operating = operating.add(signedAmount);
                     break;
 
-                case FIXED_ASSET:
-                case INVESTMENT:
+                case ASSET:
                     investing = investing.add(signedAmount);
                     break;
 
                 case EQUITY:
-                case LOAN:
-                case LIABILITY: // e.g., loans can be liabilities
+                case LIABILITY:
                     financing = financing.add(signedAmount);
                     break;
 
                 default:
                     break;
             }
+
         }
 
         CashFlowStatementDTO dto = new CashFlowStatementDTO();

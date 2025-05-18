@@ -10,4 +10,4 @@ import lombok.Data;
 public class OmniResponsePayload {
     private String responseCode;
     private String responseMessage;
-
+}

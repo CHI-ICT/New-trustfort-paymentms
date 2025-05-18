@@ -10,35 +10,42 @@ import javax.persistence.*;
 
 
 @Table(name = "chart_of_accounts")
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Data
+@Builder
 public class ChartOfAccount {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "account_code", unique = true, nullable = false)
-    private String accountCode;
+    @Column(nullable = false, unique = true, length = 30)
+    private String code;
 
-    @Column(name = "account_name", nullable = false)
-    private String accountName;
+    @Column(nullable = false, length = 100)
+    private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "classification", nullable = false)
+    @Column(nullable = false)
     private AccountClassification classification;
 
+    @Column(nullable = false)
+    private String currencyCode;
+
+    @Column(nullable = false)
+    private String subsidiaryCode;
+
+    @Column(nullable = false)
+    private String departmentCode;
+
+    @Column(nullable = false)
+    private Boolean active = true;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "account_type", nullable = false)
+    @Column(nullable = true)
     private AccountType accountType;
 
-    @Column(name = "department", nullable = true)
-    private String department;
-
-    @Column(name = "business_unit", nullable = true)
-    private String businessUnit;
 }

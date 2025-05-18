@@ -46,8 +46,8 @@ public class TaxJournalService {
      */
     private ChartOfAccount createExpenseChartOfAccount(TaxType taxType) {
         ChartOfAccount account = new ChartOfAccount();
-        account.setAccountCode("TAX-EXP-" + taxType.name());
-        account.setAccountName(taxType.name() + " EXPENSE");
+        account.setCode("TAX-EXP-" + taxType.name());
+        account.setName(taxType.name() + " EXPENSE");
         account.setClassification(AccountClassification.EXPENSE);
         account.setAccountType(AccountType.EXPENSE);
         return account;
@@ -58,8 +58,8 @@ public class TaxJournalService {
      */
     private ChartOfAccount createLiabilityChartOfAccount(TaxType taxType) {
         ChartOfAccount account = new ChartOfAccount();
-        account.setAccountCode("TAX-PAY-" + taxType.name());
-        account.setAccountName(taxType.name() + " PAYABLE");
+        account.setCode("TAX-PAY-" + taxType.name());
+        account.setName(taxType.name() + " PAYABLE");
         account.setClassification(AccountClassification.LIABILITY);
         account.setAccountType(AccountType.INCOME); // Using INCOME because you have only INCOME/EXPENSE in your AccountType enum
         return account;

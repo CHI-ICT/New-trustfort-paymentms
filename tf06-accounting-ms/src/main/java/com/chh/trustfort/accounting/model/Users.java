@@ -46,13 +46,6 @@ public class Users implements Serializable {
     @Column(name = "biometricData", nullable = true, length = 225)
     private String biometricData;
 
-    
-     @Column(name = "pin", nullable = false, length = 225)
-    private String pin;
-     
-     @Column(name = "biometricData", nullable = false, length = 225)
-    private String biometricData;
-
     @Column(name = "email_address", nullable = false, unique = true, length = 80)
     private String emailAddress;
 
@@ -73,15 +66,10 @@ public class Users implements Serializable {
     @Column(name = "tenant_id", nullable = true, length = 15)
     private String tenantId;
 
-    
-    @Column(name = "user_type", nullable = false, length = 1)
-    private String user_type="I";
-    
-    @Column(name = "user_class", nullable = false, length = 30)
-    private String user_class;
-    
-    @Column(name = "tenant_id", nullable = true, length = 15)
-    private String tenantId;
+//
+//    @Column(name = "user_class", nullable = false, length = 30)
+//    private String user_class;
+
     
     @Column(name = "device_id", nullable = false, length = 50)
     private String deviceId;
@@ -132,23 +120,6 @@ public class Users implements Serializable {
     public Wallet getWallet() {
         return wallet;
     }
-    
-    @Column(name = "created_by", nullable = false, length = 30)
-    private String createdBy;
-    
-    @Column(nullable = false)
-    private boolean approved;
-    
-    @Column(name = "approved_by", nullable = true, length = 30)
-    private String approvedBy;
-    
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt = LocalDateTime.now();
-    
-    @Column(name = "pin_tries", nullable = false)
-    private int pinTries = 0;
-    
-    @Column(name = "passcode_tries", nullable = false)
-    private int passcodeTries = 0;
+
 
 }

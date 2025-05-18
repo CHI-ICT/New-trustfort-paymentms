@@ -23,7 +23,7 @@ public class JournalEntryService {
     private final ChartOfAccountRepository chartOfAccountRepository;
 
     public void createJournalEntry(JournalEntryRequest request) {
-        ChartOfAccount account = chartOfAccountRepository.findByAccountCode(request.getAccountCode())
+        ChartOfAccount account = chartOfAccountRepository.findByCode(request.getAccountCode())
                 .orElseThrow(() -> new RuntimeException("Account not found: " + request.getAccountCode()));
 
         JournalEntry entry = new JournalEntry();

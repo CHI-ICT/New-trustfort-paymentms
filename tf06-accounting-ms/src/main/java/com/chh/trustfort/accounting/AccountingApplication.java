@@ -19,7 +19,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableFeignClients
 @EnableScheduling
 
-@EntityScan(basePackages = "com.chh.trustfort.accounting.model")
+@EntityScan(basePackages = {
+        "com.chh.trustfort.accounting.model",
+        "com.chh.trustfort.accounting.component"
+})
 @EnableJpaRepositories(basePackages = "com.chh.trustfort.accounting.repository")
 public class AccountingApplication {
 

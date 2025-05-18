@@ -1,26 +1,12 @@
+// ==== SERVICE: ChartOfAccountService.java ====
 package com.chh.trustfort.accounting.service;
 
-import com.chh.trustfort.accounting.dto.CreateChartOfAccountRequest;
-import com.chh.trustfort.accounting.model.ChartOfAccount;
-import com.chh.trustfort.accounting.repository.ChartOfAccountRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.chh.trustfort.accounting.dto.ChartOfAccountRequest;
+import com.chh.trustfort.accounting.dto.ChartOfAccountResponse;
 
-@Service
-@RequiredArgsConstructor
-public class ChartOfAccountService {
+import java.util.List;
 
-    private final ChartOfAccountRepository chartOfAccountRepository;
-
-    public void createAccount(CreateChartOfAccountRequest request) {
-        ChartOfAccount account = new ChartOfAccount();
-        account.setAccountCode(request.getAccountCode());
-        account.setAccountName(request.getAccountName());
-        account.setClassification(request.getClassification());
-        account.setAccountType(request.getAccountType());
-        account.setDepartment(request.getDepartment());
-        account.setBusinessUnit(request.getBusinessUnit());
-
-        chartOfAccountRepository.save(account);
-    }
+public interface ChartOfAccountService {
+    ChartOfAccountResponse createChartOfAccount(ChartOfAccountRequest request);
+    List<ChartOfAccountResponse> getAll();
 }

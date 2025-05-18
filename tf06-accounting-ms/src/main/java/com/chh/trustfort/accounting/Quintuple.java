@@ -26,14 +26,5 @@ public class Quintuple<A, B, C, D, E> {
         this.token = token;
         this.idToken = idToken;
         this.Users = users;
-    public D appUser;
-    public E payload;
-
-    public Quintuple(A isError, B token, C idToken, D appUser, E payload) {
-        this.isError = isError;
-        this.token = token;
-        this.idToken = idToken;
-        this.appUser = appUser;
-        this.payload = payload;
     }
 }

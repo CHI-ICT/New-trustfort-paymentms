@@ -182,10 +182,6 @@
             <version>6.3.4</version>
             <type>jar</type>
         </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
     </dependencies>
     
     <dependencyManagement>

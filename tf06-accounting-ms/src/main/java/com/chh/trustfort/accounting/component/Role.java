@@ -50,7 +50,7 @@ public enum Role {
     EXPORT_BALANCE_SHEET("E_B_S"),
     EXPORT_CASH_FLOW("E_C_F"),
     EXPORT_EQUITY_STATEMENT("E_E_S"),
-<<<<<<< HEAD
+
     EXPORT_ALL_STATEMENTS("E_A_S"),
     RECONCILE_TAX("R_T"),
     TAX_FINANCE("T_F"),
@@ -60,14 +60,15 @@ public enum Role {
     ALERTS("A"),
     SYNC_BANK_INFLOW("S_B_I"),
     GENERATE_RECEIPT("G_R"),
-    ALERT_PENDING_RECEIPTS("A_PR");
+    ALERT_PENDING_RECEIPTS("A_PR"),
+    COA_BASE("C_B"),
+    CREATE("C"),
+    GET_ALL("G_A");
+
+    //    EXPORT_ALL_STATEMENTS("E_A_S"),
+//    UNLOCK_FUNDS("U_FND");
 
 
-
-=======
-    EXPORT_ALL_STATEMENTS("E_A_S");
-    UNLOCK_FUNDS("U_FND");
->>>>>>> 433fa6006bb5e7a12e876861edcbefb115b3ca5e
 
     private final String role;
 

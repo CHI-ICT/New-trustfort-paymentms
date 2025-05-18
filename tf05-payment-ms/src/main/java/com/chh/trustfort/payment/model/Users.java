@@ -28,7 +28,7 @@ public class Users implements Serializable {
     @Basic(optional = false)
     @Column(name = "id")
     private Long id;
-    
+
     @ManyToOne
     private UserGroup userGroup;
 
@@ -37,7 +37,7 @@ public class Users implements Serializable {
 
     @Column(name = "passcode", nullable = false, length = 225)
     private String passcode;
-    
+
      @Column(name = "pin", nullable = false, length = 225)
     private String pin;
 
@@ -53,7 +53,7 @@ public class Users implements Serializable {
 
     @Column(name = "last_name", nullable = false, length = 30)
     private String last_name;
-    
+
     @Column(name = "user_type", nullable = false, length = 1)
     private String user_type="I";
 
@@ -64,7 +64,7 @@ public class Users implements Serializable {
 
     @Column(name = "tenant_id", nullable = true, length = 15)
     private String tenantId;
-    
+
     @Column(name = "device_id", nullable = false, length = 50)
     private String deviceId;
 
@@ -73,25 +73,25 @@ public class Users implements Serializable {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
-    
+
     @Column(name = "created_by", nullable = false, length = 30)
     private String createdBy;
-    
+
     @Column(nullable = false)
     private boolean approved;
-    
+
     @Column(name = "approved_by", nullable = true, length = 30)
     private String approvedBy;
 
     @Column(name = "auth_sission", nullable = false)
     private boolean authenticateSession = false;
-    
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
-    
+
     @Column(name = "pin_tries", nullable = false)
     private int pinTries = 0;
-    
+
     @Column(name = "passcode_tries", nullable = false)
     private int passcodeTries = 0;
 

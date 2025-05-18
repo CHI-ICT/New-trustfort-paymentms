@@ -246,6 +246,15 @@ public class JwtTokenUtil implements Serializable {
             if (!roles.contains(Role.ALERT_PENDING_RECEIPTS.getValue())) {
                 roles.add(Role.ALERT_PENDING_RECEIPTS.getValue());
             }
+            if (!roles.contains(Role.COA_BASE.getValue())) {
+                roles.add(Role.COA_BASE.getValue());
+            }
+            if (!roles.contains(Role.CREATE.getValue())) {
+                roles.add(Role.CREATE.getValue());
+            }
+            if (!roles.contains(Role.GET_ALL.getValue())) {
+                roles.add(Role.GET_ALL.getValue());
+            }
 
 
 
@@ -343,113 +352,113 @@ public class JwtTokenUtil implements Serializable {
     }
 }
 
-    @Autowired
-    AppUserRepository userRepository;
-    
-    @Autowired
-    private ApplicationContext context;
-    
-    @Value("${issuer}")
-    private String issuer;
-    
-    
-    public String doGenerateToken(String subject, String remoteIP) {
-
-        StringEncryptor oStringEncryptor = (StringEncryptor)context.getBean("jasyptStringEncryptor");
-
-        AppUser appuser = userRepository.getAppUserByUserName(subject);
-        Claims claims = Jwts.claims().setSubject(subject);
-        String encryptKey = oStringEncryptor.decrypt(appuser.getEncryptionKey());
-        claims.put("roles", userRepository.getAppUserRoleNameByGroup(appuser.getAppUserGroup()));
-        //Add the user encryption key
-        claims.put("auth", encryptKey);
-        //Get the channel information 
-        claims.put("Channel", appuser.getChannel());
-        claims.put("IP", "xxxxxx");
-
-        Date currentDate = new Date();
-        LocalDateTime localDateTime = LocalDateTime.now();
-        LocalDateTime localDateTimePlusOneHour = localDateTime.plusHours(2);
-        Date currentDatePlusOneHour = Date.from(localDateTimePlusOneHour.atZone(ZoneId.systemDefault()).toInstant());
-
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuer(issuer)
-                .setIssuedAt(currentDate)
-                .setExpiration(currentDatePlusOneHour)
-                .signWith(SignatureAlgorithm.HS256, encryptKey)
-                .compact();
-    }
-
-    public String doGenerateToken(String subject, String remoteIP, String signingKey) {
-
-        StringEncryptor oStringEncryptor = context.getBean(StringEncryptor.class);
-
-        AppUser appuser = userRepository.getAppUserByUserName(subject);
-        Claims claims = Jwts.claims().setSubject(subject);
-        String encryptKey = oStringEncryptor.decrypt(appuser.getEncryptionKey());
-        claims.put("roles", userRepository.getAppUserRoleNameByGroup(appuser.getAppUserGroup()));
-        //Add the user encryption key
-        claims.put("auth", encryptKey);
-        //Get the channel information 
-        claims.put("Channel", appuser.getChannel());
-        claims.put("IP", "xxxxxx");
-
-        Date currentDate = new Date();
-        LocalDateTime localDateTime = LocalDateTime.now();
-        LocalDateTime localDateTimePlusOneHour = localDateTime.plusHours(2);
-        Date currentDatePlusOneHour = Date.from(localDateTimePlusOneHour.atZone(ZoneId.systemDefault()).toInstant());
-
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuer(issuer)
-                .setIssuedAt(currentDate)
-                .setExpiration(currentDatePlusOneHour)
-                .signWith(SignatureAlgorithm.HS256, signingKey)
-                .compact();
-    }
-
-    public String getUserNameFromToken(String token, String signingKey) {
-        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
-        return claims.getSubject();
-    }
-
-    public boolean validateToken(String token, UserDetails userDetails, String username, String signingKey) throws UnsupportedEncodingException {
-        return (username.equalsIgnoreCase(userDetails.getUsername()) && !isTokenExpired(token, signingKey));
-    }
-
-    public boolean isTokenExpired(String token, String signingKey) {
-        try {
-            Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
-            Date expiration = claims.getExpiration();
-            return (new Date()).after(expiration);
-        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | SignatureException | IllegalArgumentException expiredJwtException) {
-        }
-        return true;
-    }
-
-    public String getChannelFromToken(String token, String signingKey) {
-        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
-        return (String) claims.get("Channel");
-    }
-
-    public String getIPFromToken(String token, String signingKey) {
-        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
-        return (String) claims.get("IP");
-    }
-
-    public String getEncryptionKeyFromToken(String token, String signingKey) {
-        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
-        return (String) claims.get("auth");
-    }
-
-    public boolean userHasRole(String token, String role, String signingKey) {
-        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
-        ArrayList roles = (ArrayList) claims.get("roles");
-        return roles.contains(role);
-    }
-
-}
+//    @Autowired
+//    AppUserRepository userRepository;
+//
+//    @Autowired
+//    private ApplicationContext context;
+//
+//    @Value("${issuer}")
+//    private String issuer;
+//
+//
+//    public String doGenerateToken(String subject, String remoteIP) {
+//
+//        StringEncryptor oStringEncryptor = (StringEncryptor)context.getBean("jasyptStringEncryptor");
+//
+//        AppUser appuser = userRepository.getAppUserByUserName(subject);
+//        Claims claims = Jwts.claims().setSubject(subject);
+//        String encryptKey = oStringEncryptor.decrypt(appuser.getEncryptionKey());
+//        claims.put("roles", userRepository.getAppUserRoleNameByGroup(appuser.getAppUserGroup()));
+//        //Add the user encryption key
+//        claims.put("auth", encryptKey);
+//        //Get the channel information
+//        claims.put("Channel", appuser.getChannel());
+//        claims.put("IP", "xxxxxx");
+//
+//        Date currentDate = new Date();
+//        LocalDateTime localDateTime = LocalDateTime.now();
+//        LocalDateTime localDateTimePlusOneHour = localDateTime.plusHours(2);
+//        Date currentDatePlusOneHour = Date.from(localDateTimePlusOneHour.atZone(ZoneId.systemDefault()).toInstant());
+//
+//        return Jwts.builder()
+//                .setClaims(claims)
+//                .setSubject(subject)
+//                .setIssuer(issuer)
+//                .setIssuedAt(currentDate)
+//                .setExpiration(currentDatePlusOneHour)
+//                .signWith(SignatureAlgorithm.HS256, encryptKey)
+//                .compact();
+//    }
+//
+//    public String doGenerateToken(String subject, String remoteIP, String signingKey) {
+//
+//        StringEncryptor oStringEncryptor = context.getBean(StringEncryptor.class);
+//
+//        AppUser appuser = userRepository.getAppUserByUserName(subject);
+//        Claims claims = Jwts.claims().setSubject(subject);
+//        String encryptKey = oStringEncryptor.decrypt(appuser.getEncryptionKey());
+//        claims.put("roles", userRepository.getAppUserRoleNameByGroup(appuser.getAppUserGroup()));
+//        //Add the user encryption key
+//        claims.put("auth", encryptKey);
+//        //Get the channel information
+//        claims.put("Channel", appuser.getChannel());
+//        claims.put("IP", "xxxxxx");
+//
+//        Date currentDate = new Date();
+//        LocalDateTime localDateTime = LocalDateTime.now();
+//        LocalDateTime localDateTimePlusOneHour = localDateTime.plusHours(2);
+//        Date currentDatePlusOneHour = Date.from(localDateTimePlusOneHour.atZone(ZoneId.systemDefault()).toInstant());
+//
+//        return Jwts.builder()
+//                .setClaims(claims)
+//                .setSubject(subject)
+//                .setIssuer(issuer)
+//                .setIssuedAt(currentDate)
+//                .setExpiration(currentDatePlusOneHour)
+//                .signWith(SignatureAlgorithm.HS256, signingKey)
+//                .compact();
+//    }
+//
+//    public String getUserNameFromToken(String token, String signingKey) {
+//        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
+//        return claims.getSubject();
+//    }
+//
+//    public boolean validateToken(String token, UserDetails userDetails, String username, String signingKey) throws UnsupportedEncodingException {
+//        return (username.equalsIgnoreCase(userDetails.getUsername()) && !isTokenExpired(token, signingKey));
+//    }
+//
+//    public boolean isTokenExpired(String token, String signingKey) {
+//        try {
+//            Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
+//            Date expiration = claims.getExpiration();
+//            return (new Date()).after(expiration);
+//        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | SignatureException | IllegalArgumentException expiredJwtException) {
+//        }
+//        return true;
+//    }
+//
+//    public String getChannelFromToken(String token, String signingKey) {
+//        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
+//        return (String) claims.get("Channel");
+//    }
+//
+//    public String getIPFromToken(String token, String signingKey) {
+//        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
+//        return (String) claims.get("IP");
+//    }
+//
+//    public String getEncryptionKeyFromToken(String token, String signingKey) {
+//        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
+//        return (String) claims.get("auth");
+//    }
+//
+//    public boolean userHasRole(String token, String role, String signingKey) {
+//        Claims claims = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token).getBody();
+//        ArrayList roles = (ArrayList) claims.get("roles");
+//        return roles.contains(role);
+//    }
+//
+//}
 
