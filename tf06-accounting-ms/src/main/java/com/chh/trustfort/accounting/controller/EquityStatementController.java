@@ -27,7 +27,7 @@ public class EquityStatementController {
 
     private final EquityStatementService equityStatementService;
 
-    @GetMapping(value = ApiPath.EQUITY_STATEMENT, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = ApiPath.EQUITY_STATEMENT)
     @Operation(
             summary = "Generate Statement of Equity",
             description = "Returns equity report based on retained earnings, contributions, dividends, and net change."

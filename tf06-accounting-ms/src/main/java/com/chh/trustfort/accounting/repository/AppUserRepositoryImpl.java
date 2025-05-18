@@ -115,8 +115,6 @@ public class AppUserRepositoryImpl implements AppUserRepository {
         TypedQuery<String> query = em.createQuery(
                         "SELECT t.encryptionKey FROM AppUser t WHERE LOWER(t.userName) = LOWER(:userName)", String.class)
                 .setParameter("userName", userName.toLowerCase());
-        TypedQuery<String> query = em.createQuery("SELECT t.encryptionKey FROM AppUser t WHERE t.userName = :userName", String.class)
-                .setParameter("userName", userName);
         List<String> record = query.getResultList();
         if (record.isEmpty()) {
             return null;

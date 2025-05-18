@@ -26,7 +26,7 @@ public class CashFlowStatementController {
 
     private final CashFlowStatementService cashFlowStatementService;
 
-    @GetMapping(value = ApiPath.CASH_FLOW_STATEMENT, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = ApiPath.CASH_FLOW_STATEMENT)
     public ResponseEntity<CashFlowStatementDTO> getCashFlowStatement(StatementFilterDTO filter)
      {
         CashFlowStatementDTO result = cashFlowStatementService.generateCashFlowStatement(filter);

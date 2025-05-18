@@ -50,7 +50,7 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
 
     @Query("SELECT COALESCE(SUM(j.amount), 0) FROM JournalEntry j " +
             "WHERE j.account.classification = :classification " +
-            "AND j.account.accountName = :accountName " +
+            "AND j.account.name = :accountName " +
             "AND j.transactionDate BETWEEN :startDate AND :endDate")
     BigDecimal sumTaxAmountByClassificationAndAccountName(
             @Param("classification") AccountClassification classification,
@@ -58,6 +58,7 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
 
 
 

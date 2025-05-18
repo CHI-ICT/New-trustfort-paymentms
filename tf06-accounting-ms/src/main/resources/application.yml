@@ -2,25 +2,8 @@
 server:
     port: 1006
 
+  fetchRegistry: true
 
-#server:
-#    port: 1005
-#
-#spring:
-#    application:
-#        name: trustfort-payment
-#    cloud:
-#        config:
-#            uri: http://trustfort-config:8888
-#            name: config-server
-#
-#eureka:
-#    client:
-#        registerWithEureka: true
-#        fetchRegistry: true
-# server:
-#     port: 1005
-    
 spring:
     application:
         name: trustfort-payment

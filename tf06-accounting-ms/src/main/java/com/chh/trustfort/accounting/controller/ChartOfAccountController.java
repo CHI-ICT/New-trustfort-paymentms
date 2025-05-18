@@ -1,31 +1,38 @@
+// ==== CONTROLLER: ChartOfAccountController.java ====
 package com.chh.trustfort.accounting.controller;
 
 import com.chh.trustfort.accounting.constant.ApiPath;
-import com.chh.trustfort.accounting.dto.CreateChartOfAccountRequest;
+import com.chh.trustfort.accounting.dto.ChartOfAccountRequest;
+import com.chh.trustfort.accounting.dto.ChartOfAccountResponse;
 import com.chh.trustfort.accounting.service.ChartOfAccountService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.List;
+
+import static com.chh.trustfort.accounting.constant.ApiPath.*;
 
 @RestController
-@RequestMapping(ApiPath.BASE_API)
 @RequiredArgsConstructor
-@Tag(name = "Chart of Account", description = "Handles Chart of Account operations")
-@SecurityRequirement(name = "bearerAuth")
+//@RequestMapping(BASE_API + COA_BASE)
+@RequestMapping(ApiPath.BASE_API)
 public class ChartOfAccountController {
 
-    private final ChartOfAccountService chartOfAccountService;
+    private final ChartOfAccountService service;
 
 
-    @PostMapping(value = ApiPath.CREATE_CHART_OF_ACCOUNT, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> createAccount(@RequestBody CreateChartOfAccountRequest request) {
-        chartOfAccountService.createAccount(request);
-        return ResponseEntity.ok("Account created successfully.");
+    @PostMapping(value = CREATE, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ChartOfAccountResponse> create(@Valid @RequestBody ChartOfAccountRequest request) {
+        return ResponseEntity.ok(service.createChartOfAccount(request));
+    }
+
+
+    @GetMapping(value = GET_ALL)
+    public ResponseEntity<List<ChartOfAccountResponse>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 }
+

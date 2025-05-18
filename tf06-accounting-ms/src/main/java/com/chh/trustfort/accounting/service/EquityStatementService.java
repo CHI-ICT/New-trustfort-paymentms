@@ -45,7 +45,7 @@ public class EquityStatementService {
         BigDecimal dividends = BigDecimal.ZERO;
 
         for (JournalEntry entry : entries) {
-            String accountName = entry.getAccount().getAccountName().toLowerCase();
+            String accountName = entry.getAccount().getName().toLowerCase();
             BigDecimal amount = entry.getTransactionType() == TransactionType.DEBIT
                     ? entry.getAmount().negate()
                     : entry.getAmount();
