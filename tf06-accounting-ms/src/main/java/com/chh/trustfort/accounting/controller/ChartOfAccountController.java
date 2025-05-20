@@ -24,15 +24,15 @@ public class ChartOfAccountController {
     private final ChartOfAccountService service;
 
 
-    @PostMapping(value = CREATE, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ChartOfAccountResponse> create(@Valid @RequestBody ChartOfAccountRequest request) {
-        return ResponseEntity.ok(service.createChartOfAccount(request));
-    }
-
-
-    @GetMapping(value = GET_ALL)
-    public ResponseEntity<List<ChartOfAccountResponse>> getAll() {
-        return ResponseEntity.ok(service.getAll());
-    }
+//    @PostMapping(value = CREATE, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<ChartOfAccountResponse> create(@Valid @RequestBody ChartOfAccountRequest request) {
+//        return ResponseEntity.ok(service.createChartOfAccount(request));
+//    }
+//
+//
+//    @GetMapping(value = GET_ALL)
+//    public ResponseEntity<List<ChartOfAccountResponse>> getAll() {
+//        return ResponseEntity.ok(service.getAll());
+//    }
 }
 

@@ -59,7 +59,4 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
             @Param("endDate") LocalDate endDate
     );
 
-
-
-
 }

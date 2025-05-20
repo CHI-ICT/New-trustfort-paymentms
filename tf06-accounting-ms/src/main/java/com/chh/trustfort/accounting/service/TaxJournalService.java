@@ -48,8 +48,8 @@ public class TaxJournalService {
         ChartOfAccount account = new ChartOfAccount();
         account.setCode("TAX-EXP-" + taxType.name());
         account.setName(taxType.name() + " EXPENSE");
-        account.setClassification(AccountClassification.EXPENSE);
-        account.setAccountType(AccountType.EXPENSE);
+//        account.setClassification(AccountClassification.EXPENSE);
+//        account.setAccountType(AccountType.EXPENSE);
         return account;
     }
 
@@ -60,8 +60,8 @@ public class TaxJournalService {
         ChartOfAccount account = new ChartOfAccount();
         account.setCode("TAX-PAY-" + taxType.name());
         account.setName(taxType.name() + " PAYABLE");
-        account.setClassification(AccountClassification.LIABILITY);
-        account.setAccountType(AccountType.INCOME); // Using INCOME because you have only INCOME/EXPENSE in your AccountType enum
+//        account.setClassification(AccountClassification.LIABILITY);
+//        account.setAccountType(AccountType.INCOME); // Using INCOME because you have only INCOME/EXPENSE in your AccountType enum
         return account;
     }
 }

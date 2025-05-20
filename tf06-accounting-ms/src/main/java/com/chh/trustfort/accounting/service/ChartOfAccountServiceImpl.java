@@ -4,92 +4,125 @@ package com.chh.trustfort.accounting.service;
 import com.chh.trustfort.accounting.dto.ChartOfAccountRequest;
 import com.chh.trustfort.accounting.dto.ChartOfAccountResponse;
 import com.chh.trustfort.accounting.enums.AccountClassification;
-import com.chh.trustfort.accounting.model.ChartOfAccount;
-import com.chh.trustfort.accounting.model.Currency;
-import com.chh.trustfort.accounting.model.Department;
-import com.chh.trustfort.accounting.model.Subsidiary;
+import com.chh.trustfort.accounting.model.*;
+import com.chh.trustfort.accounting.payload.CreateCOARequestPayload;
 import com.chh.trustfort.accounting.repository.*;
 import com.chh.trustfort.accounting.service.ChartOfAccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ChartOfAccountServiceImpl implements ChartOfAccountService {
 
-    private final ChartOfAccountRepository repository;
-    private final DepartmentRepository departmentRepository;
-    private final SubsidiaryRepository subsidiaryRepository;
-    private final CurrencyRepository currencyRepository;
+
+    @Autowired
+    private ChartOfAccountAccountRepository accountRepository;
+    @Autowired
+    private AccountCategoryRepository categoryRepo;
+    @Autowired
+    private EntityCodeRepository entityRepo;
 
     @Override
-    public ChartOfAccountResponse createChartOfAccount(ChartOfAccountRequest request) {
-        validateCodes(request);
+    public ChartOfAccount createAccount(CreateCOARequestPayload req) {
+        ChartOfAccount parent = null;
 
-        String code = generateCode(request);
-        if (repository.existsByCode(code)) {
-            throw new IllegalArgumentException("Chart of Account already exists: " + code);
+        if (req.getParentAccountId() != null) {
+            parent = accountRepository.findById(req.getParentAccountId())
+                    .orElseThrow(() -> new IllegalArgumentException("Parent not found"));
         }
 
-        ChartOfAccount coa = ChartOfAccount.builder()
-                .name(request.getName())
-                .code(code)
-                .currencyCode(request.getCurrencyCode())
-                .subsidiaryCode(request.getSubsidiaryCode())
-                .departmentCode(request.getDepartmentCode())
-                .classification(request.getClassification())
-                .active(true)
+        AccountCategory category = categoryRepo.findById(req.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        String generatedCode = generateNextCode(parent, category);
+
+        String entityCode = entityRepo.findBySubsidiary(req.getSubsidiary())
+                .orElseThrow(() -> new IllegalArgumentException("Entity code not found"))
+                .getCode();
+
+        String deptCode = req.getDepartmentCode() != null ? req.getDepartmentCode() : "001";
+
+        String fullCode = entityCode + "-" + generatedCode + "-" + deptCode;
+        String currencyPrefixed = req.getCurrency() + entityCode + generatedCode + deptCode;
+
+        ChartOfAccount account = ChartOfAccount.builder()
+                .name(req.getName())
+                .code(generatedCode)
+                .category(category)
+                .parentAccount(parent)
+                .subsidiary(req.getSubsidiary())
+                .currency(req.getCurrency())
+                .normalBalance(req.getNormalBalance())
+                .status(req.getStatus())
+                .fullAccountCode(fullCode)
+                .currencyPrefixedCode(currencyPrefixed)
                 .build();
 
-        return mapToResponse(repository.save(coa));
+        return accountRepository.save(account);
     }
 
     @Override
-    public List<ChartOfAccountResponse> getAll() {
-        return repository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
+    public ChartOfAccount updateAccount(Long id, ChartOfAccount updatedAccount) {
+        return accountRepository.findById(id).map(account -> {
+            account.setName(updatedAccount.getName());
+            account.setStatus(updatedAccount.getStatus());
+            return accountRepository.save(account);
+        }).orElseThrow(() -> new IllegalArgumentException("Account not found."));
     }
 
-    private void validateCodes(ChartOfAccountRequest request) {
-        if (!departmentRepository.existsByCode(request.getDepartmentCode())) {
-            throw new IllegalArgumentException("Invalid department code");
-        }
-        if (!subsidiaryRepository.existsByCode(request.getSubsidiaryCode())) {
-            throw new IllegalArgumentException("Invalid subsidiary code");
-        }
-        if (!currencyRepository.existsByCode(request.getCurrencyCode())) {
-            throw new IllegalArgumentException("Invalid currency code");
-        }
+    @Override
+    public Optional<ChartOfAccount> findById(Long id) {
+        return accountRepository.findById(id);
     }
 
-    private ChartOfAccountResponse mapToResponse(ChartOfAccount coa) {
-        return ChartOfAccountResponse.builder()
-                .code(coa.getCode())
-                .name(coa.getName())
-                .currencyCode(coa.getCurrencyCode())
-                .subsidiaryCode(coa.getSubsidiaryCode())
-                .departmentCode(coa.getDepartmentCode())
-                .classification(coa.getClassification())
-                .build();
+    @Override
+    public List<ChartOfAccount> findAll() {
+        return accountRepository.findAll();
     }
 
-    private String generateCode(ChartOfAccountRequest request) {
-        Department dept = departmentRepository.findByCode(request.getDepartmentCode())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid department code"));
+    @Override
+    public Optional<ChartOfAccount> findByCode(String code) {
+        return accountRepository.findAll()
+                .stream()
+                .filter(a -> a.getCode().equals(code))
+                .findFirst();
+    }
 
-        Subsidiary sub = subsidiaryRepository.findByCode(request.getSubsidiaryCode())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid subsidiary code"));
+    private String generateNextCode(ChartOfAccount parent, AccountCategory category) {
+        if (parent == null) {
+            int base = category.getMinCode();
+            int max = category.getMaxCode();
 
-        Currency currency = currencyRepository.findByCode(request.getCurrencyCode())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid currency code"));
+            for (int code = base; code <= max; code += 100) {
+                if (!accountRepository.existsByCode(String.valueOf(code))) {
+                    return String.valueOf(code);
+                }
+            }
 
-        AccountClassification classification = request.getClassification();
+            // fallback to any open slot
+            List<String> takenCodes = accountRepository.findAll().stream()
+                    .filter(a -> a.getParentAccount() == null)
+                    .map(ChartOfAccount::getCode).collect(Collectors.toList());
 
-        return currency.getCode()
-                + sub.getCode()
-                + classification.getCode()
-                + dept.getCode();
+            for (int code = 1000; code <= 9999; code += 100) {
+                if (!takenCodes.contains(String.valueOf(code))) {
+                    return String.valueOf(code);
+                }
+            }
+
+            throw new RuntimeException("No available root-level codes");
+        } else {
+            int base = Integer.parseInt(parent.getCode()) * 10 + 10;
+            while (accountRepository.existsByCode(String.valueOf(base))) {
+                base += 10;
+            }
+            return String.valueOf(base);
+        }
     }
 }

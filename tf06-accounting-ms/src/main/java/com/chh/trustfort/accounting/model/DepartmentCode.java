@@ -7,16 +7,15 @@ import javax.persistence.*;
 
 @Entity
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Department {
+@RequiredArgsConstructor
+public class DepartmentCode {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 3)
     private String code;
-
+    private boolean isDeleted = false;
     private String name;
 }

@@ -1,16 +1,17 @@
 package com.chh.trustfort.accounting.model;
 
-
 import com.chh.trustfort.accounting.enums.AccountClassification;
-import com.chh.trustfort.accounting.enums.AccountType;
-import com.chh.trustfort.accounting.enums.CashFlowCategory;
+import com.chh.trustfort.accounting.enums.AccountStatus;
+import com.chh.trustfort.accounting.enums.Subsidiary;
+import com.chh.trustfort.accounting.enums.TransactionType;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
 
-
-@Table(name = "chart_of_accounts")
 @Entity
+@Table(name = "chart_of_account")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,30 +23,55 @@ public class ChartOfAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 30)
+    @Column(unique = true, nullable = false)
     private String code;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false)
     private String name;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "category_id")
+    private AccountCategory category;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_account_id")
+    private ChartOfAccount parentAccount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Subsidiary subsidiary;
+
+    @Column(nullable = false)
+    private String currency;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionType normalBalance;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus status;
+
+    @Column(unique = true, name = "full_account_code")
+    private String fullAccountCode;
+
+    @Column(unique = true, name = "currency_prefixed_code")
+    private String currencyPrefixedCode;
+
+    @OneToMany(mappedBy = "parentAccount", cascade = CascadeType.ALL)
+    private List<ChartOfAccount> subAccounts;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountClassification classification;
 
-    @Column(nullable = false)
-    private String currencyCode;
-
-    @Column(nullable = false)
-    private String subsidiaryCode;
-
-    @Column(nullable = false)
-    private String departmentCode;
-
-    @Column(nullable = false)
-    private Boolean active = true;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
-    private AccountType accountType;
-
+    public AccountClassification getClassification() {
+        return null;
+    }
 }
