@@ -42,33 +42,45 @@ public class BalanceSheetController {
     @Autowired
     private final BalanceSheetService balanceSheetService;
 
-    @GetMapping(value = ApiPath.GENERATE_BALANCE_SHEET, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> generateBalanceSheet(@RequestBody BalanceSheetFilterRequest payload, HttpServletRequest httpRequest) throws Exception {
+//    @PostMapping(value = ApiPath.GENERATE_BALANCE_SHEET, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<?> generateBalanceSheet(@RequestBody BalanceSheetFilterRequest payload, HttpServletRequest httpRequest) throws Exception {
+//
+//        Quintuple<Boolean, String, String, Users, String> request = requestManager.validateRequest(
+//                Role.GENERATE_BALANCE_SHEET.getValue(),
+//                "Generate Balance Sheet as of: " + payload,
+//                httpRequest,
+//                ApiPath.ID_TOKEN
+//        );
+//
+//        if (request.isError) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(request.payload);
+//        }
+//
+//        Users user = request.Users;
+//        if (user == null) {
+//            log.error("🔒 User not found during balance sheet request");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access");
+//        }
+//
+//        log.info("📄 Balance sheet generation requested by {}", user.getUserName());
+//
+//        BalanceSheetFilterRequest filter = gson.fromJson(request.payload, BalanceSheetFilterRequest.class);
+//        BalanceSheetResponse response = balanceSheetService.generateBalanceSheet(filter);
+//
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
 
-        Quintuple<Boolean, String, String, Users, String> request = requestManager.validateRequest(
-                Role.GENERATE_BALANCE_SHEET.getValue(),
-                "Generate Balance Sheet as of: " + payload,
-                httpRequest,
-                ApiPath.ID_TOKEN
-        );
+    @PostMapping(value = ApiPath.GENERATE_BALANCE_SHEET)
+    public ResponseEntity<?> generateBalanceSheet(@RequestBody BalanceSheetFilterRequest payload) {
 
-        if (request.isError) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(request.payload);
-        }
+        log.info("📄 Balance sheet generation requested by [TEST MODE], payload = {}", payload);
 
-        Users user = request.Users;
-        if (user == null) {
-            log.error("🔒 User not found during balance sheet request");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access");
-        }
+        // Directly call the service with raw payload (no validation, no decryption)
+        BalanceSheetResponse response = balanceSheetService.generateBalanceSheet(payload);
 
-        log.info("📄 Balance sheet generation requested by {}", user.getUserName());
-
-        BalanceSheetFilterRequest filter = gson.fromJson(request.payload, BalanceSheetFilterRequest.class);
-        BalanceSheetResponse response = balanceSheetService.generateBalanceSheet(filter);
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.ok(response);
     }
+
 
 
 

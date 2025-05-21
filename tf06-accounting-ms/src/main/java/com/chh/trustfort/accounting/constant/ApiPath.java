@@ -56,6 +56,7 @@ public class ApiPath {
     public static final String COA_BASE = "/chart-of-accounts";
     public static final String CREATE = "/create";
     public static final String GET_ALL = "/all";
+    public static final String DOUBLE_ENTRY = "/create-double-entry";
     public static final String MULTI_CURRENCY_RECEIPTS= "/converted-receipts";
     public static final String DEBTOR_REPORT= "/debtor-report";
     public static final String DEBT_AGING_SUMMARY = "/debt-aging-summary";

@@ -36,10 +36,15 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
             @Param("classification") AccountClassification classification
     );
 
-    @Query("SELECT j FROM JournalEntry j WHERE j.transactionDate BETWEEN :startDate AND :endDate")
-    List<JournalEntry> findByTransactionDateBetween(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
+//    @Query("SELECT j FROM JournalEntry j WHERE j.transactionDate BETWEEN :startDate AND :endDate")
+//    List<JournalEntry> findByTransactionDateBetween(
+//            @Param("startDate") LocalDate startDate,
+//            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT j FROM JournalEntry j JOIN FETCH j.account WHERE j.transactionDate BETWEEN :startDate AND :endDate")
+    List<JournalEntry> findByTransactionDateBetween(@Param("startDate") LocalDate startDate,
+                                                    @Param("endDate") LocalDate endDate);
+
 
 
     List<JournalEntry> findAllByAccount_ClassificationInAndTransactionDateBetween(
@@ -58,8 +63,5 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
-
-
-
 
 }

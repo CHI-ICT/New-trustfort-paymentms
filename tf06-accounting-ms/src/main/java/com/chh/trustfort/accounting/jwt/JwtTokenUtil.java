@@ -198,6 +198,12 @@ public class JwtTokenUtil implements Serializable {
             if (!roles.contains(Role.EQUITY_STATEMENT.getValue())) {
                 roles.add(Role.EQUITY_STATEMENT.getValue());
             }
+            if (!roles.contains(Role.GENERATE_BALANCE_SHEET.getValue())) {
+                roles.add(Role.GENERATE_BALANCE_SHEET.getValue());
+            }
+            if (!roles.contains(Role.DOUBLE_ENTRY.getValue())) {
+                roles.add(Role.DOUBLE_ENTRY.getValue());
+            }
             if (!roles.contains(Role.GET_INCOME_STATEMENT.getValue())) {
                 roles.add(Role.GET_INCOME_STATEMENT.getValue());
             }
