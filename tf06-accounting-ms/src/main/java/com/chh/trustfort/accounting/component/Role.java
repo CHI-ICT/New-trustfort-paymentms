@@ -63,7 +63,17 @@ public enum Role {
     ALERT_PENDING_RECEIPTS("A_PR"),
     COA_BASE("C_B"),
     CREATE("C"),
-    GET_ALL("G_A");
+    GET_ALL("G_A"),
+    MULTI_CURRENCY_RECEIPTS("M_R"),
+    DEBTOR_REPORT("D_R"),
+    DEBT_AGING_SUMMARY("D_A_S"),
+    CREATE_RECEIVABLE("C_R"),
+    GET_RECEIVABLE("G_R"),
+    RAISE_DISPUTE("R_D"),
+    RESOLVE_DISPUTE("RS_D"),
+    GET_DISPUTES("G_D"),
+    MOVE_PAYMENT("M_P"),
+    GET_RECONCILIATION("G_R");
 
     //    EXPORT_ALL_STATEMENTS("E_A_S"),
 //    UNLOCK_FUNDS("U_FND");

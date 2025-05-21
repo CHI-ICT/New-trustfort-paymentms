@@ -43,7 +43,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             errors.add(error.getObjectName() + ": " + error.getDefaultMessage());
         }
 
-        ApiException apiError = new ApiException(
+        ApiExceptions apiError = new ApiExceptions(
                 LocalDateTime.now().toString(),
                 HttpStatus.BAD_REQUEST,
                 HttpStatus.BAD_REQUEST.value(),
@@ -57,7 +57,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatus status, WebRequest request) {
         String error = ex.getParameterName() + " parameter is missing";
 
-        ApiException apiError = new ApiException(
+        ApiExceptions apiError = new ApiExceptions(
                 LocalDateTime.now().toString(),
                 HttpStatus.BAD_REQUEST,
                 HttpStatus.BAD_REQUEST.value(),
@@ -73,7 +73,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             errors.add(violation.getRootBeanClass().getName() + " " + violation.getPropertyPath() + ": " + violation.getMessage());
         }
 
-        ApiException apiError = new ApiException(
+        ApiExceptions apiError = new ApiExceptions(
                 LocalDateTime.now().toString(),
                 HttpStatus.BAD_REQUEST,
                 HttpStatus.BAD_REQUEST.value(),
@@ -86,7 +86,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex, WebRequest request) {
         String error = ex.getName() + " should be of type " + ex.getRequiredType().getName();
 
-        ApiException apiError = new ApiException(
+        ApiExceptions apiError = new ApiExceptions(
                 LocalDateTime.now().toString(),
                 HttpStatus.BAD_REQUEST,
                 HttpStatus.BAD_REQUEST.value(),
@@ -103,7 +103,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         builder.append(" method is not supported for this request. Supported methods are ");
         ex.getSupportedHttpMethods().forEach(t -> builder.append(t + " "));
 
-        ApiException apiError = new ApiException(
+        ApiExceptions apiError = new ApiExceptions(
                 LocalDateTime.now().toString(),
                 HttpStatus.METHOD_NOT_ALLOWED,
                 HttpStatus.METHOD_NOT_ALLOWED.value(),
@@ -120,7 +120,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         builder.append(" media type is not supported. Supported media types are ");
         ex.getSupportedMediaTypes().forEach(t -> builder.append(t + ", "));
 
-        ApiException apiError = new ApiException(
+        ApiExceptions apiError = new ApiExceptions(
                 LocalDateTime.now().toString(),
                 HttpStatus.UNSUPPORTED_MEDIA_TYPE,
                 HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),

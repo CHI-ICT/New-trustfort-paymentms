@@ -2,6 +2,7 @@ package com.chh.trustfort.accounting.model;
 
 import com.chh.trustfort.accounting.enums.DisputeStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -20,20 +22,22 @@ public class Dispute {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String invoiceNumber;
-
-    private String issueDescription;
-
-    private BigDecimal disputedAmount;
+    private String reference; // e.g. DSP-XXXX
+    private String relatedReceiptReference;
+    private String customerEmail;
+    private String customerName;
 
     @Enumerated(EnumType.STRING)
     private DisputeStatus status;
 
-    private String raisedBy;
+    private String description;
 
-    private LocalDateTime raisedAt = LocalDateTime.now();
-
+    @Column(length = 500)
     private String resolution;
 
+    private LocalDateTime raisedAt;
+    private String raisedBy;
+
     private LocalDateTime resolvedAt;
+    private String resolvedBy;
 }
