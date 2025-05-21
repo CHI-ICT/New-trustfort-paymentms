@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface EntityCodeRepository extends JpaRepository<EntityCode, Long> {
     Optional<EntityCode> findBySubsidiary(Subsidiary subsidiary);
+    Optional<EntityCode> findByCode(String code);
 }
 
