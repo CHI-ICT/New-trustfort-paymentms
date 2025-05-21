@@ -4,6 +4,7 @@ public enum ReceivableStatus {
     UNPAID,
     PARTIALLY_PAID,
     PAID,
+    PENDING,
     OVERDUE
 }
 
