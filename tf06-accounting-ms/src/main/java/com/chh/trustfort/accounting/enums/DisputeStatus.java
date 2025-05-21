@@ -4,5 +4,7 @@ public enum DisputeStatus {
     OPEN,
     IN_PROGRESS,
     RESOLVED,
-    CLOSED
+    CLOSED,
+    ESCALATED,
+    REJECTED
 }

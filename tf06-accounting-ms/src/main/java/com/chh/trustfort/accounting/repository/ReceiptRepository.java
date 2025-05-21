@@ -9,6 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
-    Optional<Receipt> findByPaymentReference(String reference);
+//    Optional<Receipt> findByPaymentReference(String reference);
     List<Receipt> findByStatusAndDueDateBefore(ReceiptStatus status, LocalDate dueDate);
+
+    // ReceiptRepository.java
+    List<Receipt> findByPaymentReference(String reference);
+
 }
