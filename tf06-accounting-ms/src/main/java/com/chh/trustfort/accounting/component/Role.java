@@ -63,7 +63,8 @@ public enum Role {
     ALERT_PENDING_RECEIPTS("A_PR"),
     COA_BASE("C_B"),
     CREATE("C"),
-    GET_ALL("G_A");
+    GET_ALL("G_A"),
+    DOUBLE_ENTRY("D_E");
 
     //    EXPORT_ALL_STATEMENTS("E_A_S"),
 //    UNLOCK_FUNDS("U_FND");

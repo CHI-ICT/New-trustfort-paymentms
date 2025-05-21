@@ -56,4 +56,5 @@ public class ApiPath {
     public static final String COA_BASE = "/chart-of-accounts";
     public static final String CREATE = "/create";
     public static final String GET_ALL = "/all";
+    public static final String DOUBLE_ENTRY = "/create-double-entry";
 }

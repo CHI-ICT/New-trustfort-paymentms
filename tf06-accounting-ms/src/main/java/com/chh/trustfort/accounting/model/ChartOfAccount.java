@@ -71,7 +71,4 @@ public class ChartOfAccount {
     @Column(nullable = false)
     private AccountClassification classification;
 
-    public AccountClassification getClassification() {
-        return null;
-    }
 }
