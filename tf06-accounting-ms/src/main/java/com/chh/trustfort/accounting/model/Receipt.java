@@ -32,7 +32,6 @@ public class Receipt {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
-
     @Enumerated(EnumType.STRING)
     private ReceiptSource source;
 
@@ -41,6 +40,7 @@ public class Receipt {
 
     private LocalDateTime createdAt;
     private String createdBy;
+    private String matchKey;
 }
 
 
