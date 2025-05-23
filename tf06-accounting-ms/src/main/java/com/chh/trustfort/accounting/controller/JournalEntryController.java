@@ -2,6 +2,7 @@ package com.chh.trustfort.accounting.controller;
 
 import com.chh.trustfort.accounting.constant.ApiPath;
 import com.chh.trustfort.accounting.dto.ApiResponse;
+import com.chh.trustfort.accounting.dto.DoubleEntryRequest;
 import com.chh.trustfort.accounting.dto.JournalEntryRequest;
 import com.chh.trustfort.accounting.service.JournalEntryService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -28,10 +29,27 @@ public class JournalEntryController {
 
     @PostMapping(value = ApiPath.JOURNAL_ENTRY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postJournalEntry(@RequestBody JournalEntryRequest request) {
-        log.info("Incoming transactionDate: {}", request.getTransactionDate());
+        log.info("📥 Single journal entry request received: {}", request);
         journalEntryService.createJournalEntry(request);
-        return ResponseEntity.ok(new ApiResponse());
+        return ResponseEntity.ok(new ApiResponse("Journal entry recorded successfully."));
+    }
 
+    @PostMapping(value = ApiPath.DOUBLE_ENTRY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> postDoubleEntry(@RequestBody DoubleEntryRequest request) {
+        log.info("📥 Double entry request: DR [{}], CR [{}], Amount: {}", request.getDebitAccountCode(), request.getCreditAccountCode(), request.getAmount());
+
+        journalEntryService.recordDoubleEntry(
+                request.getDebitAccountCode(),
+                request.getCreditAccountCode(),
+                request.getReference(),
+                request.getDescription(),
+                request.getAmount(),
+                request.getDepartment(),
+                request.getBusinessUnit(),
+                request.getTransactionDate()
+        );
+
+        return ResponseEntity.ok(new ApiResponse("Double-entry journal successfully recorded."));
     }
 }
 

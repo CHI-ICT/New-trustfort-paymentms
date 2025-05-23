@@ -198,6 +198,12 @@ public class JwtTokenUtil implements Serializable {
             if (!roles.contains(Role.EQUITY_STATEMENT.getValue())) {
                 roles.add(Role.EQUITY_STATEMENT.getValue());
             }
+            if (!roles.contains(Role.GENERATE_BALANCE_SHEET.getValue())) {
+                roles.add(Role.GENERATE_BALANCE_SHEET.getValue());
+            }
+            if (!roles.contains(Role.DOUBLE_ENTRY.getValue())) {
+                roles.add(Role.DOUBLE_ENTRY.getValue());
+            }
             if (!roles.contains(Role.GET_INCOME_STATEMENT.getValue())) {
                 roles.add(Role.GET_INCOME_STATEMENT.getValue());
             }
@@ -254,6 +260,36 @@ public class JwtTokenUtil implements Serializable {
             }
             if (!roles.contains(Role.GET_ALL.getValue())) {
                 roles.add(Role.GET_ALL.getValue());
+            }
+            if (!roles.contains(Role.MULTI_CURRENCY_RECEIPTS.getValue())) {
+                roles.add(Role.MULTI_CURRENCY_RECEIPTS.getValue());
+            }
+            if (!roles.contains(Role.DEBTOR_REPORT.getValue())) {
+                roles.add(Role.DEBTOR_REPORT.getValue());
+            }
+            if (!roles.contains(Role.DEBT_AGING_SUMMARY.getValue())) {
+                roles.add(Role.DEBT_AGING_SUMMARY.getValue());
+            }
+            if (!roles.contains(Role.CREATE_RECEIVABLE.getValue())) {
+                roles.add(Role.CREATE_RECEIVABLE.getValue());
+            }
+            if (!roles.contains(Role.GET_RECEIVABLE.getValue())) {
+                roles.add(Role.GET_RECEIVABLE.getValue());
+            }
+            if (!roles.contains(Role.RAISE_DISPUTE.getValue())) {
+                roles.add(Role.RAISE_DISPUTE.getValue());
+            }
+            if (!roles.contains(Role.RESOLVE_DISPUTE.getValue())) {
+                roles.add(Role.RESOLVE_DISPUTE.getValue());
+            }
+            if (!roles.contains(Role.GET_DISPUTES.getValue())) {
+                roles.add(Role.GET_DISPUTES.getValue());
+            }
+            if (!roles.contains(Role.MOVE_PAYMENT.getValue())) {
+                roles.add(Role.MOVE_PAYMENT.getValue());
+            }
+            if (!roles.contains(Role.GET_RECONCILIATION.getValue())) {
+                roles.add(Role.GET_RECONCILIATION.getValue());
             }
 
 
@@ -337,7 +373,7 @@ public class JwtTokenUtil implements Serializable {
         }
     }
 
-    private Claims getClaimsFromToken(String token, String encryptionKey) {
+    public Claims getClaimsFromToken(String token, String encryptionKey) {
         try {
             Claims claims = Jwts.parser()
                     .setSigningKey(Base64.getEncoder().encodeToString(encryptionKey.getBytes()))

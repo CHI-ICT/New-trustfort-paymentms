@@ -40,6 +40,16 @@ public class Receipt {
 
     private LocalDateTime createdAt;
     private String createdBy;
+
+    @Column(name = "currency_code", nullable = false, length = 5)
+    private String currencyCode;
+
+    @Column(name = "exchange_rate", nullable = false, precision = 12, scale = 6)
+    private BigDecimal exchangeRate;
+
+    @Column(name = "base_amount", nullable = false, precision = 18, scale = 2)
+    private BigDecimal baseAmount;
+
     private String matchKey;
 }
 
