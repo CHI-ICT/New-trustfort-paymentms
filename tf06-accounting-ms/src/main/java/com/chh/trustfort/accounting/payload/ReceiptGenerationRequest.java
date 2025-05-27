@@ -14,4 +14,8 @@ public class ReceiptGenerationRequest {
     private String paymentReference;
     private ReceiptSource source;
     private String createdBy;
+    private String businessUnit;   // ✅ add this
+    private String department;
+    private String accountCode; // e.g., "1000"
+
 }

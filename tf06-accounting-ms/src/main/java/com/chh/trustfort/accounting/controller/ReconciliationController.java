@@ -1,6 +1,7 @@
 package com.chh.trustfort.accounting.controller;
 
 import com.chh.trustfort.accounting.constant.ApiPath;
+import com.chh.trustfort.accounting.dto.ReconciliationSummaryDTO;
 import com.chh.trustfort.accounting.service.ReconciliationEngine;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +22,10 @@ public class ReconciliationController {
 
 
     @GetMapping(value = ApiPath.GET_RECONCILIATION)
-    public ResponseEntity<String> runReconciliation() {
+    public ResponseEntity<ReconciliationSummaryDTO> runReconciliation() {
         log.info("Starting reconciliation between receipts and receivables...");
-        reconciliationEngine.reconcileReceivables();
-        return ResponseEntity.ok("Reconciliation process completed successfully.");
+        ReconciliationSummaryDTO summary = reconciliationEngine.reconcileReceivables();
+        return ResponseEntity.ok(summary);
     }
+
 }

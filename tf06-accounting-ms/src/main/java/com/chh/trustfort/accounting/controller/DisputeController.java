@@ -1,5 +1,6 @@
 package com.chh.trustfort.accounting.controller;
 
+import com.chh.trustfort.accounting.Responses.EncryptResponse;
 import com.chh.trustfort.accounting.constant.ApiPath;
 import com.chh.trustfort.accounting.dto.CreateDisputeRequest;
 import com.chh.trustfort.accounting.dto.DisputeResolutionRequest;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@EncryptResponse
 @RestController
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")

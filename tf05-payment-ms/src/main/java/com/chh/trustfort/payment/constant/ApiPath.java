@@ -70,6 +70,7 @@ public class ApiPath {
     public static final String VERIFY_FLW_TRANSACTION = "/verify-transaction";
     public static final String GENERATE_BALANCE_SHEET ="/generate-income-statement";
     public static final String TEST_EMAIL_NOTIFICATION="/send-test-email";
+    public static final String DECRYPT = "/decrypt";
 
 
 }

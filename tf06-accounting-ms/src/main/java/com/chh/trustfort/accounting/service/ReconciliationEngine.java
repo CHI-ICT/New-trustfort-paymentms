@@ -1,5 +1,6 @@
 package com.chh.trustfort.accounting.service;
 
+import com.chh.trustfort.accounting.dto.ReconciliationSummaryDTO;
 import com.chh.trustfort.accounting.enums.ReceivableStatus;
 import com.chh.trustfort.accounting.model.Receipt;
 import com.chh.trustfort.accounting.model.Receivable;
@@ -21,10 +22,15 @@ public class ReconciliationEngine {
     private final ReceivableRepository receivableRepository;
     private final ReceiptRepository receiptRepository;
 
-    public void reconcileReceivables() {
+    public ReconciliationSummaryDTO reconcileReceivables() {
         log.info("Running receipt-receivable reconciliation logic");
 
         List<Receivable> receivables = receivableRepository.findAll();
+
+        int updated = 0;
+        int paidCount = 0;
+        int partialCount = 0;
+        int pendingCount = 0;
 
         for (Receivable receivable : receivables) {
             List<Receipt> linkedReceipts = receiptRepository.findByPaymentReference(receivable.getReference());
@@ -33,15 +39,32 @@ public class ReconciliationEngine {
                     .map(Receipt::getBaseAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+            ReceivableStatus originalStatus = receivable.getStatus();
+
             if (totalPaid.compareTo(receivable.getAmount()) >= 0) {
                 receivable.setStatus(ReceivableStatus.PAID);
+                paidCount++;
             } else if (totalPaid.compareTo(BigDecimal.ZERO) > 0) {
                 receivable.setStatus(ReceivableStatus.PARTIALLY_PAID);
+                partialCount++;
             } else {
                 receivable.setStatus(ReceivableStatus.PENDING);
+                pendingCount++;
             }
 
-            receivableRepository.save(receivable);
+            if (!receivable.getStatus().equals(originalStatus)) {
+                updated++;
+                receivableRepository.save(receivable);
+            }
         }
+
+        return new ReconciliationSummaryDTO(
+                receivables.size(),
+                updated,
+                paidCount,
+                partialCount,
+                pendingCount,
+                "Reconciliation process completed successfully."
+        );
     }
 }

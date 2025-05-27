@@ -69,7 +69,7 @@ public class AppConfig extends WebMvcConfigurerAdapter {
 //        HikariDataSource dataSource = new HikariDataSource();
 //        dataSource.setJdbcUrl("jdbc:postgresql://localhost:5433/trustfort");
 //        dataSource.setUsername("postgres");
-//        dataSource.setPassword("*****");
+//        dataSource.setPassword("");
 //        dataSource.setDriverClassName("org.postgresql.Driver");
 //        return dataSource;
 //    }
@@ -120,7 +120,7 @@ public class AppConfig extends WebMvcConfigurerAdapter {
 //
 //        // Configure default tenants
 //        dataSources.put("trustfort", MultiTenantDataSource.createDataSource(
-//                "jdbc:postgresql://localhost:5433/trustfort", "postgres", "*****"));
+//                "jdbc:postgresql://localhost:5433/trustfort", "postgres", ""));
 //
 //        return new MultiTenantDataSource(dataSources);
 //    }

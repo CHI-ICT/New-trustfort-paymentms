@@ -93,7 +93,8 @@ public class AesServiceImpl implements AesService {
             // Use URL-safe Base64 decoder
             byte[] decodedBytes;
             try {
-                decodedBytes = Base64.getUrlDecoder().decode(cipherText);
+//                decodedBytes = Base64.getUrlDecoder().decode(cipherText);
+                decodedBytes = Base64.getDecoder().decode(cipherText);
             } catch (IllegalArgumentException e) {
                 LOGGER.error("Base64 Decoding Error: Invalid input. {}", e.getMessage());
                 throw new RuntimeException("Base64 Decoding Error: Invalid input.", e);

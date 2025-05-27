@@ -68,7 +68,7 @@ public class WalletRepository {
     }
 
     public Wallet createWallet(Wallet wallet) {
-        log.info("Creating wallet for users: {}", wallet.getUsers().getId());
+        log.info("Creating wallet for userId: {}", wallet.getUserId());
         em.persist(wallet);
         em.flush();
         log.info("Wallet created with ID: {}", wallet.getWalletId());
@@ -121,6 +121,15 @@ public class WalletRepository {
             return Optional.empty();
         }
     }
+
+    public boolean existsByUserId(String userId) {
+        Long count = em.createQuery("SELECT COUNT(w) FROM Wallet w WHERE w.userId = :userId", Long.class)
+                .setParameter("userId", userId)
+                .getSingleResult();
+        return count > 0;
+    }
+
+
 
 
 }
