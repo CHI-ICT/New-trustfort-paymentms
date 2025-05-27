@@ -10,7 +10,6 @@ import com.chh.trustfort.payment.constant.ApiPath;
 import com.chh.trustfort.payment.dto.UsersData;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.LedgerEntry;
-import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.payload.*;
 import com.chh.trustfort.payment.security.AesService;
 import com.chh.trustfort.payment.service.WalletService;
