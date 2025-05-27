@@ -64,7 +64,7 @@ public enum Role {
     COA_BASE("C_B"),
     CREATE("C"),
     GET_ALL("G_A"),
-    DOUBLE_ENTRY("D_E");
+    DOUBLE_ENTRY("D_E"),
     MULTI_CURRENCY_RECEIPTS("M_R"),
     DEBTOR_REPORT("D_R"),
     DEBT_AGING_SUMMARY("D_A_S"),

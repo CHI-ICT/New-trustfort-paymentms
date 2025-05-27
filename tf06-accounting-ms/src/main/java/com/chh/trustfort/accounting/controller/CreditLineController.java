@@ -3,6 +3,7 @@ package com.chh.trustfort.accounting.controller;
 import com.chh.trustfort.accounting.dto.CreditLineResponseDto;
 import com.chh.trustfort.accounting.payload.CreditLineRequestDto;
 import com.chh.trustfort.accounting.service.CreditLineService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,7 @@ public class CreditLineController {
 
     private final CreditLineService service;
 
+    @Autowired
     public CreditLineController(CreditLineService service) {
         this.service = service;
     }

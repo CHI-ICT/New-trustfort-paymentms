@@ -1,8 +1,6 @@
 package com.chh.trustfort.accounting.service;
 
-import com.chh.trustfort.accounting.enums.CreditStatus;
 import com.chh.trustfort.accounting.model.CreditLine;
-import com.chh.trustfort.accounting.repository.CreditLineRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
