@@ -31,8 +31,8 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
     @Query("SELECT j FROM JournalEntry j WHERE j.account.classification = :classification " +
             "AND j.transactionDate BETWEEN :startDate AND :endDate")
     List<JournalEntry> findEquityEntriesBetweenDates(
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
             @Param("classification") AccountClassification classification
     );
 

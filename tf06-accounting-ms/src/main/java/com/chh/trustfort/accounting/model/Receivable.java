@@ -1,5 +1,6 @@
 package com.chh.trustfort.accounting.model;
 
+import com.chh.trustfort.accounting.enums.MatchingStatus;
 import com.chh.trustfort.accounting.enums.ReceivableStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -30,7 +31,9 @@ public class Receivable {
 
     private String customerName;
 
-    private String customerEmail;
+    @Column(name = "payer_email")
+    private String payerEmail;
+
 
     private String customerAccount;
 
@@ -39,21 +42,21 @@ public class Receivable {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    private BigDecimal balance;
-
     private BigDecimal amountPaid = BigDecimal.ZERO;
 
     private String currency;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dueDate;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate paymentDate;
 
     @Enumerated(EnumType.STRING)
     private ReceivableStatus status;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private String createdBy;
@@ -63,5 +66,22 @@ public class Receivable {
         if (amountPaid == null) return amount;
         return amount.subtract(amountPaid).max(BigDecimal.ZERO);
     }
+
+    @Column
+    private BigDecimal matchedAmount = BigDecimal.ZERO;
+
+    @Column
+    private BigDecimal balance;
+
+    @Enumerated(EnumType.STRING)
+    private MatchingStatus matchingStatus = MatchingStatus.UNMATCHED;
+
+    // In Receivable.java
+    @ManyToOne
+    @JoinColumn(name = "debit_note_id")
+    private DebitNote debitNote;
+
+
+
 
 }

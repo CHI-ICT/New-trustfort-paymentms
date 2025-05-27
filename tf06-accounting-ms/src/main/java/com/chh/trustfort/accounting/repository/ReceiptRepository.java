@@ -15,4 +15,11 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
     // ReceiptRepository.java
     List<Receipt> findByPaymentReference(String reference);
 
+    List<Receipt> findByPayerEmailAndStatus(String payerEmail, ReceiptStatus status);
+
+    List<Receipt> findByBusinessUnitAndStatus(String businessUnit, ReceiptStatus status);
+
+    List<Receipt> findByPaymentReferenceAndStatus(String reference, ReceiptStatus status);
+
+
 }

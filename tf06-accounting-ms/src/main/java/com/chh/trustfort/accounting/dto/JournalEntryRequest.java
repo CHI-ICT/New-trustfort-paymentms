@@ -1,6 +1,7 @@
 package com.chh.trustfort.accounting.dto;
 
 import com.chh.trustfort.accounting.enums.TransactionType;
+import com.chh.trustfort.accounting.model.ChartOfAccount;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -20,4 +21,5 @@ public class JournalEntryRequest {
     private String reference;
     private String department;
     private String businessUnit;
+    private ChartOfAccount chartOfAccount;
 }

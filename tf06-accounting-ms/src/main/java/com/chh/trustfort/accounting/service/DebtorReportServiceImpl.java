@@ -26,7 +26,7 @@ public class DebtorReportServiceImpl implements DebtorReportService {
         return overdueReceivables.stream()
                 .map(receivable -> DebtorReportRow.builder()
                         .customerName(receivable.getCustomerName())
-                        .customerEmail(receivable.getCustomerEmail())
+                        .payerEmail(receivable.getPayerEmail())
                         .totalAmount(receivable.getAmount())
                         .outstandingAmount(receivable.getBalance())
                         .dueDate(LocalDate.from(receivable.getDueDate()))

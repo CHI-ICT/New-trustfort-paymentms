@@ -24,8 +24,10 @@ public class JournalEntryService {
 
     /**
      * Create a single journal entry (used mostly for test/manual postings).
+     *
+     * @return
      */
-    public void createJournalEntry(JournalEntryRequest request) {
+    public JournalEntry createJournalEntry(JournalEntryRequest request) {
         ChartOfAccount account = chartOfAccountRepository.findByCode(request.getAccountCode())
                 .orElseThrow(() -> new RuntimeException("Account not found: " + request.getAccountCode()));
 
@@ -47,6 +49,7 @@ public class JournalEntryService {
 
         log.info("✅ Single Journal Entry created: [{}] - {} {}",
                 request.getTransactionType(), request.getAccountCode(), request.getAmount());
+        return entry;
     }
 
     /**

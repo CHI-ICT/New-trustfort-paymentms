@@ -5,6 +5,7 @@
  */
 package com.chh.trustfort.accounting.component;
 
+
 /**
  *
  * @author Daniel Ofoleta
@@ -64,7 +65,7 @@ public enum Role {
     COA_BASE("C_B"),
     CREATE("C"),
     GET_ALL("G_A"),
-    DOUBLE_ENTRY("D_E");
+    DOUBLE_ENTRY("D_E"),
     MULTI_CURRENCY_RECEIPTS("M_R"),
     DEBTOR_REPORT("D_R"),
     DEBT_AGING_SUMMARY("D_A_S"),
@@ -74,7 +75,14 @@ public enum Role {
     RESOLVE_DISPUTE("RS_D"),
     GET_DISPUTES("G_D"),
     MOVE_PAYMENT("M_P"),
-    GET_RECONCILIATION("G_R");
+    GET_RECONCILIATION("G_R"),
+    MATCHER("M_T"),
+    CREATE_CREDIT_NOTE("C_C_N"),
+    CREATE_DEBIT_NOTE("C_D_N"),
+    SUBMIT_INVOICE("S_I"),
+    APPROVE_INVOICE("A_I"),
+    SCHEDULE_PAYMENTS("S_P"),
+    DECRYPT("D");
 
 
     //    EXPORT_ALL_STATEMENTS("E_A_S"),

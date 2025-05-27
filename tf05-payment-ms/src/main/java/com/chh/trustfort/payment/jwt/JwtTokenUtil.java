@@ -165,6 +165,9 @@ public class JwtTokenUtil implements Serializable {
             if (!roles.contains(Role.TEST_EMAIL_NOTIFICATION.getValue())) {
                 roles.add(Role.TEST_EMAIL_NOTIFICATION.getValue());
             }
+            if (!roles.contains(Role.DECRYPT.getValue())) {
+                roles.add(Role.DECRYPT.getValue());
+            }
 
 
 
