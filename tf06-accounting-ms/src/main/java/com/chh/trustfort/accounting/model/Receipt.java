@@ -49,7 +49,7 @@ public class Receipt {
     @Enumerated(EnumType.STRING)
     private ReceiptStatus status;
 
-    private LocalDateTime createdAt;
+//    private LocalDateTime createdAt;
     private String createdBy;
 
     @Column(name = "currency_code", nullable = false, length = 5)
