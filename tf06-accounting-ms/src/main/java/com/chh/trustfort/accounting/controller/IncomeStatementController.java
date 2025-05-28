@@ -67,10 +67,16 @@ public class IncomeStatementController {
     }
 
 
-    @PostMapping(value = ApiPath.GET_INCOME_STATEMENT, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+//    @GetMapping(value = ApiPath.GET_INCOME_STATEMENT)
+//    public ResponseEntity<IncomeStatementResponse> getIncomeStatement(@RequestBody StatementFilterDTO filters) {
+//        return ResponseEntity.ok(incomeStatementService.generateIncomeStatement(filters));
+//    }
+
+    @PostMapping(value = ApiPath.GET_INCOME_STATEMENT)
     public ResponseEntity<IncomeStatementResponse> getIncomeStatement(@RequestBody StatementFilterDTO filters) {
         return ResponseEntity.ok(incomeStatementService.generateIncomeStatement(filters));
     }
+
 }
 
 

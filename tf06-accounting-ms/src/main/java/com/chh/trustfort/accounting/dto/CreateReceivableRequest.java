@@ -14,7 +14,7 @@ public class CreateReceivableRequest {
 
     @NotBlank(message = "Customer email is required")
     @Email(message = "Email must be valid")
-    private String customerEmail;
+    private String payerEmail;
 
     @NotBlank(message = "Customer account is required")
     private String customerAccount;
@@ -32,4 +32,6 @@ public class CreateReceivableRequest {
 
     @NotBlank(message = "Created by is required")
     private String createdBy;
+
+
 }

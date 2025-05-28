@@ -4,6 +4,7 @@ import com.chh.trustfort.accounting.constant.ApiPath;
 import com.chh.trustfort.accounting.dto.ApiResponse;
 import com.chh.trustfort.accounting.dto.DoubleEntryRequest;
 import com.chh.trustfort.accounting.dto.JournalEntryRequest;
+import com.chh.trustfort.accounting.model.JournalEntry;
 import com.chh.trustfort.accounting.service.JournalEntryService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @Slf4j
@@ -30,9 +34,21 @@ public class JournalEntryController {
     @PostMapping(value = ApiPath.JOURNAL_ENTRY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postJournalEntry(@RequestBody JournalEntryRequest request) {
         log.info("📥 Single journal entry request received: {}", request);
-        journalEntryService.createJournalEntry(request);
-        return ResponseEntity.ok(new ApiResponse("Journal entry recorded successfully."));
+        JournalEntry savedEntry = journalEntryService.createJournalEntry(request);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Journal entry recorded successfully.");
+        response.put("entryId", savedEntry.getId());
+        response.put("account", savedEntry.getAccount().getCode());
+        response.put("classification", savedEntry.getAccount().getClassification());
+        response.put("amount", savedEntry.getAmount());
+        response.put("transactionType", savedEntry.getTransactionType());
+        response.put("date", savedEntry.getTransactionDate().toString()); // ✅ formatted as "YYYY-MM-DD"
+        response.put("businessUnit", savedEntry.getBusinessUnit());
+
+        return ResponseEntity.ok(response);
     }
+
 
     @PostMapping(value = ApiPath.DOUBLE_ENTRY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postDoubleEntry(@RequestBody DoubleEntryRequest request) {

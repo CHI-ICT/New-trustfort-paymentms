@@ -67,4 +67,13 @@ public class ApiPath {
     public static final String GET_DISPUTES ="/disputes";
     public static final String MOVE_PAYMENT="/payment-movement";
     public static final String GET_RECONCILIATION ="/reconciliation/run";
+    public static final String MATCHER = "/auto-match";
+
+    public static final String CREATE_CREDIT_NOTE = "/credit-notes/create";
+    public static final String CREATE_DEBIT_NOTE = "/debit-notes/{oldNoteId}/replace";
+    public static final String SUBMIT_INVOICE = "/submit-invoice";
+    public static final String APPROVE_INVOICE ="/invoices/{invoiceId}/approve";
+    public static final String SCHEDULE_PAYMENTS = "/invoices/{invoiceId}/schedule";
+    public static final String DECRYPT = "/decrypt";
+
 }

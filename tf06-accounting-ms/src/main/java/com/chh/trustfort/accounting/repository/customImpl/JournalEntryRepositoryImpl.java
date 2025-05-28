@@ -33,8 +33,8 @@ public class JournalEntryRepositoryImpl implements JournalEntryRepositoryCustom 
         if (filter.getStartDate() != null && filter.getEndDate() != null) {
             predicates.add(cb.between(
                     root.get("transactionDate"),
-                    filter.getStartDate().atStartOfDay(),
-                    filter.getEndDate().atTime(23, 59)
+                    filter.getStartDate(), // ✅ Now correct
+                    filter.getEndDate()
             ));
         }
 

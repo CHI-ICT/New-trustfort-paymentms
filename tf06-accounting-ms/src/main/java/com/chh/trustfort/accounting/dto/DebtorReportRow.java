@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @Setter
 public class DebtorReportRow {
     private String customerName;
-    private String customerEmail;
+    private String payerEmail;
     private BigDecimal totalAmount;
     private BigDecimal outstandingAmount;
     private LocalDate dueDate;

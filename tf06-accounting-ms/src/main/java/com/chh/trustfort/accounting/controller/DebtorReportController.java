@@ -1,7 +1,9 @@
 package com.chh.trustfort.accounting.controller;
 
 import com.chh.trustfort.accounting.constant.ApiPath;
+import com.chh.trustfort.accounting.dto.DebtorReportDTO;
 import com.chh.trustfort.accounting.dto.DebtorReportRow;
+import com.chh.trustfort.accounting.service.DebtorAuditReportService;
 import com.chh.trustfort.accounting.service.DebtorReportService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +26,17 @@ public class DebtorReportController {
 
     private final DebtorReportService debtorReportService;
 
+    private final DebtorAuditReportService reportService;
+
+
+//    @GetMapping(value = ApiPath.DEBTOR_REPORT)
+//    public ResponseEntity<List<DebtorReportRow>> generateDebtorReport() {
+//        List<DebtorReportRow> report = debtorReportService.generateDebtorReport();
+//        return ResponseEntity.ok(report);
+//    }
 
     @GetMapping(value = ApiPath.DEBTOR_REPORT)
-    public ResponseEntity<List<DebtorReportRow>> generateDebtorReport() {
-        List<DebtorReportRow> report = debtorReportService.generateDebtorReport();
-        return ResponseEntity.ok(report);
+    public ResponseEntity<List<DebtorReportDTO>> getDebtorReport() {
+        return ResponseEntity.ok(reportService.generateDebtorReport());
     }
 }

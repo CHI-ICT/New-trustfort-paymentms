@@ -48,25 +48,30 @@ public class BalanceSheetService {
         BigDecimal equity = BigDecimal.ZERO;
 
         for (JournalEntry entry : entries) {
-            BigDecimal signedAmount = entry.getTransactionType() == TransactionType.DEBIT
-                    ? entry.getAmount()
-                    : entry.getAmount().negate();
+            BigDecimal signedAmount;
 
-            AccountClassification classification = entry.getAccount().getClassification();
-
-            switch (classification) {
+            switch (entry.getAccount().getClassification()) {
                 case ASSET:
+                    signedAmount = entry.getTransactionType() == TransactionType.DEBIT
+                            ? entry.getAmount()
+                            : entry.getAmount().negate();
                     assets = assets.add(signedAmount);
                     break;
+
                 case LIABILITY:
-                    liabilities = liabilities.add(signedAmount);
-                    break;
                 case EQUITY:
-                    equity = equity.add(signedAmount);
-                    break;
-                default:
+                    signedAmount = entry.getTransactionType() == TransactionType.CREDIT
+                            ? entry.getAmount()
+                            : entry.getAmount().negate();
+
+                    if (entry.getAccount().getClassification() == AccountClassification.LIABILITY) {
+                        liabilities = liabilities.add(signedAmount);
+                    } else {
+                        equity = equity.add(signedAmount);
+                    }
                     break;
             }
+
         }
 
         BalanceSheetResponse response = new BalanceSheetResponse();

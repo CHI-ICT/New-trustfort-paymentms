@@ -291,6 +291,27 @@ public class JwtTokenUtil implements Serializable {
             if (!roles.contains(Role.GET_RECONCILIATION.getValue())) {
                 roles.add(Role.GET_RECONCILIATION.getValue());
             }
+            if (!roles.contains(Role.MATCHER.getValue())) {
+                roles.add(Role.MATCHER.getValue());
+            }
+            if (!roles.contains(Role.CREATE_CREDIT_NOTE.getValue())) {
+                roles.add(Role.CREATE_CREDIT_NOTE.getValue());
+            }
+            if (!roles.contains(Role.CREATE_DEBIT_NOTE.getValue())) {
+                roles.add(Role.CREATE_DEBIT_NOTE.getValue());
+            }
+            if (!roles.contains(Role.SUBMIT_INVOICE.getValue())) {
+                roles.add(Role.SUBMIT_INVOICE.getValue());
+            }
+            if (!roles.contains(Role.APPROVE_INVOICE.getValue())) {
+                roles.add(Role.APPROVE_INVOICE.getValue());
+            }
+            if (!roles.contains(Role.SCHEDULE_PAYMENTS.getValue())) {
+                roles.add(Role.SCHEDULE_PAYMENTS.getValue());
+            }
+            if (!roles.contains(Role.DECRYPT.getValue())) {
+                roles.add(Role.DECRYPT.getValue());
+            }
 
 
 

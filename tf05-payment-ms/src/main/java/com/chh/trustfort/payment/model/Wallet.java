@@ -39,8 +39,11 @@ public class Wallet implements Serializable {
 //    private AppUser owner;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "users_id", nullable = false)
     private Users users;
+
+    @Column(name = "user_id", nullable = false, unique = true)
+    private String userId;
 
 
     @Column(name = "balance", nullable = false)
