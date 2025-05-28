@@ -13,5 +13,8 @@ public class AssetClassResponseDTO {
     private BigDecimal averageReturnRate;
     private String riskLevel;
     private String regulatorCode;
+    private BigDecimal baseInterestRate;
+    private BigDecimal dividendRate;
+    private BigDecimal roiMultiplier;
 }
 

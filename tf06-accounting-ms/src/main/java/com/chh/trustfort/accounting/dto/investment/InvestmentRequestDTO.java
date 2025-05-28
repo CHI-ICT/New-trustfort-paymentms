@@ -12,6 +12,7 @@ public class InvestmentRequestDTO {
     private BigDecimal amount;
     private InvestmentType type;
     private Long assetClassId;
+    private int tenorYears;
     private Long institutionId;
     private LocalDate startDate;
     private LocalDate maturityDate;

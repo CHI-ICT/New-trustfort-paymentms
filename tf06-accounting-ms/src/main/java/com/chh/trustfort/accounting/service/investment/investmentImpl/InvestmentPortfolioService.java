@@ -1,5 +1,6 @@
 package com.chh.trustfort.accounting.service.investment.investmentImpl;
 
+import com.chh.trustfort.accounting.dto.InvestmentCalculationResultDTO;
 import com.chh.trustfort.accounting.dto.investment.InvestmentRequestDTO;
 import com.chh.trustfort.accounting.enums.InsuranceProductType;
 import com.chh.trustfort.accounting.model.AssetClass;
@@ -11,11 +12,15 @@ import com.chh.trustfort.accounting.repository.InstitutionRepository;
 import com.chh.trustfort.accounting.repository.InvestmentRepository;
 import com.chh.trustfort.accounting.repository.InvestmentRuleRepository;
 import com.chh.trustfort.accounting.service.investment.InvestmentAuditService;
+import com.chh.trustfort.accounting.service.investment.InvestmentCalculationService;
 import com.chh.trustfort.accounting.service.investment.ReturnCalculationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,10 +28,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class InvestmentPortfolioService {
     @Autowired
     private InvestmentRuleRepository ruleRepo;
+    @Autowired
+    private InvestmentCalculationService calculationService;
     @Autowired
     private InvestmentRepository repo;
     @Autowired
@@ -38,6 +46,7 @@ public class InvestmentPortfolioService {
     @Autowired
     private InvestmentAuditService audit;
 
+    @Transactional
     public Investment createInvestment(InvestmentRequestDTO dto) {
         AssetClass asset = assetRepo.findById(dto.getAssetClassId())
                 .orElseThrow(() -> new IllegalArgumentException("Asset class not found"));
@@ -46,23 +55,41 @@ public class InvestmentPortfolioService {
 
         validateInsuranceRules(dto, asset);
 
-        BigDecimal expectedReturn = calculateTotalExpectedReturn(dto.getAmount(), asset.getAverageReturnRate(),
-                dto.getStartDate(), dto.getMaturityDate(), dto.isParticipating());
+        // Calculate tenor in partial years (e.g., 1.5 years)
+        long daysBetween = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getMaturityDate());
+        if (daysBetween <= 0) {
+            throw new IllegalArgumentException("Maturity date must be after start date.");
+        }
 
-        Investment inv = new Investment();
-        inv.setReference(generateInvestmentReference());
-        inv.setAmount(dto.getAmount());
-        inv.setAssetClass(asset);
-        inv.setInstitution(inst);
-        inv.setStartDate(dto.getStartDate());
-        inv.setMaturityDate(dto.getMaturityDate());
-        inv.setExpectedReturn(expectedReturn);
-        inv.setInsuranceProductType(dto.getInsuranceProductType());
-        inv.setParticipating(dto.isParticipating());
-//        inv.setCreatedBy(user);
-        inv.setCreatedAt(LocalDateTime.now());
+        BigDecimal tenorYears = BigDecimal.valueOf(daysBetween)
+                .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP);
 
-        return repo.save(inv);
+        // Use calculated tenorYears here
+        InvestmentCalculationResultDTO calc = calculationService.calculate(
+                dto.getAssetClassId(),
+                dto.getAmount(),
+                tenorYears
+        );
+
+        Investment investment = new Investment();
+        investment.setAmount(dto.getAmount());
+        investment.setAssetClass(asset);
+        investment.setStartDate(dto.getStartDate());
+        investment.setMaturityDate(dto.getMaturityDate());
+        investment.setType(dto.getType());
+        investment.setInstitution(inst);
+        investment.setInsuranceProductType(dto.getInsuranceProductType());
+        investment.setParticipating(dto.isParticipating());
+        investment.setRoi(calc.getRoi());
+        investment.setTenorYears(tenorYears);
+        investment.setInterest(calc.getInterest());
+        investment.setDividends(calc.getDividends());
+
+        log.info("Created Investment: ROI={}, Interest={}, Dividends={}, AssetClass={}, Tenor={} years",
+                calc.getRoi(), calc.getInterest(), calc.getDividends(),
+                asset.getName(), tenorYears);
+
+        return repo.save(investment);
     }
 
     public Investment rollOverInvestment(Long investmentId, String user, String role) throws AccessDeniedException {

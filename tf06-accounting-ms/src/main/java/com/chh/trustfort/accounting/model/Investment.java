@@ -44,5 +44,17 @@ public class Investment {
 
     private String createdBy;
     private LocalDateTime createdAt;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal roi;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal interest;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal dividends;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal tenorYears;
 }
 

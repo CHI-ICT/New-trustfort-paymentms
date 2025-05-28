@@ -17,6 +17,7 @@ public class AssetClassServiceImpl implements AssetClassService {
     @Autowired
     private AssetClassRepository assetClassRepository;
 
+    @Override
     public AssetClassResponseDTO createAssetClass(AssetClassRequestDTO dto) {
         if (assetClassRepository.existsByName(dto.getName())) {
             throw new IllegalArgumentException("Asset class with name '" + dto.getName() + "' already exists.");
@@ -28,6 +29,11 @@ public class AssetClassServiceImpl implements AssetClassService {
         assetClass.setRiskLevel(dto.getRiskLevel());
         assetClass.setRegulatorCode(dto.getRegulatorCode());
 
+        // ✅ Set new fields
+        assetClass.setBaseInterestRate(dto.getBaseInterestRate());
+        assetClass.setDividendRate(dto.getDividendRate());
+        assetClass.setRoiMultiplier(dto.getRoiMultiplier());
+
         AssetClass saved = assetClassRepository.save(assetClass);
 
         AssetClassResponseDTO response = new AssetClassResponseDTO();
@@ -37,8 +43,14 @@ public class AssetClassServiceImpl implements AssetClassService {
         response.setRiskLevel(saved.getRiskLevel());
         response.setRegulatorCode(saved.getRegulatorCode());
 
+        // ✅ Include new fields in response
+        response.setBaseInterestRate(saved.getBaseInterestRate());
+        response.setDividendRate(saved.getDividendRate());
+        response.setRoiMultiplier(saved.getRoiMultiplier());
+
         return response;
     }
+
 
     public List<AssetClass> getAllAssetClasses() {
         return assetClassRepository.findAll();
