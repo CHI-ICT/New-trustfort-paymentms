@@ -20,9 +20,8 @@ spring:
 trust:
     store: classpath:omnix.p12
     store.password: Password!23
-    
+
 eureka:
     client:
         registerWithEureka: true
-        fetchRegistry: true     
-        
+        fetchRegistry: true

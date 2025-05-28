@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -99,4 +100,29 @@ public class JournalEntryService {
         log.info("📘 Double entry posted: DR [{}] → CR [{}] | Amount: {} | Ref: {}",
                 debitAccountCode, creditAccountCode, amount, reference);
     }
+
+//    public void recordDisbursement(Long userId, Long creditLineId, BigDecimal amount) {
+//        String reference = "DISB-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+//
+//        JournalEntry debit = new JournalEntry();
+//        debit.setUserId(userId);
+//        debit.setCreditLineId(creditLineId);
+//        debit.setAccountCode("CREDIT_FUND_POOL");
+//        debit.setType("CREDIT");
+//        debit.setAmount(amount);
+//        debit.setReference(reference);
+//        debit.setTimestamp(LocalDateTime.now());
+//
+//        JournalEntry credit = new JournalEntry();
+//        credit.setUserId(userId);
+//        credit.setCreditLineId(creditLineId);
+//        credit.setAccountCode("WALLET");
+//        credit.setType("DEBIT");
+//        credit.setAmount(amount);
+//        credit.setReference(reference);
+//        credit.setTimestamp(LocalDateTime.now());
+//
+//        journalRepo.saveAll(List.of(debit, credit));
+//    }
+
 }

@@ -43,13 +43,13 @@ public class Receipt {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDate dueDate;
 
-
     @Enumerated(EnumType.STRING)
     private ReceiptSource source;
 
     @Enumerated(EnumType.STRING)
     private ReceiptStatus status;
 
+//    private LocalDateTime createdAt;
     private String createdBy;
 
     @Column(name = "currency_code", nullable = false, length = 5)
@@ -68,6 +68,7 @@ public class Receipt {
     private String department;
 
 
+    private String matchKey;
 }
 
 
