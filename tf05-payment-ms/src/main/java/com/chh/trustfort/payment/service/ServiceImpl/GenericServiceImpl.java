@@ -6,10 +6,7 @@ import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.jwt.JwtTokenUtil;
 import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.model.AppUserActivity;
-import com.chh.trustfort.payment.model.Users;
-import com.chh.trustfort.payment.model.Wallet;
-import com.chh.trustfort.payment.payload.CreateWalletRequestPayload;
-import com.chh.trustfort.payment.payload.CreateWalletResponsePayload;
+
 import com.chh.trustfort.payment.payload.OmniResponsePayload;
 import com.chh.trustfort.payment.payload.UserActivityPayload;
 import com.chh.trustfort.payment.repository.AppUserRepository;
@@ -85,37 +82,37 @@ public class GenericServiceImpl implements GenericService {
     @Value("${end.night}")
     private String endNight;
 
-    @Override
-    public String createWallet(@Valid CreateWalletRequestPayload requestPayload, Users users) {
-        log.info("Creating wallet for user ID: {}", users.getId());
-
-        CreateWalletResponsePayload oResponse = new CreateWalletResponsePayload();
-        oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
-        oResponse.setResponseMessage(messageSource.getMessage("failed", null, Locale.ENGLISH));
-
-        if (walletRepository.existsByOwner(users)) {
-            log.warn("Wallet already exists for user ID: {}", users.getId());
-            oResponse.setResponseMessage(messageSource.getMessage("wallet.already.exists", null, Locale.ENGLISH));
-            return aesService.encrypt(gson.toJson(oResponse), users.getEcred());
-        }
-
-        Wallet wallet = new Wallet();
-        wallet.setWalletId(walletRepository.generateWalletId());
-        wallet.setUsers(users);
-        wallet.setCurrency(requestPayload.getCurrency());
-        wallet.setBalance(BigDecimal.ZERO);
-        wallet.setStatus(WalletStatus.ACTIVE);
-        wallet = walletRepository.createWallet(wallet);
-
-        log.info("Wallet created successfully with ID: {}", wallet.getWalletId());
-
-        if (walletUtil.validateWalletId(wallet.getWalletId())) {
-            oResponse.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
-            oResponse.setResponseMessage(messageSource.getMessage("wallet.created.success", null, Locale.ENGLISH));
-        }
-
-        return aesService.encrypt(gson.toJson(oResponse), users.getEcred());
-    }
+//    @Override
+//    public String createWallet(@Valid CreateWalletRequestPayload requestPayload, Users users) {
+//        log.info("Creating wallet for user ID: {}", users.getId());
+//
+//        CreateWalletResponsePayload oResponse = new CreateWalletResponsePayload();
+//        oResponse.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+//        oResponse.setResponseMessage(messageSource.getMessage("failed", null, Locale.ENGLISH));
+//
+//        if (walletRepository.existsByOwner(users)) {
+//            log.warn("Wallet already exists for user ID: {}", users.getId());
+//            oResponse.setResponseMessage(messageSource.getMessage("wallet.already.exists", null, Locale.ENGLISH));
+//            return aesService.encrypt(gson.toJson(oResponse), users.getEcred());
+//        }
+//
+//        Wallet wallet = new Wallet();
+//        wallet.setWalletId(walletRepository.generateWalletId());
+//        wallet.setUsers(users);
+//        wallet.setCurrency(requestPayload.getCurrency());
+//        wallet.setBalance(BigDecimal.ZERO);
+//        wallet.setStatus(WalletStatus.ACTIVE);
+//        wallet = walletRepository.createWallet(wallet);
+//
+//        log.info("Wallet created successfully with ID: {}", wallet.getWalletId());
+//
+//        if (walletUtil.validateWalletId(wallet.getWalletId())) {
+//            oResponse.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+//            oResponse.setResponseMessage(messageSource.getMessage("wallet.created.success", null, Locale.ENGLISH));
+//        }
+//
+//        return aesService.encrypt(gson.toJson(oResponse), users.getEcred());
+//    }
 
 
 

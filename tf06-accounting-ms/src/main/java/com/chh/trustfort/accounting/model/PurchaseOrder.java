@@ -1,6 +1,7 @@
 // PurchaseOrder.java
 package com.chh.trustfort.accounting.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import javax.persistence.*;
@@ -31,5 +32,6 @@ public class PurchaseOrder {
 
     private String description;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate validUntil;
 }

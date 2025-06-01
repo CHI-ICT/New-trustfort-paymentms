@@ -76,4 +76,12 @@ public class ApiPath {
     public static final String SCHEDULE_PAYMENTS = "/invoices/{invoiceId}/schedule";
     public static final String DECRYPT = "/decrypt";
 
+    public static final String CREATE_PO = "/po/create";
+    public static final String ALL_PO = "/po/all";
+
+    public static final String CREATE_CONTRACT = "/contract/create";
+    public static final String ALL_CONTRACT = "/contract/all";
+    public static final String TEST_ALERTS = "/test-payable-alerts";
+    public static final String CREATE_INSTALLMENTS = "/installments/generate";
+
 }

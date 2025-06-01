@@ -1,8 +1,7 @@
 package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.model.AppUser;
-import com.chh.trustfort.payment.model.Users;
-import com.chh.trustfort.payment.payload.CreateWalletRequestPayload;
+
 import com.chh.trustfort.payment.payload.UserActivityPayload;
 
 /**
@@ -11,7 +10,7 @@ import com.chh.trustfort.payment.payload.UserActivityPayload;
  */
 public interface GenericService {
 
-    String createWallet(CreateWalletRequestPayload requestPayload, Users users);
+//    String createWallet(CreateWalletRequestPayload requestPayload, Users users);
 
     void createUserActivity(UserActivityPayload requestPayload, AppUser appUser);
 

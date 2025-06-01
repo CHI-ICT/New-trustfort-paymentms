@@ -70,9 +70,9 @@ public class PayableInvoiceServiceImpl implements PayableInvoiceService {
                 .build();
 
         // Validate against PO or Contract
-//        if (!invoiceValidationUtil.isInvoiceMatchingPOOrContract(invoice)) {
-//            throw new RuntimeException("Invoice does not match any existing PO or Contract.");
-//        }
+        if (!invoiceValidationUtil.isInvoiceMatchingPOOrContract(invoice)) {
+            throw new RuntimeException("Invoice does not match any existing PO or Contract.");
+        }
 
         // 🔧 Set missing or auto-generated fields
         invoice.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());

@@ -18,15 +18,37 @@ public class InvoiceValidationUtil {
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final ContractRepository contractRepository;
 
-    public boolean isInvoiceMatchingPOOrContract(PayableInvoice invoice) {
-        Optional<PurchaseOrder> matchedPO = purchaseOrderRepository.findByPoNumberAndVendorEmail(
-                invoice.getReference(), invoice.getVendorEmail()
-        );
+//    public boolean isInvoiceMatchingPOOrContract(PayableInvoice invoice) {
+//        Optional<PurchaseOrder> matchedPO = purchaseOrderRepository.findByPoNumberAndVendorEmail(
+//                invoice.getReference(), invoice.getVendorEmail()
+//        );
+//
+//        Optional<Contract> matchedContract = contractRepository.findByVendorEmailAndCeilingAmount(
+//                invoice.getVendorEmail(), invoice.getAmount()
+//        );
+//
+//        return matchedPO.isPresent() || matchedContract.isPresent();
+//    }
+public boolean isInvoiceMatchingPOOrContract(PayableInvoice invoice) {
+    // 1. Match Purchase Order by Vendor Email and Description
+    Optional<PurchaseOrder> matchedPO = purchaseOrderRepository
+            .findByVendorEmailAndDescriptionAndAmount(
+                    invoice.getVendorEmail(),
+                    invoice.getDescription(),
+                    invoice.getAmount()
+            );
 
-        Optional<Contract> matchedContract = contractRepository.findByVendorEmailAndCeilingAmount(
-                invoice.getVendorEmail(), invoice.getAmount()
-        );
+    // 2. Match Contract by Vendor Email and ensure invoice amount is within ceiling and date range
+    Optional<Contract> matchedContract = contractRepository
+            .findByVendorEmail(invoice.getVendorEmail())
+            .stream()
+            .filter(c -> c.getCeilingAmount().compareTo(invoice.getAmount()) >= 0 &&
+                    invoice.getInvoiceDate() != null &&
+                    (invoice.getInvoiceDate().isAfter(c.getStartDate()) || invoice.getInvoiceDate().isEqual(c.getStartDate())) &&
+                    (invoice.getInvoiceDate().isBefore(c.getEndDate()) || invoice.getInvoiceDate().isEqual(c.getEndDate())))
+            .findFirst();
 
-        return matchedPO.isPresent() || matchedContract.isPresent();
-    }
+    return matchedPO.isPresent() || matchedContract.isPresent();
+}
+
 }
