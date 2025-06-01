@@ -82,7 +82,13 @@ public enum Role {
     SUBMIT_INVOICE("S_I"),
     APPROVE_INVOICE("A_I"),
     SCHEDULE_PAYMENTS("S_P"),
-    DECRYPT("D");
+    DECRYPT("D"),
+    CREATE_PO("C_P"),
+    ALL_PO("A_P"),
+    CREATE_CONTRACT("C_C"),
+    ALL_CONTRACT("A_C"),
+    TEST_ALERTS("T_A"),
+    CREATE_INSTALLMENTS("C_I");
 
 
     //    EXPORT_ALL_STATEMENTS("E_A_S"),
