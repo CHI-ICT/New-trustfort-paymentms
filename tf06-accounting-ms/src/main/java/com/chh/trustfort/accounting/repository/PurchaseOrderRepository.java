@@ -11,4 +11,11 @@ import java.util.Optional;
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Long> {
     Optional<PurchaseOrder> findByPoNumberAndVendorEmail(String poNumber, String vendorEmail);
+
+    boolean existsByPoNumber(String poNumber);
+
+    boolean existsByVendorEmailAndDescriptionAndAmount(String vendorEmail, String description, BigDecimal amount);
+
+    Optional<PurchaseOrder> findByVendorEmailAndDescriptionAndAmount(String vendorEmail, String description, BigDecimal amount);
+
 }

@@ -1,5 +1,5 @@
 server:
-    port: 8443
+    port: 8445
     ssl:
         key-store: classpath:omnix.p12
         key-store-type: PKCS12

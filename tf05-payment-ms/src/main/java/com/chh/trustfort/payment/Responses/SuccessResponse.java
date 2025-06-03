@@ -8,4 +8,5 @@ public class SuccessResponse {
     private String responseCode;
     private String responseMessage;
     private BigDecimal newBalance;
+    private String referenceCode;
 }
