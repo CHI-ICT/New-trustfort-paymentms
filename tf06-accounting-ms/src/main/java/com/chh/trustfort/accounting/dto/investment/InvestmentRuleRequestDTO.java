@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public class InvestmentRuleRequestDTO {
     public InsuranceProductType insuranceType;
     public Long assetClassId;
-    public Integer minTenorYears;
+    public Long minTenor;
     public BigDecimal maxAmount;
     public boolean allowHighRisk;
     public String createdBy;

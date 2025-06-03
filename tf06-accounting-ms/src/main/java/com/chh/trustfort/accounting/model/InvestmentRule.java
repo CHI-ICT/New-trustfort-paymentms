@@ -23,8 +23,8 @@ public class InvestmentRule {
     private boolean deleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "asset_class_id")
-    private AssetClass assetClass;
+    @JoinColumn(name = "investment_id")
+    private Investment investment;
 
     private Integer minTenorYears;
     private BigDecimal maxAmount;

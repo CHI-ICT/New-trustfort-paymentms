@@ -1,13 +1,11 @@
 package com.chh.trustfort.accounting.service.investment.investmentImpl;
 
-import com.chh.trustfort.accounting.model.Investment;
 import com.chh.trustfort.accounting.repository.InvestmentRepository;
 import com.chh.trustfort.accounting.service.investment.MaturityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Service
 public class MaturityServiceImpl implements MaturityService {
@@ -23,7 +21,7 @@ public class MaturityServiceImpl implements MaturityService {
         LocalDate today = LocalDate.now();
         LocalDate threshold = today.plusDays(7);
 
-        List<Investment> upcoming = investmentRepository.findByMaturityDateBetweenAndMaturityNotifiedFalse(today, threshold);
+//        List<Investment> upcoming = investmentRepository.findByMaturityDateBetweenAndMaturityNotifiedFalse(today, threshold);
 
 //        for (Investment inv : upcoming) {
 //            // Send maturity alert email

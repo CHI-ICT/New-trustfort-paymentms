@@ -1,7 +1,6 @@
 package com.chh.trustfort.accounting.service.investment.investmentImpl;
 
 import com.chh.trustfort.accounting.dto.ReportExportRequestDTO;
-import com.chh.trustfort.accounting.model.Investment;
 import com.chh.trustfort.accounting.model.InvestmentReportExportLog;
 import com.chh.trustfort.accounting.repository.InvestmentReportExportLogRepository;
 import com.chh.trustfort.accounting.repository.InvestmentRepository;
@@ -24,17 +23,18 @@ public class InvestmentReportServiceImpl implements InvestmentReportService {
 
     @Override
     public byte[] exportReport(ReportExportRequestDTO dto) {
-        List<Investment> investments = investmentRepository.findAll();
-
-        StringBuilder builder = new StringBuilder();
-        builder.append("Reference,Amount,ExpectedReturn,MaturityDate");
-        for (Investment inv : investments) {
-            builder.append(inv.getReference()).append(",")
-                    .append(inv.getAmount()).append(",")
-                    .append(inv.getExpectedReturn()).append(",")
-                    .append(inv.getMaturityDate()).append(" ");
-        }
-        return builder.toString().getBytes(StandardCharsets.UTF_8);
+//        List<Investment> investments = investmentRepository.findAll();
+//
+//        StringBuilder builder = new StringBuilder();
+//        builder.append("Reference,Amount,ExpectedReturn,MaturityDate");
+//        for (Investment inv : investments) {
+//            builder.append(inv.getReference()).append(",")
+//                    .append(inv.getAmount()).append(",")
+//                    .append(inv.getExpectedReturn()).append(",")
+//                    .append(inv.getMaturityDate()).append(" ");
+//        }
+//        return builder.toString().getBytes(StandardCharsets.UTF_8);
+        return new byte[0];
     }
 
     @Override

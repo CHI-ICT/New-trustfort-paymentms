@@ -1,8 +1,8 @@
 package com.chh.trustfort.accounting.service.investment.investmentImpl;
 
 import com.chh.trustfort.accounting.dto.InvestmentCalculationResultDTO;
-import com.chh.trustfort.accounting.model.AssetClass;
-import com.chh.trustfort.accounting.repository.AssetClassRepository;
+import com.chh.trustfort.accounting.enums.InvestmentSubtype;
+import com.chh.trustfort.accounting.model.Investment;
 import com.chh.trustfort.accounting.service.investment.InvestmentCalculationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,43 +10,43 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import static com.chh.trustfort.accounting.enums.InvestmentSubtype.NAIRA;
+
 @Service
 public class InvestmentCalculationServiceImpl implements InvestmentCalculationService {
-
     @Autowired
-    private AssetClassRepository assetClassRepository;
+    private LiveRateService liveRateService;
 
-    @Override
-    public InvestmentCalculationResultDTO calculate(Long assetClassId, BigDecimal amount, BigDecimal tenorYears) {
-        AssetClass asset = assetClassRepository.findById(assetClassId)
-                .orElseThrow(() -> new IllegalArgumentException("Asset class not found"));
 
-        BigDecimal baseInterestRate = asset.getBaseInterestRate(); // e.g., 0.10 = 10%
-        BigDecimal dividendRate = asset.getDividendRate();         // e.g., 0.02 = 2%
-        BigDecimal roiMultiplier = asset.getRoiMultiplier();       // e.g., 1.5
+    public InvestmentCalculationResultDTO calculate(InvestmentSubtype subtype, BigDecimal amount, double tenorYears) {
+        BigDecimal rate = getRateBySubtype(subtype);
+        BigDecimal interest = amount.multiply(rate).multiply(BigDecimal.valueOf(tenorYears)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal expectedReturn = amount.add(interest);
 
-        // ROI = amount * baseRate * roiMultiplier * tenorYears
-        BigDecimal roi = amount.multiply(baseInterestRate)
-                .multiply(roiMultiplier)
-                .multiply(tenorYears)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // Interest = amount * baseRate * tenorYears
-        BigDecimal interest = amount.multiply(baseInterestRate)
-                .multiply(tenorYears)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // Dividends = amount * dividendRate * tenorYears
-        BigDecimal dividends = amount.multiply(dividendRate)
-                .multiply(tenorYears)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        InvestmentCalculationResultDTO result = new InvestmentCalculationResultDTO();
-        result.setRoi(roi);
-        result.setInterest(interest);
-        result.setDividends(dividends);
-
-        return result;
+        return new InvestmentCalculationResultDTO(
+                rate.setScale(4, RoundingMode.HALF_UP),
+                interest,
+                BigDecimal.ZERO,
+                expectedReturn
+        );
     }
 
+    private BigDecimal getRateBySubtype(InvestmentSubtype subtype) {
+        switch (subtype) {
+            case DOLLAR:
+                return liveRateService.getRate("USD");
+            case NAIRA:
+                return BigDecimal.ONE;
+            case EUROBOND:
+                return new BigDecimal("0.07625");
+            case CORPORATE_AND_GOVT_BOND:
+                return new BigDecimal("0.17046");
+            case QUOTED_EQUITY:
+            case UNQUOTED_EQUITY:
+                return new BigDecimal("0.15");
+            default:
+                throw new IllegalArgumentException("Unsupported subtype: " + subtype);
+        }
+    }
 }
+

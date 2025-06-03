@@ -2,175 +2,116 @@ package com.chh.trustfort.accounting.service.investment.investmentImpl;
 
 import com.chh.trustfort.accounting.dto.InvestmentCalculationResultDTO;
 import com.chh.trustfort.accounting.dto.investment.InvestmentRequestDTO;
-import com.chh.trustfort.accounting.enums.InsuranceProductType;
-import com.chh.trustfort.accounting.model.AssetClass;
-import com.chh.trustfort.accounting.model.Institution;
-import com.chh.trustfort.accounting.model.Investment;
-import com.chh.trustfort.accounting.model.InvestmentRule;
-import com.chh.trustfort.accounting.repository.AssetClassRepository;
-import com.chh.trustfort.accounting.repository.InstitutionRepository;
-import com.chh.trustfort.accounting.repository.InvestmentRepository;
-import com.chh.trustfort.accounting.repository.InvestmentRuleRepository;
-import com.chh.trustfort.accounting.service.investment.InvestmentAuditService;
+import com.chh.trustfort.accounting.dto.investment.InvestmentResponseDTO;
+import com.chh.trustfort.accounting.model.*;
+import com.chh.trustfort.accounting.repository.*;
 import com.chh.trustfort.accounting.service.investment.InvestmentCalculationService;
-import com.chh.trustfort.accounting.service.investment.ReturnCalculationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.nio.file.AccessDeniedException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
 @Service
 public class InvestmentPortfolioService {
-    @Autowired
-    private InvestmentRuleRepository ruleRepo;
-    @Autowired
-    private InvestmentCalculationService calculationService;
-    @Autowired
-    private InvestmentRepository repo;
-    @Autowired
-    private AssetClassRepository assetRepo;
-    @Autowired
-    private InstitutionRepository instRepo;
-    @Autowired
-    private ReturnCalculationService returnCalc;
-    @Autowired
-    private InvestmentAuditService audit;
+    @Autowired private InstitutionRepository institutionRepository;
+    @Autowired private InvestmentCalculationService calculationService;
+    @Autowired private InvestmentFactory investmentFactory;
+    @Autowired private InvestmentRepository investmentRepository;
+    @Autowired private MoneyMarketCalculationService moneyMarketCalcService;
+    @Autowired private EurobondCalculationService eurobondCalcService;
+    @Autowired private MoneyMarketInvestmentRepository moneyMarketRepo;
+    @Autowired private EurobondInvestmentRepository eurobondRepo;
+    @Autowired private CorporateAndGovtBondInvestmentRepository corporateBondRepo;
+    @Autowired private QuotedEquityInvestmentRepository quotedEquityRepo;
+    @Autowired private UnquotedEquityInvestmentRepository unquotedEquityRepo;
+    @Autowired private CorporateAndGovtBondCalculationService corporateAndGovtBondCalculationService;
+    @Autowired private CommercialPaperCalculationService commercialPaperCalculationService;
+    @Autowired private TreasuryBillCalculationService treasuryBillCalculationService;
 
     @Transactional
-    public Investment createInvestment(InvestmentRequestDTO dto) {
-        AssetClass asset = assetRepo.findById(dto.getAssetClassId())
-                .orElseThrow(() -> new IllegalArgumentException("Asset class not found"));
-        Institution inst = instRepo.findById(dto.getInstitutionId())
+    public InvestmentResponseDTO createInvestment(InvestmentRequestDTO dto) {
+        long days = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getMaturityDate());
+        if (days <= 0) throw new IllegalArgumentException("Maturity date must be after start date.");
+
+        Institution institution = institutionRepository.findById(dto.getInstitutionId())
                 .orElseThrow(() -> new IllegalArgumentException("Institution not found"));
 
-        validateInsuranceRules(dto, asset);
+        InvestmentCalculationResultDTO calc = calculationService.calculate(dto.getSubtype(), dto.getAmount(), dto.getTenor());
 
-        // Calculate tenor in partial years (e.g., 1.5 years)
-        long daysBetween = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getMaturityDate());
-        if (daysBetween <= 0) {
-            throw new IllegalArgumentException("Maturity date must be after start date.");
+        InvestmentVehicle vehicle = investmentFactory.create(dto, institution, calc, dto.getTenor());
+        InvestmentVehicle savedVehicle = persistByType(vehicle);
+
+        switch (vehicle.getInvestmentType()) {
+            case MONEY_MARKET:
+                moneyMarketCalcService.calculate((MoneyMarketInvestment) vehicle, BigDecimal.ZERO);
+                break;
+            case FIXED_INCOME:
+                switch (vehicle.getSubtype()) {
+                    case EUROBOND:
+                        eurobondCalcService.calculate((EurobondInvestment) vehicle);
+                        break;
+                    case CORPORATE_AND_GOVT_BOND:
+                        corporateAndGovtBondCalculationService.calculate((CorporateAndGovtBondInvestment) vehicle);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported fixed income subtype: " + vehicle.getSubtype());
+                }
+                break;
+            case COMMERCIAL_PAPER:
+                commercialPaperCalculationService.calculate((CommercialPaperInvestment) vehicle);
+                break;
+            case TREASURY_BILL:
+                treasuryBillCalculationService.calculate((TreasuryBillInvestment) vehicle);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported investment type: " + vehicle.getInvestmentType());
         }
 
-        BigDecimal tenorYears = BigDecimal.valueOf(daysBetween)
-                .divide(BigDecimal.valueOf(365), 2, RoundingMode.HALF_UP);
+        Investment investment = Investment.builder()
+                .reference("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .asset(savedVehicle)
+                .amount(dto.getAmount())
+                .startDate(dto.getStartDate())
+                .maturityDate(dto.getMaturityDate())
+                .createdAt(LocalDateTime.now())
+                .createdBy("system")
+                .isParticipating(dto.isParticipating())
+                .insuranceProductType(dto.getInsuranceProductType())
+                .roi(calc.getRoi())
+                .build();
 
-        // Use calculated tenorYears here
-        InvestmentCalculationResultDTO calc = calculationService.calculate(
-                dto.getAssetClassId(),
-                dto.getAmount(),
-                tenorYears
-        );
+        Investment saved = investmentRepository.save(investment);
 
-        Investment investment = new Investment();
-        investment.setAmount(dto.getAmount());
-        investment.setAssetClass(asset);
-        investment.setStartDate(dto.getStartDate());
-        investment.setMaturityDate(dto.getMaturityDate());
-        investment.setType(dto.getType());
-        investment.setInstitution(inst);
-        investment.setInsuranceProductType(dto.getInsuranceProductType());
-        investment.setParticipating(dto.isParticipating());
-        investment.setRoi(calc.getRoi());
-        investment.setTenorYears(tenorYears);
-        investment.setInterest(calc.getInterest());
-        investment.setDividends(calc.getDividends());
-
-        log.info("Created Investment: ROI={}, Interest={}, Dividends={}, AssetClass={}, Tenor={} years",
-                calc.getRoi(), calc.getInterest(), calc.getDividends(),
-                asset.getName(), tenorYears);
-
-        return repo.save(investment);
+        return InvestmentResponseDTO.builder()
+                .id(saved.getId())
+                .reference(saved.getReference())
+                .amount(saved.getAmount())
+                .currency(dto.getCurrency())
+                .type(dto.getType())
+                .subtype(dto.getSubtype())
+                .roi(saved.getRoi())
+                .startDate(saved.getStartDate())
+                .maturityDate(saved.getMaturityDate())
+                .expectedReturn(calc.getExpectedReturn())
+                .institutionName(institution.getName())
+                .status("CREATED")
+                .build();
     }
 
-    public Investment rollOverInvestment(Long investmentId, String user, String role) throws AccessDeniedException {
-        if (!"INVESTMENT_EXECUTIVE".equals(role)) {
-            throw new AccessDeniedException("Unauthorized: Role '" + role + "' is not permitted to roll over investments.");
-        }
 
-        Investment original = repo.findById(investmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Original investment not found"));
-
-        if (!original.getMaturityDate().isBefore(LocalDate.now())) {
-            throw new IllegalStateException("Investment has not matured yet.");
-        }
-
-        Investment newInv = new Investment();
-        newInv.setReference(generateInvestmentReference());
-        newInv.setAmount(original.getAmount());
-        newInv.setAssetClass(original.getAssetClass());
-        newInv.setInstitution(original.getInstitution());
-        newInv.setStartDate(LocalDate.now());
-        newInv.setMaturityDate(LocalDate.now().plusYears(1));
-        newInv.setExpectedReturn(returnCalc.calculateExpectedReturn(
-                newInv.getAmount(),
-                newInv.getAssetClass().getAverageReturnRate(),
-                newInv.getStartDate(),
-                newInv.getMaturityDate()));
-        newInv.setInsuranceProductType(original.getInsuranceProductType());
-        newInv.setParticipating(original.isParticipating());
-        newInv.setCreatedBy(user);
-        newInv.setCreatedAt(LocalDateTime.now());
-
-        original.setRolledOver(true);
-        repo.save(original);
-
-        Investment saved = repo.save(newInv);
-        audit.logAction(original.getId(), "ROLLED_OVER", user, "New Investment Reference: " + saved.getReference());
-
-        return saved;
+    private InvestmentVehicle persistByType(InvestmentVehicle investment) {
+        if (investment instanceof MoneyMarketInvestment) return moneyMarketRepo.save((MoneyMarketInvestment) investment);
+        if (investment instanceof EurobondInvestment) return eurobondRepo.save((EurobondInvestment) investment);
+        if (investment instanceof CorporateAndGovtBondInvestment) return corporateBondRepo.save((CorporateAndGovtBondInvestment) investment);
+        if (investment instanceof QuotedEquityInvestment) return quotedEquityRepo.save((QuotedEquityInvestment) investment);
+        if (investment instanceof UnQuotedEquityInvestment) return unquotedEquityRepo.save((UnQuotedEquityInvestment) investment);
+        throw new IllegalArgumentException("Unsupported investment vehicle type");
     }
 
-    private void validateInsuranceRules(InvestmentRequestDTO dto, AssetClass asset) {
-        if (dto.getInsuranceProductType() == InsuranceProductType.LIFE
-                && asset.getRiskLevel().equalsIgnoreCase("High")) {
-            throw new IllegalArgumentException("LIFE insurance cannot invest in high-risk assets.");
-        }
-
-        long tenorYears = ChronoUnit.YEARS.between(dto.getStartDate(), dto.getMaturityDate());
-        if (dto.getInsuranceProductType() == InsuranceProductType.LIFE && tenorYears < 10) {
-            throw new IllegalArgumentException("Tenor must be at least 10 years for LIFE insurance.");
-        }
-    }
-
-    public void validateInvestmentRequest(InvestmentRequestDTO dto, AssetClass asset) {
-        List<InvestmentRule> rules = ruleRepo.findApplicable(dto.getInsuranceProductType(), asset.getId());
-
-        for (InvestmentRule rule : rules) {
-            if (!rule.isAllowHighRisk() && asset.getRiskLevel().equalsIgnoreCase("High")) {
-                throw new IllegalArgumentException("High-risk not allowed for " + dto.getInsuranceProductType());
-            }
-
-            long tenor = ChronoUnit.YEARS.between(dto.getStartDate(), dto.getMaturityDate());
-            if (rule.getMinTenorYears() != null && tenor < rule.getMinTenorYears()) {
-                throw new IllegalArgumentException("Minimum tenor required: " + rule.getMinTenorYears());
-            }
-
-            if (rule.getMaxAmount() != null && dto.getAmount().compareTo(rule.getMaxAmount()) > 0) {
-                throw new IllegalArgumentException("Amount exceeds max for " + asset.getName());
-            }
-        }
-    }
-
-    private BigDecimal calculateTotalExpectedReturn(BigDecimal amount, BigDecimal annualRate,
-                                                    LocalDate start, LocalDate end, boolean isParticipating) {
-        BigDecimal baseReturn = returnCalc.calculateExpectedReturn(amount, annualRate, start, end);
-        if (isParticipating) {
-            return baseReturn.add(baseReturn.multiply(BigDecimal.valueOf(0.05))); // 5% bonus for participation
-        }
-        return baseReturn;
-    }
-
-    private String generateInvestmentReference() {
-        return "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-    }
 }

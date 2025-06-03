@@ -1,17 +1,17 @@
-package com.chh.trustfort.accounting.dto;
+package com.chh.trustfort.accounting.dto.investment;
 
 import lombok.*;
-import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
-@RequiredArgsConstructor
+@Builder
 public class InvestmentCalculationResultDTO {
-    private BigDecimal roi;
     private BigDecimal interest;
-    private BigDecimal dividends;
     private BigDecimal expectedReturn;
+    private BigDecimal dividends;
+    private BigDecimal roi;
 }
