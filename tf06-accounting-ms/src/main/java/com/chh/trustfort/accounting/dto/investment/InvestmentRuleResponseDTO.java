@@ -12,7 +12,7 @@ public class InvestmentRuleResponseDTO {
     public Long id;
     public InsuranceProductType insuranceType;
     public String assetClassName;
-    public Integer minTenorYears;
+    public Long minTenor;
     public BigDecimal maxAmount;
     public boolean allowHighRisk;
     public String createdBy;

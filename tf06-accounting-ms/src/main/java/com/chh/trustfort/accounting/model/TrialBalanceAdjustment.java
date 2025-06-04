@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Data
-@Table(name = "trial_balance-adjustment")
+@Table(name = "trial_balance_adjustment")
 public class TrialBalanceAdjustment {
     @Id
     @GeneratedValue

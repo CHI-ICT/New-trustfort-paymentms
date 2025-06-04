@@ -49,7 +49,6 @@ public class CreditLineServiceImpl implements CreditLineService {
                 .map(this::mapToDto)
                 .orElseThrow(() -> new RuntimeException("Credit line not found"));
     }
-
     @Override
     public CreditLineResponseDto update(Long id, CreditLineRequestDto dto) {
         CreditLine credit = creditLineRepo.findById(id)

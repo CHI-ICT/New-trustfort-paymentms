@@ -1,5 +1,9 @@
 package com.chh.trustfort.accounting.enums;
 
 public enum InvestmentType {
-    FIXED_DEPOSIT, TREASURY_BILL, MUTUAL_FUND, BOND, STOCK
+    MONEY_MARKET,
+    CAPITAL_MARKET,
+    FIXED_INCOME,
+    COMMERCIAL_PAPER,
+    TREASURY_BILL
 }

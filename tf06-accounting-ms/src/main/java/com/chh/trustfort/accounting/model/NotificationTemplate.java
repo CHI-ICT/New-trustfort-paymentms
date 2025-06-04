@@ -38,8 +38,9 @@ public class NotificationTemplate implements Serializable {
 
     @Column(name = "created_at", nullable = false, length = 30)
     private LocalDateTime createdAt = LocalDateTime.now();
-    
-    @Column(name = "updated_at", nullable = false, length = 30)
-    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Column(name = "updated_at", nullable = false, length = 30, columnDefinition = "timestamp default now()")
+    private LocalDateTime updatedAt;
+
     
 }

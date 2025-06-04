@@ -72,16 +72,16 @@ public class AppConfig extends WebMvcConfigurerAdapter {
     }
 
 
-//    @Bean
-//    @Primary
-//    public DataSource dataSource() {
-//        HikariDataSource dataSource = new HikariDataSource();
-//        dataSource.setJdbcUrl("jdbc:postgresql://localhost:5433/Accounting-ms");
-//        dataSource.setUsername("postgres");
-//        dataSource.setPassword("");
-//        dataSource.setDriverClassName("org.postgresql.Driver");
-//        return dataSource;
-//    }
+    @Bean
+    @Primary
+    public DataSource dataSource() {
+        HikariDataSource dataSource = new HikariDataSource();
+        dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/Accounting-ms");
+        dataSource.setUsername("postgres");
+        dataSource.setPassword("root");
+        dataSource.setDriverClassName("org.postgresql.Driver");
+        return dataSource;
+    }
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(@Autowired DataSource dataSource) {
@@ -102,37 +102,37 @@ public class AppConfig extends WebMvcConfigurerAdapter {
 
 
 
-    @Bean
-    public DataSource multiTenantDataSource() {
-        Map<Object, Object> dataSources = new HashMap<>();
-
-        // Configure default tenants (this can be fetched dynamically from a registry)
-        dataSources.put(env.getProperty("default-tenant.id"),com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-                env.getProperty("default-tenant.url"), env.getProperty("default-tenant.db-user"), env.getProperty("default-tenant.db-pass")));
-        dataSources.put(env.getProperty("chi-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-                env.getProperty("chi-tenant.url"), env.getProperty("chi-tenant.db-user"), env.getProperty("chi-tenant.db-pass")));
-        dataSources.put(env.getProperty("hmo-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-                env.getProperty("hmo-tenant.url"), env.getProperty("hmo-tenant.db-user"), env.getProperty("hmo-tenant.db-pass")));
-        dataSources.put(env.getProperty("cla-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-                env.getProperty("cla-tenant.url"), env.getProperty("cla-tenant.db-user"), env.getProperty("cla-tenant.db-pass")));
-        dataSources.put(env.getProperty("hfc-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-                env.getProperty("hfc-tenant.url"), env.getProperty("hfc-tenant.db-user"), env.getProperty("hfc-tenant.db-pass")));
-        dataSources.put(env.getProperty("chh-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-                env.getProperty("chh-tenant.url"), env.getProperty("chh-tenant.db-user"), env.getProperty("chh-tenant.db-pass")));
-
-        return new MultiTenantDataSource(dataSources);
-    }
-
 //    @Bean
 //    public DataSource multiTenantDataSource() {
 //        Map<Object, Object> dataSources = new HashMap<>();
 //
-//        // Configure default tenants
-//        dataSources.put("trustfort", MultiTenantDataSource.createDataSource(
-//                "jdbc:postgresql://localhost:5433/Accounting-ms", "postgres", ""));
+//        // Configure default tenants (this can be fetched dynamically from a registry)
+//        dataSources.put(env.getProperty("default-tenant.id"),com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
+//                env.getProperty("default-tenant.url"), env.getProperty("default-tenant.db-user"), env.getProperty("default-tenant.db-pass")));
+//        dataSources.put(env.getProperty("chi-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
+//                env.getProperty("chi-tenant.url"), env.getProperty("chi-tenant.db-user"), env.getProperty("chi-tenant.db-pass")));
+//        dataSources.put(env.getProperty("hmo-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
+//                env.getProperty("hmo-tenant.url"), env.getProperty("hmo-tenant.db-user"), env.getProperty("hmo-tenant.db-pass")));
+//        dataSources.put(env.getProperty("cla-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
+//                env.getProperty("cla-tenant.url"), env.getProperty("cla-tenant.db-user"), env.getProperty("cla-tenant.db-pass")));
+//        dataSources.put(env.getProperty("hfc-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
+//                env.getProperty("hfc-tenant.url"), env.getProperty("hfc-tenant.db-user"), env.getProperty("hfc-tenant.db-pass")));
+//        dataSources.put(env.getProperty("chh-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
+//                env.getProperty("chh-tenant.url"), env.getProperty("chh-tenant.db-user"), env.getProperty("chh-tenant.db-pass")));
 //
 //        return new MultiTenantDataSource(dataSources);
 //    }
+
+    @Bean
+    public DataSource multiTenantDataSource() {
+        Map<Object, Object> dataSources = new HashMap<>();
+
+        // Configure default tenants
+        dataSources.put("trustfort", MultiTenantDataSource.createDataSource(
+                "jdbc:postgresql://localhost:5432/Accounting-ms", "postgres", "root"));
+
+        return new MultiTenantDataSource(dataSources);
+    }
 
     @Bean
     public ResourceBundleMessageSource messageSource() {

@@ -1,29 +1,30 @@
 package com.chh.trustfort.accounting.dto.investment;
 
-import com.chh.trustfort.accounting.enums.InsuranceProductType;
 import com.chh.trustfort.accounting.enums.InvestmentSubtype;
 import com.chh.trustfort.accounting.enums.InvestmentType;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
-public class InvestmentRequestDTO {
-    private String name;
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class InvestmentResponseDTO {
+    private Long id;
+    private String reference;
     private BigDecimal amount;
     private String currency;
-    private Long tenor;
-
     private InvestmentType type;
     private InvestmentSubtype subtype;
-    private InsuranceProductType insuranceProductType;
-
     private boolean isParticipating;
-
     private LocalDate startDate;
     private LocalDate maturityDate;
-
-    private Long institutionId;
-    private BigDecimal ratePA;
+    private BigDecimal roi;
+    private String institutionName;
+    private String status;
+    private BigDecimal expectedReturn;
 }
+
