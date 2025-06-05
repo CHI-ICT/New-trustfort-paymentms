@@ -1,5 +1,5 @@
 package com.chh.trustfort.payment.enums;
 
 public enum CreditStatus {
-    PENDING, APPROVED, REJECTED, REPAID
+    PENDING, APPROVED, REJECTED, REPAID,ACTIVE
 }

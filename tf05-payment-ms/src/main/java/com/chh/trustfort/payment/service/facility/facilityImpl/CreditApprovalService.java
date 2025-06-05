@@ -3,6 +3,7 @@ package com.chh.trustfort.payment.service.facility.facilityImpl;
 import com.chh.trustfort.payment.dto.ApprovalActionRequest;
 import com.chh.trustfort.payment.enums.CreditApprovalStatus;
 import com.chh.trustfort.payment.enums.CreditStatus;
+import com.chh.trustfort.payment.exception.BadRequestException;
 import com.chh.trustfort.payment.model.facility.ApprovalAuditLog;
 import com.chh.trustfort.payment.model.facility.CreditApproval;
 import com.chh.trustfort.payment.model.facility.CreditLine;
@@ -24,7 +25,8 @@ public class CreditApprovalService implements ICreditApprovalService {
     private final ApprovalAuditLogRepository auditLogRepo;
 
     public CreditApprovalService(CreditApprovalRepository approvalRepo,
-                                 CreditLineRepository creditLineRepo, ApprovalAuditLogRepository auditLogRepo) {
+                                 CreditLineRepository creditLineRepo,
+                                 ApprovalAuditLogRepository auditLogRepo) {
         this.approvalRepo = approvalRepo;
         this.creditLineRepo = creditLineRepo;
         this.auditLogRepo = auditLogRepo;
@@ -43,15 +45,17 @@ public class CreditApprovalService implements ICreditApprovalService {
     @Override
     @Transactional
     public void actOnApproval(ApprovalActionRequest request) {
+        validateApprovalRequest(request);
+
         CreditApproval approval = approvalRepo.findById(request.getApprovalId())
-                .orElseThrow(() -> new RuntimeException("Approval not found"));
+                .orElseThrow(() -> new BadRequestException("Approval with ID " + request.getApprovalId() + " not found"));
 
         if (!approval.getApproverId().equals(request.getApproverId())) {
-            throw new RuntimeException("Unauthorized action.");
+            throw new BadRequestException("Approver ID mismatch. Unauthorized action.");
         }
 
         if (approval.getStatus() != CreditApprovalStatus.PENDING) {
-            throw new RuntimeException("Approval already completed.");
+            throw new BadRequestException("This approval has already been acted on.");
         }
 
         approval.setStatus(request.isApproved() ? CreditApprovalStatus.APPROVED : CreditApprovalStatus.REJECTED);
@@ -59,7 +63,6 @@ public class CreditApprovalService implements ICreditApprovalService {
         approval.setDecisionDate(LocalDateTime.now());
         approvalRepo.save(approval);
 
-        // 🔐 Audit Log
         ApprovalAuditLog log = new ApprovalAuditLog();
         log.setApprovalId(approval.getId());
         log.setApproverId(request.getApproverId());
@@ -74,7 +77,7 @@ public class CreditApprovalService implements ICreditApprovalService {
 
     private void finalizeCreditLineIfComplete(Long creditLineId, boolean lastDecisionApproved) {
         CreditLine creditLine = creditLineRepo.findById(creditLineId)
-                .orElseThrow(() -> new RuntimeException("Credit line not found"));
+                .orElseThrow(() -> new BadRequestException("Credit line with ID " + creditLineId + " not found"));
 
         if (!lastDecisionApproved) {
             creditLine.setStatus(CreditStatus.REJECTED);
@@ -93,5 +96,16 @@ public class CreditApprovalService implements ICreditApprovalService {
 //            disbursementService.disburseIfFullyApproved(creditLineId);
         }
     }
-}
 
+    private void validateApprovalRequest(ApprovalActionRequest request) {
+        if (request.getApprovalId() == null) {
+            throw new BadRequestException("Approval ID must not be null");
+        }
+        if (request.getApproverId() == null) {
+            throw new BadRequestException("Approver ID must not be null");
+        }
+        if (request.getComment() == null || request.getComment().trim().isEmpty()) {
+            throw new BadRequestException("Comment must not be empty");
+        }
+    }
+}

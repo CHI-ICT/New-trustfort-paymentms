@@ -1,6 +1,7 @@
 package com.chh.trustfort.payment.service.facility.facilityImpl;
 
 import com.chh.trustfort.payment.enums.CreditApprovalStatus;
+import com.chh.trustfort.payment.exception.BadRequestException;
 import com.chh.trustfort.payment.model.facility.ApprovalAuditLog;
 import com.chh.trustfort.payment.model.facility.ApprovalRule;
 import com.chh.trustfort.payment.model.facility.CreditApproval;
@@ -23,7 +24,8 @@ public class RuleEngineService implements IRuleEngineService {
     private final ApprovalAuditLogRepository auditLogRepo;
 
     public RuleEngineService(ApprovalRuleRepository ruleRepo,
-                             CreditApprovalRepository approvalRepo, ApprovalAuditLogRepository auditLogRepo) {
+                             CreditApprovalRepository approvalRepo,
+                             ApprovalAuditLogRepository auditLogRepo) {
         this.ruleRepo = ruleRepo;
         this.approvalRepo = approvalRepo;
         this.auditLogRepo = auditLogRepo;
@@ -31,20 +33,20 @@ public class RuleEngineService implements IRuleEngineService {
 
     @Override
     public void applyApprovalRules(CreditLine creditLine) {
-        BigDecimal amount = creditLine.getAmount();
-
-        // Load rules by amount range
-        List<ApprovalRule> rules = ruleRepo.findByAmountRange(amount);
-
-        if (rules.isEmpty()) {
-            throw new RuntimeException("No approval rules configured for amount: " + amount);
+        if (creditLine == null || creditLine.getAmount() == null || creditLine.getId() == null) {
+            throw new BadRequestException("Invalid credit line: missing ID or amount.");
         }
 
-        // Create CreditApproval entries
+        BigDecimal amount = creditLine.getAmount();
+
+        List<ApprovalRule> rules = ruleRepo.findByAmountRange(amount);
+        if (rules.isEmpty()) {
+            throw new BadRequestException("No approval rules configured for credit amount: " + amount);
+        }
+
         for (ApprovalRule rule : rules) {
             if (Boolean.TRUE.equals(rule.getIsDeleted())) continue;
 
-            // Check for duplicate approval entry
             boolean alreadyExists = approvalRepo.existsByCreditLineIdAndApproverId(
                     creditLine.getId(), rule.getApproverId());
 
@@ -57,9 +59,8 @@ public class RuleEngineService implements IRuleEngineService {
             approval.setStatus(CreditApprovalStatus.PENDING);
             approval.setCreatedAt(LocalDateTime.now());
 
-            approvalRepo.save(approval);
+            approval = approvalRepo.save(approval);
 
-            // Audit log for creation
             ApprovalAuditLog log = new ApprovalAuditLog();
             log.setApprovalId(approval.getId());
             log.setApproverId(rule.getApproverId());

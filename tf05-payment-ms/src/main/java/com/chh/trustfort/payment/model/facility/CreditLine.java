@@ -1,6 +1,7 @@
 package com.chh.trustfort.payment.model.facility;
 
 import com.chh.trustfort.payment.enums.CreditStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +30,8 @@ public class CreditLine {
     @Enumerated(EnumType.STRING)
     private CreditStatus status;
 
+    @Column(name = "requested_at", nullable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime requestedAt;
 
     private LocalDateTime approvedDate;

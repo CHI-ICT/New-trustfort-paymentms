@@ -72,5 +72,20 @@ public class ApiPath {
     public static final String TEST_EMAIL_NOTIFICATION="/send-test-email";
     public static final String DECRYPT = "/decrypt";
 
+   //=======================================================Approval Rule======================================
+    public static final String GET_ALL_APPROVAL_RULES = "/approval-rules";
+    public static final String CREATE_APPROVAL_RULE = "/approval-rules";
+    public static final String UPDATE_APPROVER = "/approval-rules/{ruleId}/approver/{newApproverId}";
+    public static final String DELETE_APPROVAL_RULE = "/approval-rules/{id}";
+
+    //=====================================================Credit Approvals======================================
+    public static final String ACT_ON_APPROVAL = "/credit-approvals/act";
+    public static final String GET_PENDING_APPROVALS = "/credit-approvals/pending/{approverId}";
+
+    //===================================================== Credit Lines======================================
+    public static final String CREATE_CREDIT_LINE = "/credit-lines";
+    public static final String GET_ALL_CREDIT_LINES = "/credit-lines";
+    public static final String GET_CREDIT_LINE_BY_ID = "/credit-lines/{id}";
+    public static final String UPDATE_CREDIT_LINE = "/credit-lines/{id}";
 
 }
