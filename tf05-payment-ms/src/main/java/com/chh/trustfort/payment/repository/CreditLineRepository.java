@@ -16,5 +16,6 @@ public interface CreditLineRepository extends JpaRepository<CreditLine, Long> {
     List<CreditLine> findByUserIdAndStatus(Long userId, CreditStatus status);
 
     Optional<CreditLine> findTopByUserIdOrderByRequestedAtDesc(Long userId);
+    boolean existsByUserIdAndStatusIn(Long userId, List<CreditStatus> statuses);
 }
 

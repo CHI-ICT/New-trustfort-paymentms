@@ -16,6 +16,7 @@ public interface ApprovalRuleRepository extends JpaRepository<ApprovalRule, Long
     @Query("SELECT r FROM ApprovalRule r WHERE :amount BETWEEN r.minAmount AND r.maxAmount AND r.isDeleted = false ORDER BY r.level ASC")
     List<ApprovalRule> findByAmountRange(@Param("amount") BigDecimal amount);
     List<ApprovalRule> findAllByIsDeletedFalse();
+    boolean existsByName(String name);
 }
 
 
