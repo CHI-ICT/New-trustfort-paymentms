@@ -56,6 +56,16 @@ public class RequestManager {
 
         OmniResponsePayload oResponse = new OmniResponsePayload();
         String token = httpRequest.getHeader(HEADER_STRING).replace(TOKEN_PREFIX, "");
+//        String header = httpRequest.getHeader(HEADER_STRING);
+//        if (header == null || header.isBlank()) {
+//            OmniResponsePayload oResponses = new OmniResponsePayload();
+//            oResponses.setResponseCode(ResponseCode.TOKEN_EXPIRED.getResponseCode());
+//            oResponses.setResponseMessage("Missing or invalid Authorization header.");
+//            String json = gson.toJson(oResponses);
+//            return new Quintuple<>(true, null, null, null, json);
+//        }
+//        String token = header.replace(TOKEN_PREFIX, "");
+
         TokenData tokenData = getTokenData(token);
 
         AppUser appUser = appUserRepository.getAppUserByUserName(tokenData.getSub());
@@ -138,4 +148,106 @@ public class RequestManager {
 
         return oTokenData;
     }
+
+
+//    public Quintuple<Boolean, String, String, Users, String> validateRequest(
+//            String role, String requestBody, HttpServletRequest httpRequest, String idToken) {
+//
+//        log.info("Validating request for role: {}", role);
+//        OmniResponsePayload oResponse = new OmniResponsePayload();
+//
+//        // Extract Authorization Token
+//        String token = httpRequest.getHeader("Authorization");
+//        if (token == null || !token.startsWith("Bearer ")) {
+//            log.error("Missing or invalid Authorization token");
+//            return unauthorizedResponse("Missing or invalid authorization token.");
+//        }
+//        token = token.replace("Bearer ", "");
+//        log.info("Extracted Token: {}", token);
+//
+//        // Extract user details from token
+//        TokenData tokenData = getTokenData(token);
+//        if (tokenData == null || tokenData.getSub() == null) {
+//            log.error("Invalid token data");
+//            return unauthorizedResponse("Invalid token data.");
+//        }
+//        log.info("Token Subject (Username): {}", tokenData.getSub());
+//
+//        // Fetch user from database
+//        Users users = usersRepository.getUserByUserName(tokenData.getSub());
+//        if (users == null) {
+//            log.error("User not found for username: {}", tokenData.getSub());
+//            return unauthorizedResponse("User not found.");
+//        }
+//        log.info("Authenticated User: {}", users.getUserName());
+//
+//        // Decrypt the stored encryption key for JWT operations.
+//        String decryptedKey;
+//        try {
+//            decryptedKey = stringEncryptor.decrypt(users.getEncryptionKey());
+//        } catch (Exception e) {
+//            log.error("Error decrypting encryption key for user: {}", users.getUserName());
+//            return unauthorizedResponse("Encryption key error.");
+//        }
+//
+//        // Validate the token using the decrypted key.
+//        boolean isExpired = jwtTokenUtil.isTokenExpired(token, decryptedKey);
+//        if (isExpired) {
+//            log.error("Token expired for user: {}", users.getUserName());
+//            return unauthorizedResponse("Your token has expired.");
+//        }
+//
+//        boolean userHasRole = jwtTokenUtil.userHasRole(token, role, decryptedKey);
+//        if (!userHasRole) {
+//            return unauthorizedResponse("You do not have the required permissions to perform this action.");
+//        }
+//
+//        // Session validation if enabled.
+//        if (users.isAuthenticateSession()) {
+//            if (idToken == null) {
+//                idToken = httpRequest.getHeader("ID-TOKEN");
+//            }
+//            if (idToken != null) {
+//                idToken = idToken.replace("Bearer ", "");
+//            }
+//            if (idToken == null || idToken.isBlank()) {
+//                return unauthorizedResponse("Your session has expired or ID Token is missing.");
+//            }
+//        }
+//
+//        // Determine whether to decrypt the request body.
+//        // If the payload starts with '{' or matches a known plain pattern (e.g., wallet IDs starting with "WAL-"), then assume it's plain.
+//        String trimmed = requestBody.trim();
+//        String decryptedBody;
+//        if (trimmed.startsWith("{") || trimmed.startsWith("WAL-")) {
+//            decryptedBody = requestBody;
+//        } else {
+//            decryptedBody = aesService.decrypt(requestBody, users.getEcred());
+//        }
+//
+//        return new Quintuple<>(false, token, idToken, users, decryptedBody);
+//    }
+//
+//
+//    private TokenData getTokenData(String token) {
+//        try {
+//            String[] pieces = token.split("\\.");
+//            if (pieces.length < 2) {
+//                return null;
+//            }
+//            String b64payload = pieces[1];
+//            String jsonString = new String(Base64.decodeBase64(b64payload), "UTF-8");
+//            return gson.fromJson(jsonString, TokenData.class);
+//        } catch (UnsupportedEncodingException e) {
+//            return null;
+//        }
+//    }
+//
+//    private Quintuple<Boolean, String, String, Users, String> unauthorizedResponse(String message) {
+//        OmniResponsePayload oResponse = new OmniResponsePayload();
+//        oResponse.setResponseMessage(message);
+//        String responseJson = gson.toJson(oResponse);
+//        return new Quintuple<>(true, null, null, null, responseJson);
+//    }
+
 }

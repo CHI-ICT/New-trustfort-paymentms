@@ -31,11 +31,10 @@ public class FlutterwaveService {
     private final WalletRepository walletRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final OkHttpClient httpClient = new OkHttpClient();
 
     @Value("${flutterwave.secret.key}")
     private String flutterwaveSecretKey;
-
-    private final OkHttpClient httpClient = new OkHttpClient();
 
     @Transactional
     public VerifyFlutterwaveResponse verifyTransaction(VerifyFlutterwaveRequest request) {
@@ -52,45 +51,36 @@ public class FlutterwaveService {
                 String body = response.body().string();
                 JsonNode root = objectMapper.readTree(body);
 
-                log.info("🔍 Flutterwave full response: {}", root.toPrettyString());
+                log.info("🔍 Flutterwave response: {}", root.toPrettyString());
 
                 JsonNode dataNode = root.path("data");
-
                 if (dataNode.isMissingNode()) {
-                    throw new RuntimeException("Flutterwave response missing 'data' field");
+                    throw new RuntimeException("Missing 'data' node in Flutterwave response");
                 }
 
                 String status = dataNode.path("status").asText(null);
                 String emailAddress = dataNode.path("customer").path("email").asText(null);
                 String amountString = dataNode.path("amount").asText(null);
 
-                if (status == null || !"successful".equalsIgnoreCase(status)) {
-                    throw new RuntimeException("Payment not successful or missing status field: " + status);
+                if (!"successful".equalsIgnoreCase(status)) {
+                    throw new RuntimeException("Transaction not successful: " + status);
                 }
 
-                if (emailAddress == null) {
-                    throw new RuntimeException("Missing email in Flutterwave response");
-                }
-
-                if (amountString == null) {
-                    throw new RuntimeException("Missing amount in Flutterwave response");
+                if (emailAddress == null || amountString == null) {
+                    throw new RuntimeException("Missing email or amount in Flutterwave response");
                 }
 
                 BigDecimal amount = new BigDecimal(amountString);
 
-                // 🧠 Get user's wallet
                 Optional<Wallet> optionalWallet = walletRepository.findByEmailAddress(emailAddress);
                 if (optionalWallet.isEmpty()) {
                     throw new RuntimeException("No wallet found for email: " + emailAddress);
                 }
 
                 Wallet wallet = optionalWallet.get();
-
-                // 💰 Credit wallet
                 wallet.setBalance(wallet.getBalance().add(amount));
                 walletRepository.updateUser(wallet);
 
-                // 🧾 Ledger
                 LedgerEntry ledger = new LedgerEntry();
                 ledger.setWalletId(wallet.getWalletId());
                 ledger.setTransactionType(TransactionType.CREDIT);
@@ -100,34 +90,30 @@ public class FlutterwaveService {
                 ledger.setReference(request.getReference());
                 ledgerEntryRepository.save(ledger);
 
-                VerifyFlutterwaveResponse res = new VerifyFlutterwaveResponse();
-                res.setStatus("success");
-                res.setMessage("Wallet funded via Flutterwave");
-                res.setCreditedAmount(amount);
-                res.setWalletId(wallet.getWalletId());
-
-                return res;
+                return VerifyFlutterwaveResponse.builder()
+                        .status("success")
+                        .message("Wallet funded via Flutterwave")
+                        .walletId(wallet.getWalletId())
+                        .creditedAmount(amount)
+                        .build();
             }
 
         } catch (Exception e) {
-            log.error("❌ Flutterwave verification error", e);
-            throw new RuntimeException("Could not verify payment: " + e.getMessage());
+            log.error("❌ Error during Flutterwave verification", e);
+            throw new RuntimeException("Flutterwave verification failed: " + e.getMessage());
         }
     }
 
-
     public String initiatePayment(InitiatePaymentRequest request) {
         try {
-            // 🔐 Step 1: Create tx_ref (your own transaction reference)
-            String txRef = "FLW-" + System.currentTimeMillis(); // generate once
-
+            String txRef = "FLW-" + System.currentTimeMillis(); // Unique transaction ref
             int amountInKobo = request.getAmount().multiply(new BigDecimal("100")).intValue();
 
             Map<String, Object> payload = Map.of(
                     "tx_ref", txRef,
                     "amount", amountInKobo / 100,
                     "currency", "NGN",
-                    "redirect_url", "https://google.com", // change later
+                    "redirect_url", "https://google.com",
                     "customer", Map.of(
                             "email", request.getEmail(),
                             "name", "Trustfort Wallet User"
@@ -155,24 +141,18 @@ public class FlutterwaveService {
                 String responseBody = response.body().string();
                 JsonNode jsonResponse = objectMapper.readTree(responseBody);
 
-                if (jsonResponse.path("status").asText().equalsIgnoreCase("success")) {
-                    String authorizationUrl = jsonResponse.path("data").path("link").asText();
-
-                    // ✅ Just log your generated tx_ref
-                    log.info("✅ Flutterwave Payment Initiated");
-                    log.info("🔗 Authorization URL: {}", authorizationUrl);
-                    log.info("🧾 tx_ref (Client reference): {}", txRef);
-
-                    return authorizationUrl;
+                if ("success".equalsIgnoreCase(jsonResponse.path("status").asText())) {
+                    String link = jsonResponse.path("data").path("link").asText();
+                    log.info("✅ Payment initiated: tx_ref={}, link={}", txRef, link);
+                    return link;
                 } else {
                     throw new RuntimeException("Flutterwave payment initiation failed");
                 }
             }
 
         } catch (Exception e) {
-            log.error("Error initiating Flutterwave payment", e);
-            throw new RuntimeException("Flutterwave initiation error");
+            log.error("❌ Flutterwave initiation error", e);
+            throw new RuntimeException("Flutterwave payment initiation error: " + e.getMessage());
         }
     }
-
 }

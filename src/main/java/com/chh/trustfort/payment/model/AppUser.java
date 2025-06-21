@@ -79,4 +79,10 @@ public class AppUser implements Serializable {
     private String ipAddress;
     @Column(name = "auth_ip_address", nullable = false)
     private boolean authenticateIpAddress = false;
+
+    private String email;
+    private String phoneNumber;
+
+    @Column(name = "transaction_pin")
+     private String transactionPin;
 }

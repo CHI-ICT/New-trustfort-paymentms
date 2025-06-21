@@ -1,14 +1,9 @@
 package com.chh.trustfort.payment.security;
 
-import com.chh.trustfort.payment.model.AppUser;
-
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,8 +14,8 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.chh.trustfort.payment.model.AppUser;
 import org.jasypt.encryption.StringEncryptor;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -51,7 +46,7 @@ public class AesServiceImpl implements AesService {
             return Base64.getEncoder().encodeToString(cipher.doFinal(plaintext.getBytes("UTF-8")));
         } catch (InvalidKeyException | InvalidAlgorithmParameterException | UnsupportedEncodingException |
                  IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException ex) {
-            java.util.logging.Logger.getLogger(AesServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(AesServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }

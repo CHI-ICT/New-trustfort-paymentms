@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Transactional
@@ -67,6 +69,18 @@ public class WalletRepository {
         }
     }
 
+    public List<Wallet> findByUserId(String userId) {
+        try {
+            return em.createQuery("SELECT w FROM Wallet w WHERE w.userId = :userId", Wallet.class)
+                    .setParameter("userId", userId)
+                    .getResultList();
+        } catch (Exception e) {
+            log.error("❌ Failed to retrieve wallets for userId: {}", userId, e);
+            return Collections.emptyList();
+        }
+    }
+
+
     public Wallet createWallet(Wallet wallet) {
         log.info("Creating wallet for userId: {}", wallet.getUserId());
         em.persist(wallet);
@@ -113,7 +127,7 @@ public class WalletRepository {
 
     public Optional<Wallet> findByEmailAddress(String emailAddress) {
         try {
-            Wallet wallet = em.createQuery("SELECT w FROM Wallet w WHERE w.users.emailAddress = :emailAddress", Wallet.class)
+            Wallet wallet = em.createQuery("SELECT w FROM Wallet w WHERE w.users.email = :emailAddress", Wallet.class)
                     .setParameter("emailAddress", emailAddress)
                     .getSingleResult();
             return Optional.of(wallet);

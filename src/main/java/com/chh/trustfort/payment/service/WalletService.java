@@ -1,13 +1,14 @@
 package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.Responses.WalletBalanceResponse;
+import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
+import com.chh.trustfort.payment.dto.WalletDTO;
 import com.chh.trustfort.payment.exception.WalletException;
+import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.model.LedgerEntry;
-import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.payload.*;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,45 +19,37 @@ import java.util.List;
  * @author DOfoleta
  */
 public interface WalletService {
+    List<WalletDTO> getWalletsByUserId(String userId);
 
-//    public String createWallet(CreateWalletRequestPayload payload, Users users);
-Wallet createWallet(String userId, String emailAddress);
 
-//    public String fundWallet(FundWalletRequestPayload payload, Users users);
+    String createWallet(CreateWalletRequestPayload requestPayload, AppUser appUser);
+
 String fundWallet(FundWalletRequestPayload payload, String userId, String emailAddress);
 
-//    public String fetchWallet(String walletId, Users users);
-String fetchWallet(String walletId, String userId);
-//    public String transferFunds(FundsTransferRequestPayload payload, Users users);
-public String transferFunds(FundsTransferRequestPayload payload, String userId, String email);
+String fetchWallet(String walletId, String userId, AppUser user);
 
-//    public WalletBalanceResponse getWalletBalance(String walletId, Users users);
+public String transferFunds(FundsTransferRequestPayload payload, String idToken, AppUser appUser, AppUser ecred);
+
 public WalletBalanceResponse getWalletBalance(String walletId, String userId);
 
-//    public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, Users users);
 public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId);
 
-//    public String withdrawFunds(WithdrawFundsRequestPayload payload, Users users);
-public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email);
+public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser);
 
-//    public String freezeWallet(FreezeWalletRequestPayload payload, Users users);
-public String freezeWallet(FreezeWalletRequestPayload payload, String userId, String email);
+public String freezeWallet(String requestPayload, String idToken, AppUser appUser);
 
-//    public String unfreezeWallet(UnfreezeWalletRequestPayload payload, Users users);
-String unfreezeWallet(UnfreezeWalletRequestPayload payload, String userId, String email);
+String unfreezeWallet(UnfreezeWalletRequestPayload payload, String idToken, AppUser appUser);
 
-//    public String closeWallet(CloseWalletRequestPayload payload, Users users);
-String closeWallet(CloseWalletRequestPayload payload, String userId, String email);
+String closeWallet(CloseWalletRequestPayload payload, String idToken, AppUser appUser);
 
-//    public String lockFunds(LockFundsRequestPayload payload, Users users);
-String lockFunds(LockFundsRequestPayload payload, String userId, String email);
+String lockFunds(LockFundsRequestPayload payload, String idToken, AppUser appUser);
 
-//    public String unlockFunds(UnlockFundsRequestPayload payload, Users users);
-String unlockFunds(UnlockFundsRequestPayload payload, String userId, String email);
+String unlockFunds(UnlockFundsRequestPayload payload, String idToken, AppUser appUser);
 
+String updateWalletBalance(UpdateWalletBalancePayload payload, String idToken, AppUser appUser) throws WalletException;
+Object processWebhookDeposit(FcmbWebhookPayload payload, String idToken, AppUser appUser);
 
-    void updateWalletBalance(String walletId, double amount) throws WalletException;
-    Object processWebhookDeposit(FcmbWebhookPayload payload);
+void creditWalletByEmail(String email, BigDecimal amount, String reference);
 
-    void creditWalletByEmail(String userName, BigDecimal amount, String reference);
+String confirmBankTransfer(ConfirmBankTransferRequest payload, String idToken, AppUser appUser);
 }

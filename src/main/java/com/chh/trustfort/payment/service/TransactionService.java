@@ -2,6 +2,7 @@ package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.dto.TransactionRequestDto;
 import com.chh.trustfort.payment.dto.TransactionResponseDto;
+import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.model.Users;
 import org.hibernate.TransactionException;
 
@@ -16,7 +17,7 @@ public interface TransactionService {
      * @return Transaction response details.
      * @throws TransactionException If the transaction fails.
      */
-    TransactionResponseDto processTransaction(TransactionRequestDto requestDto, Users user) throws com.chh.trustfort.payment.exception.TransactionException;
+    TransactionResponseDto processTransaction(TransactionRequestDto requestDto, AppUser appUser, String idToken) throws com.chh.trustfort.payment.exception.TransactionException;
 
     /**
      * Retrieves the transaction history for a wallet.

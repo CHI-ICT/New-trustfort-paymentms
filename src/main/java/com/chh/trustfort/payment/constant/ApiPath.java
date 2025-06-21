@@ -31,6 +31,7 @@ public class ApiPath {
     public static final String CLOSE_WALLET= "/close-wallet";
     public static final String LOCK_FUNDS= "/lock-funds";
     public static final String UNLOCK_FUNDS= "/unlock-funds";
+    public static final String UPDATE_WALLET_BALANCE ="/update-wallet-ballance";
     //=======================================================Commission======================================
     public static final String COMMISSION_BASE = "/commission";
     public static final String CREDIT_COMMISSION = "/credit-commission";
@@ -87,5 +88,9 @@ public class ApiPath {
     public static final String GET_ALL_CREDIT_LINES = "/credit-lines";
     public static final String GET_CREDIT_LINE_BY_ID = "/credit-lines/{id}";
     public static final String UPDATE_CREDIT_LINE = "/credit-lines/{id}";
+
+    public static final String CREDIT_WALLET ="/credit-wallet" ;
+    public static final String INITIATE_FLW_PAYMENT = "/initiate-flw-payment";
+    public static final String GET_ALL_WALLETS_BY_USER_ID = "/wallets/user";
 
 }

@@ -18,8 +18,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -64,12 +62,12 @@ public class PaystackReconciliationService {
                 log.info("Transaction processed: {}", alreadyProcessed);
                 if (alreadyProcessed) continue;
 
-                Users user = usersRepository.findByEmailAddress(email)
+                Users user = usersRepository.findByEmail(email)
                         .orElseThrow(() -> new RuntimeException("User not found: " + email));
-                log.info("User found: {}", user != null ? user.getEmailAddress() : "Not Found");
+                log.info("User found: {}", user != null ? user.getEmail() : "Not Found");
 
 
-                Wallet wallet = walletRepository.findByWalletId(user.getWalletId())
+                Wallet wallet = walletRepository.findByEmailAddress(email)
                         .orElseThrow(() -> new RuntimeException("Wallet not found for user: " + email));
                 log.info("Wallet found: {}", wallet != null ? wallet.getWalletId() : "Not Found");
 
