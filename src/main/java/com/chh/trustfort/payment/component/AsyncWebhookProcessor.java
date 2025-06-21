@@ -1,6 +1,7 @@
 package com.chh.trustfort.payment.component;
 
 import com.chh.trustfort.payment.model.WebhookLog;
+import com.chh.trustfort.payment.payload.CreditWalletRequestPayload;
 import com.chh.trustfort.payment.repository.WebhookLogRepository;
 import com.chh.trustfort.payment.service.WalletService;
 import lombok.RequiredArgsConstructor;

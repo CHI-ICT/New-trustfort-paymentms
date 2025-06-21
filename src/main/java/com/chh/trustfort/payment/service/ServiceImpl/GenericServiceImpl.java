@@ -1,4 +1,4 @@
-//package com.chh.trustfort.payment.service.ServiceImpl;
+package com.chh.trustfort.payment.service.ServiceImpl;//package com.chh.trustfort.payment.service.ServiceImpl;
 //
 //import com.chh.trustfort.payment.component.ResponseCode;
 //import com.chh.trustfort.payment.component.WalletUtil;

@@ -1,16 +1,22 @@
 package com.chh.trustfort.payment.service.ServiceImpl;
 
+import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.dto.TransactionRequestDto;
 import com.chh.trustfort.payment.dto.TransactionResponseDto;
+import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.model.Transaction;
 import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.model.Users;
+import com.chh.trustfort.payment.payload.UpdateWalletBalancePayload;
 import com.chh.trustfort.payment.repository.TransactionRepository;
 import com.chh.trustfort.payment.repository.WalletRepository;
 import com.chh.trustfort.payment.service.TransactionService;
 import com.chh.trustfort.payment.service.WalletService;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.TransactionException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,39 +25,40 @@ import java.util.Date;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class TransactionServiceImpl implements TransactionService {
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    private final TransactionRepository transactionRepository;
+    private final WalletRepository walletRepository;
+    private final WalletService walletService;
 
-    @Autowired
-    private WalletRepository walletRepository;
-
-    @Autowired
-    private WalletService walletService; // to update balance if needed
-
-    @Override
     @Transactional
-    public TransactionResponseDto processTransaction(TransactionRequestDto requestDto, Users user) throws com.chh.trustfort.payment.exception.TransactionException {
-        // Validate input and retrieve wallet
+    public TransactionResponseDto processTransaction(TransactionRequestDto requestDto, AppUser appUser, String idToken) throws TransactionException {
+        // 1. Retrieve wallet
         Wallet wallet = walletRepository.findByWalletId(requestDto.getWalletId())
                 .orElseThrow(() -> new TransactionException("Wallet not found for ID: " + requestDto.getWalletId()));
 
-        if (wallet == null) {
-            throw new TransactionException("Wallet not found for ID: " + requestDto.getWalletId());
-        }
-
-        // Ensure the wallet belongs to the user
-        if (!wallet.getUsers().getId().equals(user.getId())) {
+        // 2. Check ownership
+        if (!wallet.getUserId().equals(appUser.getId())) {
             throw new TransactionException("Unauthorized access to wallet: " + requestDto.getWalletId());
         }
 
-        // Update wallet balance using WalletService's update logic.
-        // For credit, amount is positive; for debit, amount is negative.
-        double amount = requestDto.getAmount().doubleValue();
-        walletService.updateWalletBalance(requestDto.getWalletId(), amount);
+        // 3. Update balance via WalletService
+        UpdateWalletBalancePayload payload = new UpdateWalletBalancePayload();
+        payload.setWalletId(requestDto.getWalletId());
+        payload.setAmount(requestDto.getAmount().doubleValue());
 
-        // Create a new transaction record
+        String updateResultJson = walletService.updateWalletBalance(payload, idToken, appUser);
+        Gson gson = new Gson();
+        JsonObject result = gson.fromJson(updateResultJson, JsonObject.class);
+
+        String responseCode = result.get("responseCode").getAsString();
+        if (!responseCode.equals(ResponseCode.SUCCESS.getResponseCode())) {
+            throw new TransactionException("Wallet balance update failed: " + result.get("responseMessage").getAsString());
+        }
+
+        // 4. Record the transaction
         Transaction txn = new Transaction();
         txn.setWalletId(requestDto.getWalletId());
         txn.setTransactionType(requestDto.getTransactionType());
@@ -60,11 +67,11 @@ public class TransactionServiceImpl implements TransactionService {
 
         Transaction savedTxn = transactionRepository.save(txn);
 
-        // Prepare response DTO
+        // 5. Prepare and return response
         TransactionResponseDto responseDto = new TransactionResponseDto();
         responseDto.setTransactionId(savedTxn.getId());
         responseDto.setMessage("Transaction processed successfully");
-        responseDto.setNewBalance(wallet.getBalance());
+        responseDto.setNewBalance(result.get("newBalance").getAsBigDecimal());
 
         return responseDto;
     }

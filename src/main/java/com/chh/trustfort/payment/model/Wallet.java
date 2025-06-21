@@ -34,17 +34,12 @@ public class Wallet implements Serializable {
     @Column(name = "wallet_id", unique = true, nullable = false)
     private String walletId;
 
-//    @ManyToOne
-//    @JoinColumn(name = "AppUser_id", nullable = false)
-//    private AppUser owner;
-
     @OneToOne
     @JoinColumn(name = "users_id", nullable = false)
-    private Users users;
+    private AppUser users;
 
     @Column(name = "user_id", nullable = false, unique = true)
     private String userId;
-
 
     @Column(name = "balance", nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
@@ -69,11 +64,9 @@ public class Wallet implements Serializable {
     @Column(name = "serialnumber", nullable = false)
     private Long serialNumber;
 
-//    @Version
-//    @Column(name = "version")
-//    private Long version;
-
     @Column(name = "account_number", unique = true)
     private String accountNumber;
+
+    private String email;
 
 }

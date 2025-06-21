@@ -56,5 +56,6 @@ public class CreditApprovalController {
             return new ResponseEntity<>(aesService.encrypt(SecureResponseUtil.error(response.getResponseCode(), response.getResponseMessage(), String.valueOf(HttpStatus.UNAUTHORIZED)),request.appUser) , HttpStatus.OK);
         }
         return new ResponseEntity<>(aesService.encrypt(gson.toJson(approvalService.getPendingApprovals(approverId)), request.appUser), HttpStatus.OK);
+
     }
 }

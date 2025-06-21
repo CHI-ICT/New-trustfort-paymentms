@@ -45,7 +45,7 @@ public class CommissionService {
         Users user = usersRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Wallet wallet = walletRepository.findByWalletId(user.getWalletId())
+        Wallet wallet = walletRepository.findByEmailAddress(user.getEmail())
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
 
         Commission commission = new Commission();
@@ -74,7 +74,7 @@ public class CommissionService {
 
 
     @Transactional
-    public String withdrawCommission(WithdrawCommissionRequest payload, Users user) {
+    public String withdrawCommission(WithdrawCommissionRequest payload, AppUser user) {
         log.info("Processing commission withdrawal for user: {}", user.getUserName());
 
         // ✅ Step 0: Validate PIN before proceeding

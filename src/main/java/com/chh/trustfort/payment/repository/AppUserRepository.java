@@ -8,6 +8,7 @@ package com.chh.trustfort.payment.repository;
 import com.chh.trustfort.payment.model.*;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -63,4 +64,5 @@ public interface AppUserRepository {
 
     boolean userExistsById(long appUserId);
 
+    Optional<AppUser> findById(Long userId);
 }

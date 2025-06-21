@@ -8,6 +8,7 @@ package com.chh.trustfort.payment.repository;
 import com.chh.trustfort.payment.model.*;
 
 import java.util.List;
+import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -256,6 +257,12 @@ public class AppUserRepositoryImpl implements AppUserRepository {
                 .setParameter("appUserId", appUserId)
                 .getSingleResult();
         return count > 0;
+    }
+
+    @Override
+    public Optional<AppUser> findById(Long userId) {
+        AppUser user = em.find(AppUser.class, userId);
+        return Optional.ofNullable(user);
     }
 
 }

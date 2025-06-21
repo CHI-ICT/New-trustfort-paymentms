@@ -1,8 +1,10 @@
 package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.enums.TransactionStatus;
+import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.model.LedgerEntry;
 import com.chh.trustfort.payment.model.SettlementAccount;
+import com.chh.trustfort.payment.payload.UpdateWalletBalancePayload;
 import com.chh.trustfort.payment.repository.LedgerEntryRepository;
 import com.chh.trustfort.payment.repository.SettlementAccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class ReconciliationRetryService {
     @Scheduled(fixedRate = 30 * 60 * 1000)
     public void retryFailedWithdrawals() {
         log.info("🔁 Starting reconciliation retry job...");
+
         List<LedgerEntry> failedOrPendingEntries = ledgerEntryRepository.findByStatusIn(List.of(
                 TransactionStatus.FAILED,
                 TransactionStatus.PENDING
@@ -46,9 +49,22 @@ public class ReconciliationRetryService {
                     log.info("✅ Transfer success. Entry marked COMPLETED: {}", entry.getId());
                 } else {
                     entry.setStatus(TransactionStatus.FAILED);
-                    walletService.updateWalletBalance(entry.getWalletId(), amount.doubleValue());
-                    log.warn("❌ Retry failed. Entry remains FAILED and wallet refunded: {}", entry.getId());
+
+                    // Prepare required inputs for wallet balance update
+                    UpdateWalletBalancePayload payload = new UpdateWalletBalancePayload();
+                    payload.setWalletId(entry.getWalletId());
+                    payload.setAmount(amount.doubleValue());
+
+                    AppUser mockAppUser = new AppUser();
+                    mockAppUser.setId(entry.getId()); // Assuming LedgerEntry has userId or fetch it another way
+                    mockAppUser.setEmail("system@internal.job");
+
+                    String idToken = "internal-job-token"; // Placeholder token
+
+                    String result = walletService.updateWalletBalance(payload, idToken, mockAppUser);
+                    log.warn("❌ Retry failed. Wallet refunded: {}. Response: {}", entry.getId(), result);
                 }
+
                 ledgerEntryRepository.save(entry);
 
                 // Ensure settlement balance remains accurate
@@ -65,4 +81,4 @@ public class ReconciliationRetryService {
 
         log.info("✅ Reconciliation retry job completed.");
     }
-} 
+}
