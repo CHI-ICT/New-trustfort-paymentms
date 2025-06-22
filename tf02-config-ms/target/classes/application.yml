@@ -10,7 +10,8 @@ spring:
         config:
             server:
                 git:
-                    uri: file:///C:/Apps/trustfort/configserver                    
+                    uri: file:///C:/Apps/trustfort/configserver
+
 eureka:
     client:
         registerWithEureka: true
@@ -24,7 +25,17 @@ eureka:
 
 logging:
     file:
-        name: C:/expertbridge/logs/trustfort.log
-        
+        name: C:/chh/logs/trustfort.log
+#cloud:
+#    aws:
+#        credentials:
+#            access-key: AKIA3WKXQ6EYHFYVKMDO
+#            secret-key: 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
+#        region:
+#            static: us-east-1
+#        s3:
+#            bucket: trustfort
+#
+#
 
         

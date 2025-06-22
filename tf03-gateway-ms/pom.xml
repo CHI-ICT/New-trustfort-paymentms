@@ -166,13 +166,7 @@
             <version>5.0.19.RELEASE</version>
             <type>jar</type>
         </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>RELEASE</version>
-            <scope>compile</scope>
-        </dependency>
-        <!--        <dependency>-->
+<!--        <dependency>-->
 <!--            <groupId>com.consolidatedhallmarkholdings</groupId>-->
 <!--            <artifactId>tf04-admin-ms</artifactId>-->
 <!--            <version>3.0.0</version>-->
@@ -192,17 +186,20 @@
     </dependencyManagement>
 
     <build>
+        <finalName>trustfort-gateway-ms</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <executable>true</executable>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <executable>true</executable>
                 </configuration>
             </plugin>
         </plugins>

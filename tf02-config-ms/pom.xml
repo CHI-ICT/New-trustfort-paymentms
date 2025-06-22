@@ -8,13 +8,13 @@
         <version>2.3.11.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-
-    <groupId>com.techplanet.expertbridge</groupId>
+    
+    <groupId>com.chh.trustfort</groupId>
     <artifactId>tf02-config-ms</artifactId>
     <version>3.0.0</version>
     <name>tf02-config-ms</name>
-    <description>Expertbridge - Omni Channel Config Microservice</description>
-
+    <description>TrustFort - Omni Channel Config Microservice</description>
+    
     <developers>
         <developer>
             <id>bokon</id>
@@ -41,7 +41,7 @@
             </roles>
         </developer>
     </developers>
-
+    
     <properties>
         <java.version>11</java.version>
         <spring-cloud.version>Hoxton.SR11</spring-cloud.version>
@@ -109,10 +109,6 @@
             <version>2.16.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -127,6 +123,7 @@
     </dependencyManagement>
 
     <build>
+        <finalName>trustfort-config-ms</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -138,6 +135,7 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <executable>true</executable>
                 </configuration>
             </plugin>
         </plugins>

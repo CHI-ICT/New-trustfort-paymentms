@@ -8,7 +8,8 @@ public class TenantContext {
        
     private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
     private static final String DEFAULT_TENANT = "trustfort"; // Set your default tenant ID
-    
+//    private static final String DEFAULT_TENANT = "chi"; // Set your default tenant ID
+
 //    private static final String DEFAULT_TENANT = "chi"; // Set your default tenant ID
 
     public static void setTenantId(String tenantId) {

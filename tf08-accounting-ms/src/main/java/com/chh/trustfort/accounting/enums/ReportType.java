@@ -1,0 +1,12 @@
+package com.chh.trustfort.accounting.enums;
+
+public enum ReportType {
+    PROFIT_AND_LOSS,
+    BALANCE_SHEET,
+    CASH_FLOW,
+    VARIANCE_REPORT,
+    CONSOLIDATED_REPORT,
+    EQUITY_STATEMENT,
+    INCOME_STATEMENT,
+    STATEMENT_OF_EQUITY, CONSOLIDATED, TRIAL_BALANCE
+}

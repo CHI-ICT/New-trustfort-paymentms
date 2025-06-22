@@ -56,13 +56,22 @@ zuul:
       url: http://localhost:8888
     gatewayService:
       serviceId: trustfort-gateway
-      url: http://localhost:8443
+      url: http://localhost:8445
     adminService:
       serviceId: trustfort-admin
       url: http://localhost:1004
     paymentService:
       serviceId: trustfort-payment
+      url: http://localhost:1006
+    policyService:
+      serviceId: trustfort-policy
       url: http://localhost:1005
+    accountingService:
+      serviceId: trustfort-accounting
+      url: http://localhost:1007
+    claimsService:
+      serviceId: trustfort-claims
+      url: http://localhost:1008
   rateLimit:
     enabled: true
     repository: JPA
@@ -83,7 +92,12 @@ zuul:
         - limit: 5000
           refresh-interval: 60
           type:
-            - origin          
+            - origin
+      policyService:
+        - limit: 5000
+          refresh-interval: 60
+          type:
+            - origin
 spring:
   cloud:
     loadbalancer:
@@ -111,34 +125,34 @@ chi-tenant:
   id: chi
   db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
   db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/chi_db
+  url: jdbc:postgresql://192.168.0.2:5432/chi
 cla-tenant:
   id: cla
   db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
   db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/cla_db
+  url: jdbc:postgresql://192.168.0.2:5432/cla
 hmo-tenant:
   id: hmo
   db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
   db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/hmo_db
+  url: jdbc:postgresql://192.168.0.2:5432/hmo
 hfc-tenant:
   id: hfc
   db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
   db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/hfc_db
+  url: jdbc:postgresql://192.168.0.2:5432/hfc
 chh-tenant:
   id: chh
   db-user: ENC(F+f2ERKM2FyAGLQj2P4UoVr+cpsLrQOh)
   db-pass: ENC(WX4Bk0SWi9WVjrOsLCBmLvjE0+P9HC8v)
-  url: jdbc:postgresql://192.168.0.2:5432/chh_db
+  url: jdbc:postgresql://192.168.0.2:5432/chh
         
 eureka:
   client:
     fetchRegistry: true
     registerWithEureka: true
     serviceUrl:
-        defaultZone: http://localhost:8761/eureka/
+        defaultZone: http://192.168.0.2:8761/eureka/
   instance:
     hostname: localhost
   server:

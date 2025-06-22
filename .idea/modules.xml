@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Trustfort.iml" filepath="$PROJECT_DIR$/.idea/Trustfort.iml" />
-      <module fileurl="file://$PROJECT_DIR$/tf04-admin-ms/tf04-admin-ms.iml" filepath="$PROJECT_DIR$/tf04-admin-ms/tf04-admin-ms.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tf06-payment-ms/tf06-payment-ms.iml" filepath="$PROJECT_DIR$/tf06-payment-ms/tf06-payment-ms.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/trustfort_paymentms.iml" filepath="$PROJECT_DIR$/.idea/trustfort_paymentms.iml" />
     </modules>
   </component>
 </project>

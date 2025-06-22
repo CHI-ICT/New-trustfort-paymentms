@@ -45,7 +45,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/webjars/**",
-        "/hystrix/**", "hystrix.stream", "/actuator/hystrix.stream"
+        "/hystrix/**", "hystrix.stream", "/actuator/hystrix.stream",
+        "/images/**"
     };
 
 

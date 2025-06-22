@@ -100,7 +100,7 @@ public class Initializer implements ApplicationRunner {
         if (appUser == null) {
 
             AppUser newUser = new AppUser();
-            newUser.setChannel("PORTAL");
+            newUser.setChannel(env.getProperty("default.group-name"));
             newUser.setCreatedAt(LocalDateTime.now());
             newUser.setCreatedBy("System");
             newUser.setEnabled(true);
