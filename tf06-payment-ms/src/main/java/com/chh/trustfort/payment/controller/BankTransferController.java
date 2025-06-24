@@ -4,7 +4,7 @@ import com.chh.trustfort.payment.Quintuple;
 import com.chh.trustfort.payment.Responses.ConfirmBankTransferResponse;
 import com.chh.trustfort.payment.Util.SecureResponseUtil;
 import com.chh.trustfort.payment.component.RequestManager;
-import com.chh.trustfort.payment.component.Role;
+import com.chh.trustfort.payment.enums.Role;
 import com.chh.trustfort.payment.constant.ApiPath;
 import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
 import com.chh.trustfort.payment.model.AppUser;

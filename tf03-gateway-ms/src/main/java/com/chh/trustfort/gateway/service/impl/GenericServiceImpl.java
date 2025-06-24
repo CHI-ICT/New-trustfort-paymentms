@@ -151,6 +151,8 @@ public class GenericServiceImpl implements GenericService {
                     .toString();
 
             StringEncryptor oStringEncryptor = (StringEncryptor) context.getBean("jasyptStringEncryptor");
+//            return oStringEncryptor.encrypt(encryptionKey.concat("/").concat(iv));
+            iv = "00000000000000000000000000000000";
             return oStringEncryptor.encrypt(encryptionKey.concat("/").concat(iv));
 
         } catch (BeansException ex) {

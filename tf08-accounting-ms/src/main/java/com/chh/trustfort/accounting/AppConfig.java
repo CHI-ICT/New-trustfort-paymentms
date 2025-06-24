@@ -76,7 +76,7 @@ public class AppConfig extends WebMvcConfigurerAdapter {
     @Primary
     public DataSource dataSource() {
         HikariDataSource dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl("jdbc:postgresql://localhost:5433/Accounting-ms");
+        dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/Accounting-ms");
         dataSource.setUsername("postgres");
         dataSource.setPassword("Olawumi");
         dataSource.setDriverClassName("org.postgresql.Driver");
@@ -129,7 +129,7 @@ public class AppConfig extends WebMvcConfigurerAdapter {
 
         // Configure default tenants
         dataSources.put("trustfort", MultiTenantDataSource.createDataSource(
-                "jdbc:postgresql://localhost:5433/Accounting-ms", "postgres", "Olawumi"));
+                "jdbc:postgresql://localhost:5432/Accounting-ms", "postgres", "Olawumi"));
 
         return new MultiTenantDataSource(dataSources);
     }

@@ -49,6 +49,9 @@ public class Wallet implements Serializable {
     @Column(name = "balance", nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Column(name = "ledger_balance", nullable = false)
+    private BigDecimal ledgerBalance = BigDecimal.ZERO;
+
     @Column(name = "currency", length = 3, nullable = false)
     private String currency;
 

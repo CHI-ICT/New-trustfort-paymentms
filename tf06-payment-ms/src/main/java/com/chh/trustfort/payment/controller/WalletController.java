@@ -6,10 +6,7 @@ import com.chh.trustfort.payment.Responses.WalletBalanceResponse;
 import com.chh.trustfort.payment.Util.SecureResponseUtil;
 import com.chh.trustfort.payment.component.RequestManager;
 import com.chh.trustfort.payment.component.ResponseCode;
-//import com.chh.trustfort.payment.component.Role;
 import com.chh.trustfort.payment.constant.ApiPath;
-import com.chh.trustfort.payment.dto.UsersData;
-import com.chh.trustfort.payment.dto.WalletDTO;
 import com.chh.trustfort.payment.enums.Role;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
@@ -48,8 +45,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RefreshScope
 @Tag(name = "Wallet API", description = "Handles wallet operations")
-@SecurityRequirement(name = "bearerAuth")
-@RequestMapping(ApiPath.BASE_API )
 @RequiredArgsConstructor
 public class WalletController {
 
@@ -58,9 +53,10 @@ public class WalletController {
     private final RequestManager requestManager;
     private final Gson gson;
     private final WalletService walletService;
-    private final AesService aesService;
-    private final UsersRepository usersRepository;
     private final WalletRepository walletRepository;
+    private final UsersRepository usersRepository;
+    private final AesService aesService;
+
 
 
 
@@ -118,36 +114,37 @@ public class WalletController {
         return new ResponseEntity<>(encryptedResponse, HttpStatus.OK);
     }
 
+    @PostMapping(value = ApiPath.CREATE_WALLET, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createWallet(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest) {
 
+        // 🔐 Extract ID token from Authorization header
+        String idToken = authorizationHeader.replace("Bearer ", "").trim();
+        System.out.println("🔐 ID TOKEN: " + idToken);
+        System.out.println("📥 RAW PAYLOAD (Base64): " + requestPayload);
 
-
-
-
-    @PostMapping(value = ApiPath.CREATE_WALLET, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-public ResponseEntity<?> createWallet(@RequestParam String idToken, @RequestBody String requestPayload, HttpServletRequest httpRequest) {
-    System.out.println("🔐 ID TOKEN: " + idToken);
-    System.out.println("📥 RAW PAYLOAD: " + requestPayload);
-    Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-            Role.CREATE_WALLET.getValue(), requestPayload, httpRequest, idToken
-    );
-
-    if (request.isError) {
-        String decryptedError = aesService.decrypt(request.payload, request.appUser);
-        OmniResponsePayload response = gson.fromJson(decryptedError, OmniResponsePayload.class);
-        return new ResponseEntity<>(
-                SecureResponseUtil.error(response.getResponseCode(), response.getResponseMessage(), String.valueOf(HttpStatus.BAD_REQUEST)),
-                HttpStatus.OK
+        // 🔐 Validate and decrypt payload using existing logic
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.CREATE_WALLET.getValue(), requestPayload, httpRequest, idToken
         );
+
+        if (request.isError) {
+            String decryptedError = aesService.decrypt(request.payload, request.appUser);
+            OmniResponsePayload response = gson.fromJson(decryptedError, OmniResponsePayload.class);
+            return new ResponseEntity<>(
+                    SecureResponseUtil.error(response.getResponseCode(), response.getResponseMessage(), String.valueOf(HttpStatus.BAD_REQUEST)),
+                    HttpStatus.OK
+            );
+        }
+
+        System.out.println("📥 Decrypted Payload: " + request.payload);
+        CreateWalletRequestPayload decryptedPayload = gson.fromJson(request.payload, CreateWalletRequestPayload.class);
+        String result = walletService.createWallet(decryptedPayload, request.appUser);
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
-    System.out.println("📥 Decrypted Payload: " + request.payload);
-    CreateWalletRequestPayload decryptedPayload = gson.fromJson(request.payload, CreateWalletRequestPayload.class);
-    String result = walletService.createWallet(decryptedPayload, request.appUser); // 🟢 Use AppUser directly
-    return new ResponseEntity<>(result, HttpStatus.OK);
-//    // ✅ Now safe to parse directly
-//    CreateWalletRequestPayload decryptedPayload = gson.fromJson(request.payload, CreateWalletRequestPayload.class);
-//    String result = walletService.createWallet(decryptedPayload, request.appUser);
-//    return new ResponseEntity<>(result, HttpStatus.OK);
-}
 
 
 
@@ -172,12 +169,12 @@ public ResponseEntity<?> createWallet(@RequestParam String idToken, @RequestBody
     }
 
 
-    @GetMapping(value = ApiPath.FETCH_WALLET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> processFetchWalletRequest(@RequestParam("walletId") String walletId, HttpServletRequest httpRequest) throws Exception {
+    @GetMapping(value = ApiPath.FETCH_ALL_WALLETS, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> fetchAllWallets(HttpServletRequest httpRequest) {
 
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
                 Role.FETCH_WALLET.getValue(),
-                walletId,
+                "", // No payload needed
                 httpRequest,
                 ApiPath.ID_TOKEN
         );
@@ -188,10 +185,10 @@ public ResponseEntity<?> createWallet(@RequestParam String idToken, @RequestBody
 
         AppUser user = request.appUser;
 
-        String encryptedResponse = walletService.fetchWallet(walletId, String.valueOf(user.getId()), user);
+        String encryptedResponse = walletService.fetchAllWallets(String.valueOf(user.getId()), user);
         return new ResponseEntity<>(encryptedResponse, HttpStatus.OK);
-
     }
+
 
 
     @PostMapping(value = ApiPath.TRANSFER_FUNDS, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -220,30 +217,42 @@ public ResponseEntity<?> createWallet(@RequestParam String idToken, @RequestBody
         return ResponseEntity.ok(encryptedResponse);
     }
 
-
     @GetMapping(value = ApiPath.CHECK_BALANCE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> checkWalletBalance(@RequestParam("walletId") String walletId,
-                                                @RequestParam("idToken") String idToken,
-                                                HttpServletRequest httpRequest) {
-
+    public ResponseEntity<?> checkWalletBalanceByPhoneNumber(
+            @RequestParam String phoneNumber,
+            @RequestHeader("Authorization") String idToken,
+            HttpServletRequest httpRequest
+    ) {
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.CHECK_BALANCE.getValue(), walletId, httpRequest, idToken
+                Role.CHECK_BALANCE.getValue(),
+                null,
+                httpRequest,
+                idToken
         );
 
         if (request.isError) {
-            OmniResponsePayload errorPayload = gson.fromJson(request.payload, OmniResponsePayload.class);
-            return new ResponseEntity<>(SecureResponseUtil.error(
-                    errorPayload.getResponseCode(),
-                    errorPayload.getResponseMessage(),
-                    String.valueOf(HttpStatus.BAD_REQUEST)),
-                    HttpStatus.OK
+            OmniResponsePayload response = gson.fromJson(
+                    aesService.decrypt(request.payload, request.appUser),
+                    OmniResponsePayload.class
+            );
+
+            return ResponseEntity.ok(
+                    aesService.encrypt(SecureResponseUtil.error(
+                            response.getResponseMessage(),
+                            response.getResponseCode(),
+                            "UNAUTHORIZED"
+                    ), request.appUser)
             );
         }
 
-        WalletBalanceResponse balanceResponse = walletService.getWalletBalance(walletId, String.valueOf(request.appUser.getId()));
-        String encrypted = aesService.encrypt(gson.toJson(balanceResponse), request.appUser);
-        return new ResponseEntity<>(encrypted, HttpStatus.OK);
+        log.info("📦 Checking wallet balance for phoneNumber: {}", phoneNumber);
+        String encryptedResponse = walletService.checkBalanceByPhoneNumber(phoneNumber, request.appUser);
+        return ResponseEntity.ok(encryptedResponse);
     }
+
+
+
+
 
 
     @GetMapping(value = ApiPath.TRANSACTION_HISTORY, produces = MediaType.APPLICATION_JSON_VALUE)

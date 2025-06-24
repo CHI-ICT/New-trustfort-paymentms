@@ -8,6 +8,8 @@
         <option value="$PROJECT_DIR$/tf03-gateway-ms/pom.xml" />
         <option value="$PROJECT_DIR$/tf06-payment-ms/pom.xml" />
         <option value="$PROJECT_DIR$/tf01-discovery-ms/pom.xml" />
+        <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/tf08-accounting-ms/pom.xml" />
       </list>
     </option>
   </component>

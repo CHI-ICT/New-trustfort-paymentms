@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: trustfort-payment
+  cloud:
+    config:
+      uri: http://localhost:8888
+      name: trustfort-payment
+      profile: default
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

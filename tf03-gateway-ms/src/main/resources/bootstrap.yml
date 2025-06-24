@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: trustfort-gateway
+  cloud:
+    config:
+      uri: http://localhost:8888
+      name: trustfort-gateway
+      profile: default
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

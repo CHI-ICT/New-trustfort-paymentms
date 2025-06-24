@@ -63,6 +63,7 @@ public class VirtualAccountController {
         );
 
         if (request.isError) {
+            log.info("🔍 Decrypted Payload: {}", request.payload);
             OmniResponsePayload response = gson.fromJson(request.payload, OmniResponsePayload.class);
             return new ResponseEntity<>(
                     SecureResponseUtil.error(response.getResponseCode(), response.getResponseMessage(), String.valueOf(HttpStatus.BAD_REQUEST)),

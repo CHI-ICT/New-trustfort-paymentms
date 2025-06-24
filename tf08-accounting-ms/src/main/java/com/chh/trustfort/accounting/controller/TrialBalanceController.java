@@ -24,7 +24,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@EncryptResponse
+//@EncryptResponse
 @RequestMapping(ApiPath.BASE_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")

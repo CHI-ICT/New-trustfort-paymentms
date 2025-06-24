@@ -135,9 +135,44 @@ public class WalletServiceImpl implements WalletService {
         return aesService.encrypt(gson.toJson(response), appUser);
     }
 
+    @Override
+    public String checkBalanceByPhoneNumber(String phoneNumber, AppUser appUser) {
+        WalletBalanceResponse response = new WalletBalanceResponse();
+        response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+        response.setMessage("No wallet found for the provided phone number");
 
+        try {
+            List<Wallet> wallets = walletRepository.findByUserId(phoneNumber);
 
+            if (wallets.isEmpty()) {
+                log.warn("❌ No wallet found for phoneNumber: {}", phoneNumber);
+                return aesService.encrypt(gson.toJson(response), appUser);
+            }
 
+            Wallet wallet = wallets.get(0); // 👈 First wallet only
+            if (wallet.getStatus() == WalletStatus.SUSPENDED) {
+                response.setMessage("Wallet is frozen and cannot be accessed");
+                return aesService.encrypt(gson.toJson(response), appUser);
+            }
+
+            if (wallet.getStatus() == WalletStatus.CLOSED) {
+                response.setMessage("Wallet is closed and cannot be accessed");
+                return aesService.encrypt(gson.toJson(response), appUser);
+            }
+
+            response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+            response.setMessage("Wallet balance retrieved successfully");
+            response.setWalletId(wallet.getWalletId());
+            response.setBalance(wallet.getBalance());
+
+            return aesService.encrypt(gson.toJson(response), appUser);
+
+        } catch (Exception e) {
+            log.error("❌ Error retrieving wallet balance for phoneNumber: {}", phoneNumber, e);
+            response.setMessage("An error occurred while retrieving wallet balance");
+            return aesService.encrypt(gson.toJson(response), appUser);
+        }
+    }
 
 
     @Override
@@ -213,11 +248,10 @@ public class WalletServiceImpl implements WalletService {
             appUserRepository.createUserActivity(activity);
         }
 
-        return aesService.encrypt(gson.toJson(response), appUser);
+//        return aesService.encrypt(gson.toJson(response), appUser);
+        return gson.toJson(response);
+
     }
-
-
-
 
     @Override
     @Transactional
@@ -272,23 +306,27 @@ public class WalletServiceImpl implements WalletService {
         return gson.toJson(response);
     }
     @Override
-    public String fetchWallet(String walletId, String userId, AppUser user) {
-        Wallet wallet = walletRepository.findByWalletId(walletId)
-                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
+    public String fetchAllWallets(String userId, AppUser user) {
+        List<Wallet> wallets = walletRepository.findByUserId(userId);
 
-        if (!wallet.getUserId().equals(userId)) {
-            ErrorResponse errorResponse = new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode());
-            return aesService.encrypt(gson.toJson(errorResponse), user);  // ✅ pass AppUser
+        if (wallets.isEmpty()) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    "No wallets found for user ID: " + userId,
+                    ResponseCode.FAILED_TRANSACTION.getResponseCode()
+            );
+            return aesService.encrypt(gson.toJson(errorResponse), user);
         }
 
         WalletResponse walletResponse = new WalletResponse(
                 ResponseCode.SUCCESS.getResponseCode(),
-                "Wallet retrieved successfully",
-                wallet
+                "Wallets retrieved successfully",
+                (Wallet) wallets
         );
 
-        return aesService.encrypt(gson.toJson(walletResponse), user); // ✅ pass AppUser
+        return aesService.encrypt(gson.toJson(walletResponse), user);
     }
+
+
 
 
 

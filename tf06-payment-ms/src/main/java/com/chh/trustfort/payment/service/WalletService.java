@@ -21,14 +21,14 @@ import java.util.List;
 public interface WalletService {
     List<WalletDTO> getWalletsByUserId(String userId);
 
-
+    String checkBalanceByPhoneNumber(String phoneNumber, AppUser appUser);
     String getWalletsByPhoneNumber(String phoneNumber, AppUser appUser);
 
     String createWallet(CreateWalletRequestPayload requestPayload, AppUser appUser);
 
 String fundWallet(FundWalletRequestPayload payload, String userId, String emailAddress);
 
-String fetchWallet(String walletId, String userId, AppUser user);
+String fetchAllWallets(String userId, AppUser user);
 
 public String transferFunds(FundsTransferRequestPayload payload, String idToken, AppUser appUser, AppUser ecred);
 

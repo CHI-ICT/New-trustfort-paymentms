@@ -21,7 +21,7 @@ public class ApiPath {
     //=======================================================Wallet======================================
     public static final String CREATE_WALLET= "/create-wallet";
     public static final String FUND_WALLET= "/fund-wallet";
-    public static final String FETCH_WALLET= "/fetch-wallet";
+    public static final String FETCH_ALL_WALLETS= "/fetch-wallet";
     public static final String TRANSFER_FUNDS= "/transfer-funds";
     public static final String CHECK_BALANCE= "/check-balance";
     public static final String TRANSACTION_HISTORY= "/tran-history";

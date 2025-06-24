@@ -11,6 +11,8 @@
         <module name="tf06-payment-ms" />
         <module name="tf01-discovery-ms" />
         <module name="tf03-gateway-ms" />
+        <module name="tf06-payment-ms (1)" />
+        <module name="tf08-accounting-ms" />
       </profile>
     </annotationProcessing>
   </component>
@@ -20,6 +22,8 @@
       <module name="tf02-config-ms" options="-parameters" />
       <module name="tf03-gateway-ms" options="-parameters" />
       <module name="tf06-payment-ms" options="-parameters" />
+      <module name="tf06-payment-ms (1)" options="-parameters" />
+      <module name="tf08-accounting-ms" options="-parameters" />
     </option>
   </component>
 </project>
