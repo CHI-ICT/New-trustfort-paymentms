@@ -257,36 +257,68 @@ public class WalletController {
 
     @GetMapping(value = ApiPath.TRANSACTION_HISTORY, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> processTransactionHistoryRequest(
-            @RequestParam("walletId") String walletId,
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestHeader("Authorization") String jwtToken,
+            @RequestHeader("idToken") String idToken,
             HttpServletRequest httpRequest) {
 
-        try {
-            Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                    Role.TRANSACTION_HISTORY.getValue(),
-                    walletId,
-                    httpRequest,
-                    ApiPath.ID_TOKEN
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.TRANSACTION_HISTORY.getValue(),
+                null,
+                httpRequest,
+                idToken
+        );
+
+        if (request.isError) {
+            OmniResponsePayload errorPayload = gson.fromJson(
+                    aesService.decrypt(request.payload, request.appUser),
+                    OmniResponsePayload.class
             );
 
-            if (request.isError) {
-                return new ResponseEntity<>(request.payload, HttpStatus.OK);
-            }
+            return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.error(
+                    errorPayload.getResponseMessage(),
+                    errorPayload.getResponseCode(),
+                    "UNAUTHORIZED"
+            ), request.appUser));
+        }
 
-            List<LedgerEntry> entries = walletService.getTransactionHistory(walletId, startDate, endDate, String.valueOf(request.appUser.getId())).getBody();
-            String encrypted = aesService.encrypt(gson.toJson(entries), request.appUser);
+        // ✅ Decrypt the payload and extract phoneNumber manually
+        String decrypted = aesService.decrypt(request.payload, request.appUser);
+        OmniRequestPayload payload = gson.fromJson(decrypted, OmniRequestPayload.class);
 
-            return ResponseEntity.ok(encrypted);
+        String userId = payload.getPhoneNumber();
+        log.info("🔍 Extracted phone number for user lookup: {}", userId);
+
+        if (userId == null || userId.trim().isEmpty()) {
+            log.warn("❌ Missing phone number in decrypted payload.");
+            ErrorResponse error = new ErrorResponse("06", "User not found or missing phone number");
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), request.appUser));
+        }
+
+        // ✅ Look up wallet using phone number
+        Optional<Wallet> walletOpt = walletRepository.findByUserId(userId).stream().findFirst();
+        if (!walletOpt.isPresent()) {
+            log.warn("⚠️ No wallet found for userId (phone number): {}", userId);
+            ErrorResponse error = new ErrorResponse("06", "Wallet not found for user");
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), request.appUser));
+        }
+
+        String walletId = walletOpt.get().getWalletId();
+
+        try {
+            List<LedgerEntry> entries = walletService.getTransactionHistory(walletId, startDate, endDate, userId).getBody();
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(entries), request.appUser));
         } catch (WalletException e) {
-            ErrorResponse error = new ErrorResponse(ResponseCode.FAILED_TRANSACTION.getResponseCode(), e.getMessage());
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), null));
+            ErrorResponse error = new ErrorResponse("06", e.getMessage());
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), request.appUser));
         } catch (Exception e) {
-            log.error("Error retrieving transaction history: {}", e.getMessage(), e);
-            ErrorResponse error = new ErrorResponse(ResponseCode.FAILED_TRANSACTION.getResponseCode(), "Failed to fetch transactions");
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), null));
+            log.error("❌ Error retrieving transaction history: {}", e.getMessage(), e);
+            ErrorResponse error = new ErrorResponse("06", "Failed to fetch transactions");
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), request.appUser));
         }
     }
+
 
 
     @PostMapping(value = "/withdraw", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

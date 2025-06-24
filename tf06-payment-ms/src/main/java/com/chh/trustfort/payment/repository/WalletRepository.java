@@ -77,6 +77,20 @@ public class WalletRepository {
         }
     }
 
+    public Optional<String> findWalletIdByUserId(String userId) {
+        try {
+            return Optional.ofNullable(em.createQuery(
+                            "SELECT w.walletId FROM Wallet w WHERE w.userId = :userId", String.class)
+                    .setParameter("userId", userId)
+                    .setMaxResults(1)
+                    .getSingleResult());
+        } catch (Exception e) {
+            log.warn("⚠️ Wallet not found for userId: {}", userId);
+            return Optional.empty();
+        }
+    }
+
+
 
 
     public Wallet createWallet(Wallet wallet) {
