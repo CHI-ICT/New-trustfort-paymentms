@@ -120,15 +120,15 @@ public class WalletController {
             @RequestBody String requestPayload,
             HttpServletRequest httpRequest) {
 
-        // 🔐 Extract ID token from Authorization header
         String idToken = authorizationHeader.replace("Bearer ", "").trim();
-        System.out.println("🔐 ID TOKEN: " + idToken);
-        System.out.println("📥 RAW PAYLOAD (Base64): " + requestPayload);
+        log.info("🔐 ID TOKEN: {}", idToken);
+        log.info("📥 RAW PAYLOAD (Base64): {}", requestPayload);
 
-        // 🔐 Validate and decrypt payload using existing logic
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
                 Role.CREATE_WALLET.getValue(), requestPayload, httpRequest, idToken
         );
+        // ✅ Set IP address manually since RequestManager doesn't do it
+        request.appUser.setIpAddress(httpRequest.getRemoteAddr());
 
         if (request.isError) {
             String decryptedError = aesService.decrypt(request.payload, request.appUser);
@@ -139,7 +139,7 @@ public class WalletController {
             );
         }
 
-        System.out.println("📥 Decrypted Payload: " + request.payload);
+        log.info("📥 Decrypted Payload: {}", request.payload);
         CreateWalletRequestPayload decryptedPayload = gson.fromJson(request.payload, CreateWalletRequestPayload.class);
         String result = walletService.createWallet(decryptedPayload, request.appUser);
 
@@ -256,68 +256,55 @@ public class WalletController {
 
 
     @GetMapping(value = ApiPath.TRANSACTION_HISTORY, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> processTransactionHistoryRequest(
+    public ResponseEntity<?> processTransactionHistoryRequest(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam("phoneNumber") String phoneNumber,
             @RequestHeader("Authorization") String jwtToken,
-            @RequestHeader("idToken") String idToken,
             HttpServletRequest httpRequest) {
 
+        // ✅ Validate using JWT token (no idToken or payload involved)
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.TRANSACTION_HISTORY.getValue(),
-                null,
-                httpRequest,
-                idToken
+                Role.TRANSACTION_HISTORY.getValue(), null, httpRequest, jwtToken
         );
 
-        if (request.isError) {
-            OmniResponsePayload errorPayload = gson.fromJson(
-                    aesService.decrypt(request.payload, request.appUser),
-                    OmniResponsePayload.class
-            );
-
-            return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.error(
-                    errorPayload.getResponseMessage(),
-                    errorPayload.getResponseCode(),
-                    "UNAUTHORIZED"
-            ), request.appUser));
+        if (request.isError || request.appUser == null) {
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                    new ErrorResponse("06", "Unauthorized request")
+            ), null));
         }
 
-        // ✅ Decrypt the payload and extract phoneNumber manually
-        String decrypted = aesService.decrypt(request.payload, request.appUser);
-        OmniRequestPayload payload = gson.fromJson(decrypted, OmniRequestPayload.class);
+        AppUser appUser = request.appUser;
 
-        String userId = payload.getPhoneNumber();
-        log.info("🔍 Extracted phone number for user lookup: {}", userId);
+        log.info("🔍 PhoneNumber passed in request param: {}", phoneNumber);
 
-        if (userId == null || userId.trim().isEmpty()) {
-            log.warn("❌ Missing phone number in decrypted payload.");
-            ErrorResponse error = new ErrorResponse("06", "User not found or missing phone number");
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), request.appUser));
-        }
+        // 🔍 Find wallet by phone number (stored as userId)
+        Optional<Wallet> walletOpt = walletRepository.findByUserId(phoneNumber).stream().findFirst();
 
-        // ✅ Look up wallet using phone number
-        Optional<Wallet> walletOpt = walletRepository.findByUserId(userId).stream().findFirst();
         if (!walletOpt.isPresent()) {
-            log.warn("⚠️ No wallet found for userId (phone number): {}", userId);
-            ErrorResponse error = new ErrorResponse("06", "Wallet not found for user");
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), request.appUser));
+            log.warn("❌ No wallet found for phoneNumber: {}", phoneNumber);
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                    new ErrorResponse("06", "Wallet not found for user")
+            ), appUser));
         }
 
         String walletId = walletOpt.get().getWalletId();
 
         try {
-            List<LedgerEntry> entries = walletService.getTransactionHistory(walletId, startDate, endDate, userId).getBody();
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(entries), request.appUser));
+            List<LedgerEntry> transactions = walletService.getTransactionHistory(walletId, startDate, endDate, phoneNumber).getBody();
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(transactions), appUser));
         } catch (WalletException e) {
-            ErrorResponse error = new ErrorResponse("06", e.getMessage());
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), request.appUser));
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                    new ErrorResponse("06", e.getMessage())
+            ), appUser));
         } catch (Exception e) {
             log.error("❌ Error retrieving transaction history: {}", e.getMessage(), e);
-            ErrorResponse error = new ErrorResponse("06", "Failed to fetch transactions");
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), request.appUser));
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                    new ErrorResponse("06", "Internal server error")
+            ), appUser));
         }
     }
+
 
 
 

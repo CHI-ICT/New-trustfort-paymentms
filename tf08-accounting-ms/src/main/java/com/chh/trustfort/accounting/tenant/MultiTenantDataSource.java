@@ -4,10 +4,12 @@ package com.chh.trustfort.accounting.tenant;
  *
  * @author DOfoleta
  */
+
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
-import java.util.Map;
+
 import javax.sql.DataSource;
+import java.util.Map;
 
 public class MultiTenantDataSource extends AbstractRoutingDataSource {
 

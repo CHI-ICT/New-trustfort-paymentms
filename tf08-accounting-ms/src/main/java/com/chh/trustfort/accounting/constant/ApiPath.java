@@ -108,4 +108,5 @@ public class ApiPath {
     public static final String GET_APPROVALS_BY_STATUS = "/report-approval/by-status";
 
     public static final String REPORT_VIEWER = "/viewer";
+    public static final String RECONCILE_BANK = "/bank/reconcile";
 }

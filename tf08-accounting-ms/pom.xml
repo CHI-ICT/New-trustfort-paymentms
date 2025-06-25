@@ -233,6 +233,12 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-config</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.techplanet.expertbridge</groupId>
+            <artifactId>tf06-payment-ms</artifactId>
+            <version>3.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
     
     <dependencyManagement>

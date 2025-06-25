@@ -5,21 +5,15 @@
  */
 package com.chh.trustfort.accounting.model;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import javax.persistence.*;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  *
@@ -79,4 +73,11 @@ public class AppUser implements Serializable {
     private String ipAddress;
     @Column(name = "auth_ip_address", nullable = false)
     private boolean authenticateIpAddress = false;
+
+    private String email;
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "transaction_pin")
+     private String transactionPin;
 }

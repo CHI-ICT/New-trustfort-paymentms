@@ -1,24 +1,14 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package com.chh.trustfort.accounting;
 
+
 import com.chh.trustfort.accounting.tenant.MultiTenantDataSource;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
-import java.lang.System.Logger;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import javax.sql.DataSource;
-
-import com.zaxxer.hikari.HikariDataSource;
-
-import javax.sql.DataSource;
 import org.jasypt.encryption.StringEncryptor;
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
@@ -35,16 +25,19 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+import javax.sql.DataSource;
+import java.lang.System.Logger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  *
@@ -52,42 +45,36 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
  */
 @Configuration
 @ComponentScan
-@EntityScan("com.chh.trustfort.accounting.model")
+@EntityScan("com.chh.trustfort.admin.model")
 @PropertySource("classpath:application.yml")
 @EnableTransactionManagement
 @EnableWebMvc
 @EnableEncryptableProperties
 @EnableAsync
 @EnableScheduling
-//@EnableJpaRepositories("com.chh.trustfort.accounting.repository")  // Add this line
+@EnableJpaRepositories("com.chh.trustfort.payment.repository")  // Add this line
 public class AppConfig extends WebMvcConfigurerAdapter {
 
     @Autowired
     Environment env;
     protected Logger logger;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-
-    @Bean
-    @Primary
-    public DataSource dataSource() {
-        HikariDataSource dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/Accounting-ms");
-        dataSource.setUsername("postgres");
-        dataSource.setPassword("Olawumi");
-        dataSource.setDriverClassName("org.postgresql.Driver");
-        return dataSource;
-    }
+//    @Bean
+//    @Primary
+//    public DataSource dataSource() {
+//        HikariDataSource dataSource = new HikariDataSource();
+//        dataSource.setJdbcUrl("jdbc:postgresql://localhost:5433/trustfort");
+//        dataSource.setUsername("postgres");
+//        dataSource.setPassword("");
+//        dataSource.setDriverClassName("org.postgresql.Driver");
+//        return dataSource;
+//    }
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(@Autowired DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("com.chh.trustfort.accounting.model");
+        em.setPackagesToScan("com.chh.trustfort.payment.model");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -102,37 +89,37 @@ public class AppConfig extends WebMvcConfigurerAdapter {
 
 
 
-//    @Bean
-//    public DataSource multiTenantDataSource() {
-//        Map<Object, Object> dataSources = new HashMap<>();
-//
-//        // Configure default tenants (this can be fetched dynamically from a registry)
-//        dataSources.put(env.getProperty("default-tenant.id"),com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-//                env.getProperty("default-tenant.url"), env.getProperty("default-tenant.db-user"), env.getProperty("default-tenant.db-pass")));
-//        dataSources.put(env.getProperty("chi-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-//                env.getProperty("chi-tenant.url"), env.getProperty("chi-tenant.db-user"), env.getProperty("chi-tenant.db-pass")));
-//        dataSources.put(env.getProperty("hmo-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-//                env.getProperty("hmo-tenant.url"), env.getProperty("hmo-tenant.db-user"), env.getProperty("hmo-tenant.db-pass")));
-//        dataSources.put(env.getProperty("cla-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-//                env.getProperty("cla-tenant.url"), env.getProperty("cla-tenant.db-user"), env.getProperty("cla-tenant.db-pass")));
-//        dataSources.put(env.getProperty("hfc-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-//                env.getProperty("hfc-tenant.url"), env.getProperty("hfc-tenant.db-user"), env.getProperty("hfc-tenant.db-pass")));
-//        dataSources.put(env.getProperty("chh-tenant.id"), com.chh.trustfort.accounting.tenant.MultiTenantDataSource.createDataSource(
-//                env.getProperty("chh-tenant.url"), env.getProperty("chh-tenant.db-user"), env.getProperty("chh-tenant.db-pass")));
-//
-//        return new MultiTenantDataSource(dataSources);
-//    }
-
     @Bean
     public DataSource multiTenantDataSource() {
         Map<Object, Object> dataSources = new HashMap<>();
 
-        // Configure default tenants
-        dataSources.put("trustfort", MultiTenantDataSource.createDataSource(
-                "jdbc:postgresql://localhost:5432/Accounting-ms", "postgres", "Olawumi"));
+        // Configure default tenants (this can be fetched dynamically from a registry)
+        dataSources.put(env.getProperty("default-tenant.id"), MultiTenantDataSource.createDataSource(
+                env.getProperty("default-tenant.url"), env.getProperty("default-tenant.db-user"), env.getProperty("default-tenant.db-pass")));
+        dataSources.put(env.getProperty("chi-tenant.id"), MultiTenantDataSource.createDataSource(
+                env.getProperty("chi-tenant.url"), env.getProperty("chi-tenant.db-user"), env.getProperty("chi-tenant.db-pass")));
+        dataSources.put(env.getProperty("hmo-tenant.id"), MultiTenantDataSource.createDataSource(
+                env.getProperty("hmo-tenant.url"), env.getProperty("hmo-tenant.db-user"), env.getProperty("hmo-tenant.db-pass")));
+        dataSources.put(env.getProperty("cla-tenant.id"), MultiTenantDataSource.createDataSource(
+                env.getProperty("cla-tenant.url"), env.getProperty("cla-tenant.db-user"), env.getProperty("cla-tenant.db-pass")));
+        dataSources.put(env.getProperty("hfc-tenant.id"), MultiTenantDataSource.createDataSource(
+                env.getProperty("hfc-tenant.url"), env.getProperty("hfc-tenant.db-user"), env.getProperty("hfc-tenant.db-pass")));
+        dataSources.put(env.getProperty("chh-tenant.id"), MultiTenantDataSource.createDataSource(
+                env.getProperty("chh-tenant.url"), env.getProperty("chh-tenant.db-user"), env.getProperty("chh-tenant.db-pass")));
 
         return new MultiTenantDataSource(dataSources);
     }
+
+//    @Bean
+//    public DataSource multiTenantDataSource() {
+//        Map<Object, Object> dataSources = new HashMap<>();
+//
+//        // Configure default tenants
+//        dataSources.put("trustfort", MultiTenantDataSource.createDataSource(
+//                "jdbc:postgresql://localhost:5433/trustfort", "postgres", ""));
+//
+//        return new MultiTenantDataSource(dataSources);
+//    }
 
     @Bean
     public ResourceBundleMessageSource messageSource() {

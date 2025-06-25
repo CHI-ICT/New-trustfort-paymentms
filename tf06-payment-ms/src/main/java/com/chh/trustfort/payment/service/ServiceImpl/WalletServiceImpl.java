@@ -25,7 +25,6 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
@@ -104,8 +103,9 @@ public class WalletServiceImpl implements WalletService {
         response.setResponseMessage("No wallets found");
 
         try {
+            log.info("🔍 Attempting to fetch wallets for userId (phoneNumber): {}", phoneNumber);
             List<Wallet> wallets = walletRepository.findByUserId(phoneNumber); // ✅ Already using phoneNumber
-
+            log.info("📦 Wallets fetched from DB: {}", wallets.size()); // ✅ Safe logging
             if (wallets.isEmpty()) {
                 log.warn("⚠️ No wallets found for phoneNumber: {}", phoneNumber);
                 return aesService.encrypt(gson.toJson(response), appUser);
@@ -124,6 +124,8 @@ public class WalletServiceImpl implements WalletService {
                             .build())
                     .collect(Collectors.toList());
 
+            log.info("✅ WalletDTOs prepared: {}", gson.toJson(walletDTOs));
+
             response.setResponseCode("00");
             response.setResponseMessage("Wallets retrieved successfully");
             response.setWallets(walletDTOs);
@@ -132,7 +134,9 @@ public class WalletServiceImpl implements WalletService {
             response.setResponseMessage("An unexpected error occurred");
         }
 
-        return aesService.encrypt(gson.toJson(response), appUser);
+        String encryptedResponse = aesService.encrypt(gson.toJson(response), appUser);
+        log.info("✅ Returning encrypted wallet response");
+        return encryptedResponse;
     }
 
     @Override
@@ -174,7 +178,6 @@ public class WalletServiceImpl implements WalletService {
         }
     }
 
-
     @Override
     public String createWallet(CreateWalletRequestPayload requestPayload, AppUser appUser) {
         CreateWalletResponsePayload response = new CreateWalletResponsePayload();
@@ -190,26 +193,27 @@ public class WalletServiceImpl implements WalletService {
         CreateWalletRequestPayload.UserData userData = requestPayload.getData();
 
         if (userData.getPhoneNumber() == null || userData.getEmailAddress() == null) {
-            log.warn("Phone Number or Email Address is null");
+            log.warn("⚠️ Phone number or email is missing");
             response.setResponseMessage(messageSource.getMessage("user.not.found", null, Locale.ENGLISH));
             return aesService.encrypt(gson.toJson(response), appUser);
         }
 
         String phoneNumber = userData.getPhoneNumber();
         if (walletRepository.existsByUserId(phoneNumber)) {
-            log.warn("Wallet already exists for phone number: {}", phoneNumber);
+            log.warn("⚠️ Wallet already exists for phone number: {}", phoneNumber);
             response.setResponseMessage(messageSource.getMessage("wallet.already.exists", null, Locale.ENGLISH));
             return aesService.encrypt(gson.toJson(response), appUser);
         }
 
-        String walletId = walletRepository.generateWalletId(); // This is just an internal unique ID
-        String serialNumber = walletId.replace("WAL-", "");
-        String accountNumber = walletUtil.generateAccountNumber(); // ✅ This must generate a proper 10/12-digit number
-        String currency = (requestPayload.getCurrency() != null) ? requestPayload.getCurrency() : "NGN";
+        // ✅ Generate wallet ID & serial
+        String serialNumber = String.valueOf(System.currentTimeMillis()).substring(5);
+        String walletId = "WAL-" + serialNumber;
 
-        Users users = usersRepository.findById(Long.valueOf(userData.getUserId()))
-                .orElse(null);
+        // ✅ Generate 10-digit account number
+        String accountNumber = walletUtil.generateAccountNumber();
+        String currency = requestPayload.getCurrency() != null ? requestPayload.getCurrency() : "NGN";
 
+        Users users = usersRepository.findById(Long.valueOf(userData.getUserId())).orElse(null);
         if (users == null) {
             log.warn("❌ No Users entity found for DB userId: {}", userData.getUserId());
             response.setResponseMessage(messageSource.getMessage("user.not.found", null, Locale.ENGLISH));
@@ -217,118 +221,93 @@ public class WalletServiceImpl implements WalletService {
         }
 
         Wallet wallet = new Wallet();
-        wallet.setWalletId(walletId);                          // ✅ WAL-100001
-        wallet.setSerialNumber(Long.parseLong(serialNumber));  // ✅ e.g. 100001
-        wallet.setUserId(phoneNumber);                         // ✅ Use phone number as user identifier
+        wallet.setWalletId(walletId);
+        wallet.setSerialNumber(Long.parseLong(serialNumber));
+        wallet.setUserId(phoneNumber);
         wallet.setEmail(userData.getEmailAddress());
         wallet.setCurrency(currency);
         wallet.setBalance(BigDecimal.ZERO);
+        wallet.setLedgerBalance(BigDecimal.ZERO);
         wallet.setStatus(WalletStatus.ACTIVE);
         wallet.setPhoneNumber(phoneNumber);
-        wallet.setAccountNumber(accountNumber);                // ✅ Save correct account number
+        wallet.setAccountNumber(accountNumber);
         wallet.setUsers(users);
 
         wallet = walletRepository.createWallet(wallet);
         log.info("✅ Wallet created successfully: {}", wallet.getWalletId());
 
-        if (walletUtil.validateWalletId(wallet.getWalletId())) {
-            response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
-            response.setResponseMessage(messageSource.getMessage("wallet.created.success", null, Locale.ENGLISH));
-            response.setWalletId(wallet.getWalletId());
-
-            AppUserActivity activity = new AppUserActivity();
-            activity.setAppUser(appUser);
-            activity.setActivity("CREATE_WALLET");
-            activity.setDescription("Wallet created successfully with ID: " + wallet.getWalletId());
-            activity.setIpAddress(appUser.getIpAddress());
-            activity.setCreatedBy(userData.getUserName());
-            activity.setCreatedAt(LocalDateTime.now());
-            activity.setStatus('S');
-
-            appUserRepository.createUserActivity(activity);
+        // Validate account number (optional, for traceability)
+        if (!walletUtil.validateAccountNumber(wallet.getAccountNumber())) {
+            log.warn("⚠️ Account number validation failed: {}", wallet.getAccountNumber());
+            response.setResponseMessage("Account number validation failed. Please contact support.");
+            return aesService.encrypt(gson.toJson(response), appUser);
         }
 
-//        return aesService.encrypt(gson.toJson(response), appUser);
-        return gson.toJson(response);
+        // ✅ Build success response
+        response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+        response.setResponseMessage(messageSource.getMessage("wallet.created.success", null, Locale.ENGLISH));
+        response.setWalletId(wallet.getWalletId());
 
+        AppUserActivity activity = new AppUserActivity();
+        activity.setAppUser(appUser);
+        activity.setActivity("CREATE_WALLET");
+        activity.setDescription("Wallet created successfully with ID: " + wallet.getWalletId());
+        activity.setIpAddress(appUser.getIpAddress());
+        activity.setCreatedBy(userData.getUserName() != null ? userData.getUserName() : "SYSTEM");
+        activity.setCreatedAt(LocalDateTime.now());
+        activity.setStatus('S');
+
+        appUserRepository.createUserActivity(activity);
+        return aesService.encrypt(gson.toJson(response), appUser);
     }
 
+
     @Override
-    @Transactional
-    public String fundWallet(FundWalletRequestPayload payload, String userId, String emailAddress) {
-        log.info("Funding wallet for user ID: {}", userId);
+    public WalletBalanceResponse getWalletBalance(String walletId, String userId) {
+        log.info("Fetching balance for Wallet ID: {}", walletId);
 
-        Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
-                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + payload.getWalletId()));
+        WalletBalanceResponse response = new WalletBalanceResponse();
+        response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
 
-        if (wallet.getStatus() == WalletStatus.SUSPENDED || wallet.getStatus() == WalletStatus.CLOSED) {
-            return gson.toJson(new ErrorResponse("Wallet is not active", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
+        Wallet wallet = getWalletOrThrow(walletId);
+
+        if (wallet.getStatus() == WalletStatus.SUSPENDED) {
+            log.warn("Wallet is frozen: {}", walletId);
+            response.setMessage("Wallet is frozen and cannot be accessed");
+            return response;
         }
 
         if (!wallet.getUserId().equals(userId)) {
-            return gson.toJson(new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
+            log.warn("Unauthorized access to wallet: {}", walletId);
+            response.setMessage("Unauthorized access to this wallet");
+            return response;
         }
 
-        BigDecimal creditAmount = payload.getAmount();
-        wallet.setBalance(wallet.getBalance().add(creditAmount));
-        walletRepository.updateUser(wallet);
+        if (wallet.getStatus() == WalletStatus.CLOSED) {
+            response.setMessage("Wallet is closed and cannot be accessed");
+            return response;
+        }
 
-        LedgerEntry ledgerEntry = new LedgerEntry();
-        ledgerEntry.setWalletId(wallet.getWalletId());
-        ledgerEntry.setTransactionType(TransactionType.CREDIT);
-        ledgerEntry.setAmount(creditAmount);
-        ledgerEntry.setStatus(TransactionStatus.COMPLETED);
-        ledgerEntry.setDescription("Wallet Funding");
-        ledgerEntryRepository.save(ledgerEntry);
-
-        JournalEntryRequest journal = new JournalEntryRequest();
-        journal.setAccountCode("REV001");
-        journal.setAmount(creditAmount);
-        journal.setDescription("Wallet Funding");
-        journal.setTransactionType("CREDIT");
-        journal.setDepartment("Wallet");
-        journal.setBusinessUnit("Retail");
-        journal.setTransactionDate(LocalDateTime.now());
-
-        accountingClient.postJournalEntry(journal);
-
-        SuccessResponse response = new SuccessResponse();
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
-        response.setResponseMessage("Wallet funded successfully");
-        response.setNewBalance(wallet.getBalance());
+        response.setMessage("Balance retrieved successfully");
+        response.setWalletId(walletId);
+        response.setBalance(wallet.getBalance());
 
-        notificationService.sendEmail(emailAddress,
-                "🔺 Wallet Funded",
-                "Your wallet was credited with ₦" + creditAmount + " via manual funding.");
-
-        log.info("Wallet ID: {} funded successfully. New balance: {}", wallet.getWalletId(), wallet.getBalance());
-
-        return gson.toJson(response);
+        return response;
     }
-    @Override
-    public String fetchAllWallets(String userId, AppUser user) {
-        List<Wallet> wallets = walletRepository.findByUserId(userId);
 
-        if (wallets.isEmpty()) {
-            ErrorResponse errorResponse = new ErrorResponse(
-                    "No wallets found for user ID: " + userId,
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode()
-            );
-            return aesService.encrypt(gson.toJson(errorResponse), user);
+    @Override
+    public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId) {
+        Wallet wallet = walletRepository.findByWalletId(walletId)
+                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
+
+        if (!wallet.getUserId().equals(userId)) {
+            throw new WalletException("Unauthorized access to this wallet");
         }
 
-        WalletResponse walletResponse = new WalletResponse(
-                ResponseCode.SUCCESS.getResponseCode(),
-                "Wallets retrieved successfully",
-                (Wallet) wallets
-        );
-
-        return aesService.encrypt(gson.toJson(walletResponse), user);
+        List<LedgerEntry> entries = ledgerEntryRepository.findByWalletId(walletId);
+        return ResponseEntity.ok(entries); // ✅ wrap the list properly
     }
-
-
-
-
 
     @Override
     @Transactional
@@ -438,52 +417,79 @@ public class WalletServiceImpl implements WalletService {
         return aesService.encrypt(gson.toJson(response), ecred);
     }
 
+
     @Override
-    public WalletBalanceResponse getWalletBalance(String walletId, String userId) {
-        log.info("Fetching balance for Wallet ID: {}", walletId);
+    @Transactional
+    public String fundWallet(FundWalletRequestPayload payload, String userId, String emailAddress) {
+        log.info("Funding wallet for user ID: {}", userId);
 
-        WalletBalanceResponse response = new WalletBalanceResponse();
-        response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+        Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
+                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + payload.getWalletId()));
 
-        Wallet wallet = getWalletOrThrow(walletId);
-
-        if (wallet.getStatus() == WalletStatus.SUSPENDED) {
-            log.warn("Wallet is frozen: {}", walletId);
-            response.setMessage("Wallet is frozen and cannot be accessed");
-            return response;
+        if (wallet.getStatus() == WalletStatus.SUSPENDED || wallet.getStatus() == WalletStatus.CLOSED) {
+            return gson.toJson(new ErrorResponse("Wallet is not active", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
         }
 
         if (!wallet.getUserId().equals(userId)) {
-            log.warn("Unauthorized access to wallet: {}", walletId);
-            response.setMessage("Unauthorized access to this wallet");
-            return response;
+            return gson.toJson(new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
         }
 
-        if (wallet.getStatus() == WalletStatus.CLOSED) {
-            response.setMessage("Wallet is closed and cannot be accessed");
-            return response;
-        }
+        BigDecimal creditAmount = payload.getAmount();
+        wallet.setBalance(wallet.getBalance().add(creditAmount));
+        walletRepository.updateUser(wallet);
 
+        LedgerEntry ledgerEntry = new LedgerEntry();
+        ledgerEntry.setWalletId(wallet.getWalletId());
+        ledgerEntry.setTransactionType(TransactionType.CREDIT);
+        ledgerEntry.setAmount(creditAmount);
+        ledgerEntry.setStatus(TransactionStatus.COMPLETED);
+        ledgerEntry.setDescription("Wallet Funding");
+        ledgerEntryRepository.save(ledgerEntry);
+
+        JournalEntryRequest journal = new JournalEntryRequest();
+        journal.setAccountCode("REV001");
+        journal.setAmount(creditAmount);
+        journal.setDescription("Wallet Funding");
+        journal.setTransactionType("CREDIT");
+        journal.setDepartment("Wallet");
+        journal.setBusinessUnit("Retail");
+        journal.setTransactionDate(LocalDateTime.now());
+
+        accountingClient.postJournalEntry(journal);
+
+        SuccessResponse response = new SuccessResponse();
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
-        response.setMessage("Balance retrieved successfully");
-        response.setWalletId(walletId);
-        response.setBalance(wallet.getBalance());
+        response.setResponseMessage("Wallet funded successfully");
+        response.setNewBalance(wallet.getBalance());
 
-        return response;
+        notificationService.sendEmail(emailAddress,
+                "🔺 Wallet Funded",
+                "Your wallet was credited with ₦" + creditAmount + " via manual funding.");
+
+        log.info("Wallet ID: {} funded successfully. New balance: {}", wallet.getWalletId(), wallet.getBalance());
+
+        return gson.toJson(response);
     }
 
     @Override
-    public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId) {
-        Wallet wallet = walletRepository.findByWalletId(walletId)
-                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
+    public String fetchAllWallets(String userId, AppUser user) {
+        List<Wallet> wallets = walletRepository.findByUserId(userId);
 
-        if (!wallet.getUserId().equals(userId)) {
-            log.warn("Unauthorized access to transaction history for wallet ID: {}", walletId);
-            throw new WalletException("Unauthorized access to this wallet");
+        if (wallets.isEmpty()) {
+            ErrorResponse errorResponse = new ErrorResponse(
+                    "No wallets found for user ID: " + userId,
+                    ResponseCode.FAILED_TRANSACTION.getResponseCode()
+            );
+            return aesService.encrypt(gson.toJson(errorResponse), user);
         }
 
-        List<LedgerEntry> transactions = ledgerEntryRepository.findByWalletId(walletId);
-        return (ResponseEntity<List<LedgerEntry>>) transactions;
+        WalletResponse walletResponse = new WalletResponse(
+                ResponseCode.SUCCESS.getResponseCode(),
+                "Wallets retrieved successfully",
+                (Wallet) wallets
+        );
+
+        return aesService.encrypt(gson.toJson(walletResponse), user);
     }
 
     @Override
