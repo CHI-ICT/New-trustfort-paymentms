@@ -35,17 +35,29 @@ jwt:
   issuer: trustfort
   secret: QmFzZTY0LWVuY29kZWQtc2VjcmV0LWtleQ==
 
+
+flutterwave:
+  secret-key: FLWSECK_TEST-7c9baeea2252b699d4a5c0a645f9f805-X
+  initiate-url: https://api.flutterwave.com/v3/payments
+
+
 paystack:
   secret:
     key: sk_live_9aeeff47588ebfdcb313d3c5b746159e2e52b055
 
-flutterwave:
-  public:
-    key: FLWPUBK_TEST-ed4c3675ef7f33e36f298c566d5a1e4e-X
-  secret:
-    key: FLWSECK_TEST-7c9baeea2252b699d4a5c0a645f9f805-X
-  encryption:
-    key: FLWSECK_TESTc3dc5b987f2b
+
+#    logging:
+#      level:
+#        org.springframework.security: DEBUG
+
+#
+#flutterwave:
+#  public:
+#    key: FLWPUBK_TEST-ed4c3675ef7f33e36f298c566d5a1e4e-X
+#  secret:
+#    key: FLWSECK_TEST-7c9baeea2252b699d4a5c0a645f9f805-X
+#  encryption:
+#    key: FLWSECK_TESTc3dc5b987f2b
 
 cron: true
 issuer: trustfort

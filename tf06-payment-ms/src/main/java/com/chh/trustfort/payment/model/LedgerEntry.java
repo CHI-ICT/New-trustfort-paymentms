@@ -47,7 +47,13 @@ public class LedgerEntry {
     @JoinColumn(name = "wallet_fk", referencedColumnName = "id")
     private Wallet wallet;
 
+    @Column(name = "transaction_reference", unique = true)
+    private String transactionReference;
+
     @Column(name = "reference", unique = true)
     private String reference;
+
+    @Column(name = "narration", unique = true)
+    private String narration;
 
 }

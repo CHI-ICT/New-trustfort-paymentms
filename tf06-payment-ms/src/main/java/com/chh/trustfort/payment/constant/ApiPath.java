@@ -92,5 +92,7 @@ public class ApiPath {
     public static final String CREDIT_WALLET ="/credit-wallet" ;
     public static final String INITIATE_FLW_PAYMENT = "/initiate-flw-payment";
     public static final String GET_ALL_WALLETS_BY_USER_ID = "/wallets/user";
+    public static final String FLUTTERWAVE_WEBHOOK = "/webhook/flutterwave";
+
 
 }

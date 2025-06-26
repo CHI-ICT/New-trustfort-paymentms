@@ -52,7 +52,8 @@ public enum Role {
     RETRY_FAILED_TRANSFERS("R_F_T"),
     MOCK_TRANSFER_STATUS("M_T_S"),
     INITIATE_FLW_PAYMENT("I_F_P"),
-    GET_ALL_WALLETS_BY_USER_ID("W_B_U");
+    GET_ALL_WALLETS_BY_USER_ID("W_B_U"),
+    FLUTTERWAVE_WEBHOOK("F_W");
 
 
     private final String role;

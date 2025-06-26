@@ -10,7 +10,7 @@ import com.chh.trustfort.payment.enums.PaymentGateway;
 import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.payload.OmniResponsePayload;
 import com.chh.trustfort.payment.security.AesService;
-import com.chh.trustfort.payment.service.FlutterwaveService;
+//import com.chh.trustfort.payment.service.FlutterwaveService;
 import com.chh.trustfort.payment.service.PaystackService;
 import com.google.gson.Gson;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -35,7 +35,7 @@ import java.util.Map;
 public class CardPaymentController {
 
     private final PaystackService paystackService;
-    private final FlutterwaveService flutterwaveService;
+//    private final FlutterwaveService flutterwaveService;
     private final RequestManager requestManager;
     private final Gson gson;
     private final AesService aesService;
@@ -62,8 +62,8 @@ public class CardPaymentController {
             String redirectUrl;
             if (paymentRequest.getGateway() == PaymentGateway.PAYSTACK) {
                 redirectUrl = paystackService.initiatePayment(paymentRequest);
-            } else if (paymentRequest.getGateway() == PaymentGateway.FLUTTERWAVE) {
-                redirectUrl = flutterwaveService.initiatePayment(paymentRequest);
+//            } else if (paymentRequest.getGateway() == PaymentGateway.FLUTTERWAVE) {
+//                redirectUrl = flutterwaveService.initiatePayment(paymentRequest);
             } else {
                 return new ResponseEntity<>(SecureResponseUtil.error("400", "Unsupported gateway", "400"), HttpStatus.OK);
             }

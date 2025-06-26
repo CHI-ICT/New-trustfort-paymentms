@@ -27,6 +27,8 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> 
 
     Optional<LedgerEntry> findPendingByWalletId(@Param("walletId") String walletId);
 
+    Optional<LedgerEntry> findByTransactionReference(String txRef);
+
     boolean existsByDescription(String description);
 
 

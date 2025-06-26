@@ -38,7 +38,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private BCryptPasswordEncoder passwordEncoder;
 
         private static final String[] AUTH_WHITE_LIST = {
-        "/","/trustfort/api/v1/token/generate-token", "/h2-console/**", "/trustfort/api/doc", 
+        "/","/trustfort/api/v1/token/generate-token", "/h2-console/**", "/trustfort/api/doc",
+                "/trustfort/api/v1/paymentService/webhook/flutterwave",
         "/css/**", "/js/**",
         "/swagger-resources/**",
         "/swagger-ui.html",
