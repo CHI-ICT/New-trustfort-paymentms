@@ -1,6 +1,7 @@
 package com.chh.trustfort.accounting.service;
 
 import com.chh.trustfort.accounting.dto.PayableInvoiceRequestDTO;
+import com.chh.trustfort.accounting.model.AppUser;
 import com.chh.trustfort.accounting.model.PayableInvoice;
 
 public interface PayableInvoiceService {
@@ -11,5 +12,5 @@ public interface PayableInvoiceService {
      * @param request the invoice submission payload
      * @return the saved PayableInvoice
      */
-    PayableInvoice submitInvoice(PayableInvoiceRequestDTO request);
+    String submitInvoice(PayableInvoiceRequestDTO request, AppUser user);
 }

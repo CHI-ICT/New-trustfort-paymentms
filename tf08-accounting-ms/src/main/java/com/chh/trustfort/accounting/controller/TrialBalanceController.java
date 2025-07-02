@@ -1,6 +1,11 @@
 package com.chh.trustfort.accounting.controller;
 
+import com.chh.trustfort.accounting.Quintuple;
+import com.chh.trustfort.accounting.Util.SecureResponseUtil;
 import com.chh.trustfort.accounting.component.RequestManager;
+import com.chh.trustfort.accounting.component.Role;
+import com.chh.trustfort.accounting.model.AppUser;
+import com.google.gson.Gson;
 import org.springframework.core.io.Resource; // ✅ Correct
 
 import com.chh.trustfort.accounting.Responses.EncryptResponse;
@@ -21,11 +26,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-//@EncryptResponse
 @RequestMapping(ApiPath.BASE_API)
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
@@ -37,123 +42,185 @@ public class TrialBalanceController {
     private final FinancialSummaryService financialSummaryService;
     private final ReportExportService reportExportService;
     private final ReportViewerService reportViewerService;
-
     private final VarianceAnalysisService varianceAnalysisService;
     private final DashboardReportService dashboardReportService;
     private final RealTimeMonitoringService realTimeMonitoringService;
     private final ReportAuditTrailService auditTrailService;
     private final RequestManager requestManager;
     private final AesService aesService;
+    private final Gson gson;
 
-
-@GetMapping(value = ApiPath.GET_TRIAL_BALANCE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<TrialBalanceResponse>> getTrialBalance(
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    @PostMapping(value = ApiPath.GET_TRIAL_BALANCE, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getTrialBalance(
+            @RequestParam String idToken,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
     ) {
-        log.info("Generating trial balance from {} to {}", startDate, endDate);
-        List<TrialBalanceResponse> response = trialBalanceService.generateTrialBalance(startDate, endDate);
-        return ResponseEntity.ok(response);
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.TRIAL_BALANCE_VIEW.getValue(), requestPayload, httpRequest, idToken
+        );
+
+        if (request.isError) {
+            return ResponseEntity.badRequest().body(aesService.encrypt(request.payload, request.appUser));
+        }
+
+        TaxDateRangeDTO filter = gson.fromJson(request.payload, TaxDateRangeDTO.class);
+        List<TrialBalanceResponse> response = trialBalanceService.generateTrialBalance(filter.getStartDate(), filter.getEndDate());
+        return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Trial balance generated", response), request.appUser));
     }
 
-
-    @GetMapping(value = ApiPath.GET_FINANCIAL_SUMMARY, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<FinancialSummaryDTO> getSummary(
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    @PostMapping(value = ApiPath.GET_FINANCIAL_SUMMARY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getSummary(
+            @RequestParam String idToken,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
     ) {
-        FinancialSummaryDTO summary = financialSummaryService.compileSummary(startDate, endDate);
-        return ResponseEntity.ok(summary);
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.FINANCIAL_SUMMARY_VIEW.getValue(), requestPayload, httpRequest, idToken
+        );
+
+        if (request.isError) {
+            return ResponseEntity.badRequest().body(aesService.encrypt(request.payload, request.appUser));
+        }
+
+        TaxDateRangeDTO filter = gson.fromJson(request.payload, TaxDateRangeDTO.class);
+        FinancialSummaryDTO summary = financialSummaryService.compileSummary(filter.getStartDate(), filter.getEndDate());
+        return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Financial summary compiled", summary), request.appUser));
     }
 
-    @GetMapping(value = ApiPath.EXPORT_REPORT, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ERPExportDTO> exportReport(
-            @RequestParam("reportType") String reportType,
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    @PostMapping(value = ApiPath.EXPORT_REPORT, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> exportReport(
+            @RequestParam String idToken,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
     ) {
-        ERPExportDTO exportDTO = reportExportService.prepareExport(reportType, startDate, endDate);
-        return ResponseEntity.ok(exportDTO);
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.REPORT_EXPORT.getValue(), requestPayload, httpRequest, idToken
+        );
+
+        if (request.isError) {
+            return ResponseEntity.badRequest().body(aesService.encrypt(request.payload, request.appUser));
+        }
+
+        ReportExportRequestDTO dto = gson.fromJson(request.payload, ReportExportRequestDTO.class);
+        ERPExportDTO exportDTO = reportExportService.prepareExport(dto.getReportType(), dto.getStartDate(), dto.getEndDate());
+        return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Report export ready", exportDTO), request.appUser));
     }
 
-    @GetMapping(value = ApiPath.DOWNLOAD_REPORT, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PostMapping(value = ApiPath.GET_VARIANCE_ANALYSIS, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getVarianceReport(
+            @RequestParam String idToken,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
+    ) {
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.VARIANCE_ANALYSIS_VIEW.getValue(), requestPayload, httpRequest, idToken
+        );
+
+        if (request.isError) {
+            return ResponseEntity.badRequest().body(aesService.encrypt(request.payload, request.appUser));
+        }
+
+        TaxDateRangeDTO filter = gson.fromJson(request.payload, TaxDateRangeDTO.class);
+        VarianceAnalysisDTO variance = varianceAnalysisService.analyzeVariance(filter.getStartDate(), filter.getEndDate());
+        return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Variance analysis report", variance), request.appUser));
+    }
+
+    @PostMapping(value = ApiPath.GET_DASHBOARD_SUMMARY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getDashboardSummary(
+            @RequestParam String idToken,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
+    ) {
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.DASHBOARD_VIEW.getValue(), requestPayload, httpRequest, idToken
+        );
+
+        if (request.isError) {
+                return ResponseEntity.badRequest().body(aesService.encrypt(request.payload, request.appUser));
+        }
+
+        TaxDateRangeDTO filter = gson.fromJson(request.payload, TaxDateRangeDTO.class);
+        DashboardSummaryDTO dashboard = dashboardReportService.generateDashboardView(filter.getStartDate(), filter.getEndDate());
+        return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Dashboard summary ready", dashboard), request.appUser));
+    }
+
+    @PostMapping(value = ApiPath.GET_REPORT_MONITORING, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> monitorTrends(
+            @RequestParam String idToken,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
+    ) {
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.REPORT_MONITOR.getValue(), requestPayload, httpRequest, idToken
+        );
+
+        if (request.isError) {
+            return ResponseEntity.badRequest().body(aesService.encrypt(request.payload, request.appUser));
+        }
+
+        TrendDateRangeDTO dto = gson.fromJson(request.payload, TrendDateRangeDTO.class);
+        RealTimeMonitoringDTO trends = realTimeMonitoringService.monitorTrends(
+                dto.getPrevStart(), dto.getPrevEnd(), dto.getCurrStart(), dto.getCurrEnd()
+        );
+        return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Monitoring report", trends), request.appUser));
+    }
+
+    @PostMapping(value = ApiPath.DOWNLOAD_REPORT, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> downloadReport(
-            @RequestParam("reportType") String reportType,
-            @RequestParam("format") String format,
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam String idToken,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
     ) {
-        // Inject the date range into StatementFilterDTO
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.DOWNLOAD_REPORT.getValue(), requestPayload, httpRequest, idToken
+        );
+
+        if (request.isError) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        DownloadReportRequestDTO dto = gson.fromJson(request.payload, DownloadReportRequestDTO.class);
         StatementFilterDTO filter = new StatementFilterDTO();
-        filter.setStartDate(startDate);
-        filter.setEndDate(endDate);
+        filter.setStartDate(dto.getStartDate());
+        filter.setEndDate(dto.getEndDate());
 
-        List<ReportViewerResponse> reportData = reportViewerService.getReportData(reportType, filter);
-
+        List<ReportViewerResponse> reportData = reportViewerService.getReportData(dto.getReportType(), filter);
         if (reportData == null || reportData.isEmpty()) {
             throw new RuntimeException("No data available for export");
         }
 
+        String reportTitle = dto.getReportType().toUpperCase().replace("_", " ") + " Report";
         String fileExtension;
         String contentType;
         Resource exportedFile;
-        ReportDownloadUtil.ExportFormat exportFormat = ReportDownloadUtil.ExportFormat.valueOf(format.toUpperCase());
-
-        String reportTitle = reportType.toUpperCase().replace("_", " ") + " Report";
+        ReportDownloadUtil.ExportFormat exportFormat = ReportDownloadUtil.ExportFormat.valueOf(dto.getFormat().toUpperCase());
 
         switch (exportFormat) {
             case PDF:
-                exportedFile = (Resource) ReportDownloadUtil.exportAsPdf(reportData, reportTitle, startDate, endDate);
+                exportedFile = ReportDownloadUtil.exportAsPdf(reportData, reportTitle, dto.getStartDate(), dto.getEndDate());
                 contentType = "application/pdf";
                 fileExtension = ".pdf";
                 break;
             case EXCEL:
-                exportedFile = (Resource) ReportDownloadUtil.exportAsExcel(reportData);
+                exportedFile = ReportDownloadUtil.exportAsExcel(reportData);
                 contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 fileExtension = ".xlsx";
                 break;
             case CSV:
-                exportedFile = (Resource) ReportDownloadUtil.exportAsCsv(reportData);
+                exportedFile = ReportDownloadUtil.exportAsCsv(reportData);
                 contentType = "text/csv";
                 fileExtension = ".csv";
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported format: " + format);
+                throw new IllegalArgumentException("Unsupported format: " + dto.getFormat());
         }
 
-        String filename = reportType.toLowerCase() + "_report" + fileExtension;
+        String filename = dto.getReportType().toLowerCase() + "_report" + fileExtension;
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(exportedFile);
     }
-
-    @GetMapping(value = ApiPath.GET_VARIANCE_ANALYSIS, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<VarianceAnalysisDTO> getVarianceReport(
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
-    ) {
-        return ResponseEntity.ok(varianceAnalysisService.analyzeVariance(startDate, endDate));
-    }
-
-
-    @GetMapping(value = ApiPath.GET_DASHBOARD_SUMMARY, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<DashboardSummaryDTO> getDashboardSummary(
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
-    ) {
-        return ResponseEntity.ok(dashboardReportService.generateDashboardView(startDate, endDate));
-    }
-
-    @GetMapping(value = ApiPath.GET_REPORT_MONITORING, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RealTimeMonitoringDTO> monitorTrends(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate prevStart,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate prevEnd,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate currStart,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate currEnd
-    ) {
-        return ResponseEntity.ok(realTimeMonitoringService.monitorTrends(prevStart, prevEnd, currStart, currEnd));
-    }
-
 }

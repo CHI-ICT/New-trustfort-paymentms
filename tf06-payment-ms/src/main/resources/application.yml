@@ -78,7 +78,7 @@ admin:
 
 accounting:
   service:
-    url: http://localhost:1009/trustfort/api/v1
+    url: http://localhost:1007/trustfort/api/v1
 
 email:
   notification:

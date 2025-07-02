@@ -51,7 +51,6 @@ public class WalletRepository {
         }
     }
 
-
     public List<Wallet> findByUserPhone(String phoneNumber) {
         try {
             return em.createQuery(
@@ -63,8 +62,6 @@ public class WalletRepository {
             return Collections.emptyList();
         }
     }
-
-
 
     public List<Wallet> findByUserId(String userId) {
         try {
@@ -91,9 +88,6 @@ public class WalletRepository {
         }
     }
 
-
-
-
     public Wallet createWallet(Wallet wallet) {
         log.info("Creating wallet for userId: {}", wallet.getUserId());
         em.persist(wallet);
@@ -116,6 +110,7 @@ public class WalletRepository {
                 .getSingleResult();
         return count > 0;
     }
+
     public Optional<Wallet> findByWalletId(String walletId) {
         try {
             return Optional.ofNullable(
@@ -127,6 +122,7 @@ public class WalletRepository {
             return Optional.empty();
         }
     }
+
     public Optional<Wallet> findByAccountNumber(String accountNumber) {
         try {
             Wallet wallet = em.createQuery("SELECT w FROM Wallet w WHERE w.accountNumber = :accountNumber", Wallet.class)
@@ -136,6 +132,13 @@ public class WalletRepository {
         } catch (NoResultException e) {
             return Optional.empty();
         }
+    }
+
+    public Wallet save(Wallet wallet) {
+        log.info("💾 Saving wallet for userId: {}", wallet.getUserId());
+        Wallet merged = em.merge(wallet);
+        em.flush();
+        return merged;
     }
 
     public Optional<Wallet> findByEmailAddress(String emailAddress) {

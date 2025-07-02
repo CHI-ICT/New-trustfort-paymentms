@@ -32,4 +32,6 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> 
     boolean existsByDescription(String description);
 
 
+
+
 }

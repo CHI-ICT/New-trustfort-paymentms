@@ -1,11 +1,12 @@
 package com.chh.trustfort.accounting.service;// DebitNoteService.java
 
 import com.chh.trustfort.accounting.dto.ReversalRequestDTO;
+import com.chh.trustfort.accounting.model.AppUser;
 import com.chh.trustfort.accounting.model.DebitNote;
 
 public interface DebitNoteService {
-    DebitNote reverseDebitNote(ReversalRequestDTO request);
+    String reverseDebitNote(ReversalRequestDTO request, AppUser appUser);
 
-    DebitNote linkNewDebitNoteToOld(Long oldNoteId, DebitNote newNotePayload, String createdBy);
+    String linkNewDebitNoteToOld(Long oldNoteId, DebitNote newNotePayload, String createdBy, AppUser appUser);
 
 }

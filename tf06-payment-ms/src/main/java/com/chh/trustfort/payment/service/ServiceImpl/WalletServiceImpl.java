@@ -6,6 +6,7 @@ import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.component.WalletUtil;
 import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
 import com.chh.trustfort.payment.dto.JournalEntryRequest;
+import com.chh.trustfort.payment.dto.LedgerEntryDTO;
 import com.chh.trustfort.payment.dto.WalletDTO;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
 import com.chh.trustfort.payment.enums.TransactionStatus;
@@ -52,6 +53,7 @@ public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository walletRepository;
     private final AppUserRepository appUserRepository;
+    private final LedgerEntryRepository ledgerRepository;
     private final UsersService usersService;
     private final OtpService otpService;
     private final WalletUtil walletUtil;
@@ -179,6 +181,51 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
+    public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String narration) {
+        try {
+            log.info("🔍 Verifying wallet for phone number: {}", phoneNumber);
+
+            // Find wallet by userId (assumed to be phone number)
+            Wallet wallet = walletRepository.findByUserId(phoneNumber).stream().findFirst().orElse(null);
+            if (wallet == null) {
+                log.warn("⚠️ Wallet not found for user: {}", phoneNumber);
+                return false;
+            }
+
+            // Prevent duplicate credit using tx_ref
+            if (ledgerRepository.findByTransactionReference(reference).isPresent()) {
+                log.warn("⚠️ Duplicate transaction reference detected: {}", reference);
+                return false;
+            }
+
+            // Credit wallet
+            wallet.setBalance(wallet.getBalance().add(amount));
+            wallet.setLedgerBalance(wallet.getLedgerBalance().add(amount));
+            walletRepository.save(wallet);
+//            walletRepository.updateUser(wallet);
+
+            // Log to ledger
+            LedgerEntry ledger = new LedgerEntry();
+            ledger.setWallet(wallet);
+            ledger.setWalletId(wallet.getWalletId());
+            ledger.setAmount(amount);
+            ledger.setTransactionReference(reference);
+            ledger.setTransactionType(TransactionType.CREDIT);
+            ledger.setStatus(TransactionStatus.COMPLETED);
+            ledger.setNarration(narration != null ? narration : "Flutterwave wallet funding");
+
+            ledgerRepository.save(ledger);
+
+            log.info("✅ Wallet credited: {} | Amount: {} | Ref: {}", phoneNumber, amount, reference);
+            return true;
+
+        } catch (Exception e) {
+            log.error("❌ Error crediting wallet for phone number {}: {}", phoneNumber, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
     public String createWallet(CreateWalletRequestPayload requestPayload, AppUser appUser) {
         CreateWalletResponsePayload response = new CreateWalletResponsePayload();
         response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
@@ -232,6 +279,8 @@ public class WalletServiceImpl implements WalletService {
         wallet.setPhoneNumber(phoneNumber);
         wallet.setAccountNumber(accountNumber);
         wallet.setUsers(users);
+        wallet.setAccountCode("WALLET-FUNDING");
+
 
         wallet = walletRepository.createWallet(wallet);
         log.info("✅ Wallet created successfully: {}", wallet.getWalletId());
@@ -296,18 +345,40 @@ public class WalletServiceImpl implements WalletService {
         return response;
     }
 
-    @Override
-    public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId) {
-        Wallet wallet = walletRepository.findByWalletId(walletId)
-                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
+//    @Override
+//    public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId) {
+//        Wallet wallet = walletRepository.findByWalletId(walletId)
+//                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
+//
+//        if (!wallet.getUserId().equals(userId)) {
+//            throw new WalletException("Unauthorized access to this wallet");
+//        }
+//
+//        List<LedgerEntry> entries = ledgerEntryRepository.findByWalletId(walletId);
+//        return ResponseEntity.ok(entries); // ✅ wrap the list properly
+//    }
+@Override
+public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
+        String walletId, LocalDate startDate, LocalDate endDate, String userId) {
 
-        if (!wallet.getUserId().equals(userId)) {
-            throw new WalletException("Unauthorized access to this wallet");
-        }
+    Wallet wallet = walletRepository.findByWalletId(walletId)
+            .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
 
-        List<LedgerEntry> entries = ledgerEntryRepository.findByWalletId(walletId);
-        return ResponseEntity.ok(entries); // ✅ wrap the list properly
+    if (!wallet.getUserId().equals(userId)) {
+        throw new WalletException("Unauthorized access to this wallet");
     }
+
+    List<LedgerEntry> entries = ledgerEntryRepository.findByWalletId(walletId);
+
+    // ✅ Convert entities to DTOs
+    List<LedgerEntryDTO> dtos = entries.stream()
+            .map(LedgerEntryDTO::fromEntity)
+            .collect(Collectors.toList());
+
+    return ResponseEntity.ok(dtos);
+}
+
+
 
     @Override
     @Transactional
@@ -416,7 +487,6 @@ public class WalletServiceImpl implements WalletService {
 
         return aesService.encrypt(gson.toJson(response), ecred);
     }
-
 
     @Override
     @Transactional
@@ -897,7 +967,6 @@ public class WalletServiceImpl implements WalletService {
                 "Wallet funded via Paystack"
         );
     }
-
 
     @Override
     @Transactional

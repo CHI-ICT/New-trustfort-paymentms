@@ -86,4 +86,6 @@ public class AppUser implements Serializable {
 
     @Column(name = "transaction_pin")
      private String transactionPin;
+
+
 }

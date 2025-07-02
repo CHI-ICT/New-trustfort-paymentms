@@ -1,6 +1,8 @@
 package com.chh.trustfort.payment.model;
 
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
@@ -16,9 +18,18 @@ public class WebhookLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String txRef;
+    private String eventType;
+    @Lob
+    private String rawPayload;
+    private String sourceIp;
+
+    private boolean processed;
+
+//    @Column(name = "reference")
     private String reference;
 
-    private String eventType;
 
-    private LocalDateTime receivedAt = LocalDateTime.now();
+    @CreationTimestamp
+    private LocalDateTime receivedAt;
 }

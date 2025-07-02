@@ -30,14 +30,12 @@ public class CashFlowStatementService {
         List<JournalEntry> entries = journalEntryRepository.findByTransactionDateBetween(
                 filter.getStartDate(), filter.getEndDate());
 
-        // Apply department filter
         if (filter.getDepartment() != null && !filter.getDepartment().isBlank()) {
             entries = entries.stream()
                     .filter(e -> filter.getDepartment().equalsIgnoreCase(e.getDepartment()))
                     .collect(Collectors.toList());
         }
 
-        // Apply business unit filter
         if (filter.getBusinessUnit() != null && !filter.getBusinessUnit().isBlank()) {
             entries = entries.stream()
                     .filter(e -> filter.getBusinessUnit().equalsIgnoreCase(e.getBusinessUnit()))
@@ -64,7 +62,6 @@ public class CashFlowStatementService {
                     break;
 
                 case ASSET:
-                    // Only treat non-cash assets as investing
                     if (!accountName.contains("cash")) {
                         signedAmount = type == TransactionType.DEBIT ? amount : amount.negate();
                         investing = investing.add(signedAmount);
@@ -86,22 +83,20 @@ public class CashFlowStatementService {
         BigDecimal openingCashBalance = computeOpeningCashBalance(filter);
         BigDecimal closingCashBalance = openingCashBalance.add(netCashFlow);
 
-        CashFlowStatementDTO dto = new CashFlowStatementDTO();
-        dto.setOperatingActivities(operating);
-        dto.setInvestingActivities(investing);
-        dto.setFinancingActivities(financing);
-        dto.setNetCashFlow(netCashFlow);
-        dto.setOpeningCashBalance(openingCashBalance);
-        dto.setClosingCashBalance(closingCashBalance);
-
-        return dto;
+        return CashFlowStatementDTO.builder()
+                .operatingActivities(operating)
+                .investingActivities(investing)
+                .financingActivities(financing)
+                .netCashFlow(netCashFlow)
+                .openingCashBalance(openingCashBalance)
+                .closingCashBalance(closingCashBalance)
+                .build();
     }
 
     private BigDecimal computeOpeningCashBalance(StatementFilterDTO filter) {
         List<JournalEntry> entries = journalEntryRepository.findByTransactionDateBetween(
                 LocalDate.of(2000, 1, 1), filter.getStartDate().minusDays(1));
 
-        // Apply filters
         if (filter.getDepartment() != null && !filter.getDepartment().isBlank()) {
             entries = entries.stream()
                     .filter(e -> filter.getDepartment().equalsIgnoreCase(e.getDepartment()))
@@ -114,7 +109,6 @@ public class CashFlowStatementService {
                     .collect(Collectors.toList());
         }
 
-        // Only include cash-related accounts
         return entries.stream()
                 .filter(e -> e.getAccount().getAccountName().toLowerCase().contains("cash"))
                 .map(e -> e.getTransactionType() == TransactionType.DEBIT ? e.getAmount() : e.getAmount().negate())
@@ -123,34 +117,14 @@ public class CashFlowStatementService {
 
     public List<ReportViewerResponse> generateCashFlowForViewer(StatementFilterDTO filter) {
         CashFlowStatementDTO dto = generateCashFlowStatement(filter);
-        List<ReportViewerResponse> list = new ArrayList<>();
 
-        list.add(new ReportViewerResponse(Map.of(
-                "Activity", "Operating Activities",
-                "Amount", dto.getOperatingActivities()
-        )));
-        list.add(new ReportViewerResponse(Map.of(
-                "Activity", "Investing Activities",
-                "Amount", dto.getInvestingActivities()
-        )));
-        list.add(new ReportViewerResponse(Map.of(
-                "Activity", "Financing Activities",
-                "Amount", dto.getFinancingActivities()
-        )));
-        list.add(new ReportViewerResponse(Map.of(
-                "Activity", "Net Cash Flow",
-                "Amount", dto.getNetCashFlow()
-        )));
-        list.add(new ReportViewerResponse(Map.of(
-                "Activity", "Opening Balance",
-                "Amount", dto.getOpeningCashBalance()
-        )));
-        list.add(new ReportViewerResponse(Map.of(
-                "Activity", "Closing Balance",
-                "Amount", dto.getClosingCashBalance()
-        )));
-
-        return list;
+        return List.of(
+                new ReportViewerResponse(Map.of("Activity", "Operating Activities", "Amount", dto.getOperatingActivities())),
+                new ReportViewerResponse(Map.of("Activity", "Investing Activities", "Amount", dto.getInvestingActivities())),
+                new ReportViewerResponse(Map.of("Activity", "Financing Activities", "Amount", dto.getFinancingActivities())),
+                new ReportViewerResponse(Map.of("Activity", "Net Cash Flow", "Amount", dto.getNetCashFlow())),
+                new ReportViewerResponse(Map.of("Activity", "Opening Balance", "Amount", dto.getOpeningCashBalance())),
+                new ReportViewerResponse(Map.of("Activity", "Closing Balance", "Amount", dto.getClosingCashBalance()))
+        );
     }
-
 }

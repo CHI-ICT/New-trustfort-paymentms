@@ -19,6 +19,21 @@ public class FlutterwaveWebhookController {
 
     private final FlutterwaveWebhookService flutterwaveWebhookService;
 
+//    @PostMapping(value = ApiPath.FLUTTERWAVE_WEBHOOK, consumes = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<?> handleWebhook(@RequestBody String payload, HttpServletRequest request) {
+//        log.info("📨 Received Flutterwave webhook from IP {}: {}", request.getRemoteAddr(), payload);
+//
+//        boolean success = flutterwaveWebhookService.handleWebhook(payload);
+//
+//        if (!success) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT)
+//                    .body(Map.of("status", "fail", "message", "Webhook already logged"));
+//        }
+//
+//        return ResponseEntity.ok(Map.of("status", "success", "message", "Webhook logged"));
+//    }
+//    }
+
     @PostMapping(value = ApiPath.FLUTTERWAVE_WEBHOOK, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> handleWebhook(@RequestBody String payload, HttpServletRequest request) {
         log.info("📨 Received Flutterwave webhook from IP {}: {}", request.getRemoteAddr(), payload);
@@ -27,11 +42,10 @@ public class FlutterwaveWebhookController {
 
         if (!success) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("status", "fail", "message", "Duplicate tx_ref or invalid userId"));
+                    .body(Map.of("status", "fail", "message", "Webhook already logged or malformed"));
         }
 
-        return ResponseEntity.ok(Map.of("status", "success", "message", "Webhook processed"));
+        return ResponseEntity.ok(Map.of("status", "success", "message", "Webhook logged"));
     }
-    }
-
+}
 

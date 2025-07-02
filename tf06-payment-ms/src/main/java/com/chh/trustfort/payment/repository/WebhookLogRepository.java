@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface WebhookLogRepository extends JpaRepository<WebhookLog, Long> {
     Optional<WebhookLog> findByReference(String reference);
+    boolean existsByTxRef(String txRef);
+
 }

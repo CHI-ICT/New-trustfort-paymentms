@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ledger_entries")
+@Table(name = "accounting_ledger_entries")
 @Getter
 @Setter
 @NoArgsConstructor

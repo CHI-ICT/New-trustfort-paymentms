@@ -17,16 +17,11 @@ public class StatementIntegrityService {
     private final CashFlowStatementService cashFlowService;
 
     public List<IntegrityCheckResult> validateAllStatements(BalanceSheetFilterRequest filter) {
-        // Convert BalanceSheetFilterRequest to StatementFilterDTO
         StatementFilterDTO converted = toStatementFilter(filter);
-
         List<IntegrityCheckResult> results = new ArrayList<>();
 
-        // These methods require StatementFilterDTO
         results.add(validateIncomeVsEquity(converted));
         results.add(validateCashFlowVsBalanceSheet(converted));
-
-        // This method requires BalanceSheetFilterRequest
         results.add(validateBalanceSheetEquation(filter));
 
         return results;
@@ -65,9 +60,6 @@ public class StatementIntegrityService {
 
     public IntegrityCheckResult validateCashFlowVsBalanceSheet(StatementFilterDTO filter) {
         CashFlowStatementDTO cash = cashFlowService.generateCashFlowStatement(filter);
-
-
-        // ✅ Convert to correct request object for balance sheet
         BalanceSheetFilterRequest balanceSheetFilter = toBalanceSheetFilter(filter);
         BalanceSheetResponse bs = balanceService.generateBalanceSheet(balanceSheetFilter);
 
@@ -83,8 +75,6 @@ public class StatementIntegrityService {
         );
     }
 
-
-    // ✅ Convert from BalanceSheetFilterRequest to StatementFilterDTO
     private StatementFilterDTO toStatementFilter(BalanceSheetFilterRequest filter) {
         StatementFilterDTO dto = new StatementFilterDTO();
         dto.setStartDate(filter.getStartDate());
@@ -94,7 +84,6 @@ public class StatementIntegrityService {
         return dto;
     }
 
-    // ✅ Convert from StatementFilterDTO to BalanceSheetFilterRequest (used for consistency)
     private BalanceSheetFilterRequest toBalanceSheetFilter(StatementFilterDTO dto) {
         BalanceSheetFilterRequest filter = new BalanceSheetFilterRequest();
         filter.setStartDate(dto.getStartDate());

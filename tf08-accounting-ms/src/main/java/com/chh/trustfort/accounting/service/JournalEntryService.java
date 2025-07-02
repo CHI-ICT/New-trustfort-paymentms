@@ -1,11 +1,16 @@
 package com.chh.trustfort.accounting.service;
 
+import com.chh.trustfort.accounting.Util.SecureResponseUtil;
+import com.chh.trustfort.accounting.dto.DoubleEntryRequest;
 import com.chh.trustfort.accounting.dto.JournalEntryRequest;
 import com.chh.trustfort.accounting.enums.TransactionType;
+import com.chh.trustfort.accounting.model.AppUser;
 import com.chh.trustfort.accounting.model.ChartOfAccount;
 import com.chh.trustfort.accounting.model.JournalEntry;
 import com.chh.trustfort.accounting.repository.ChartOfAccountAccountRepository;
 import com.chh.trustfort.accounting.repository.JournalEntryRepository;
+import com.chh.trustfort.accounting.security.AesService;
+import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -21,13 +27,10 @@ public class JournalEntryService {
 
     private final JournalEntryRepository journalEntryRepository;
     private final ChartOfAccountAccountRepository chartOfAccountRepository;
+    private final AesService aesService;
+    private final Gson gson;
 
-    /**
-     * Create a single journal entry (used mostly for test/manual postings).
-     *
-     * @return
-     */
-    public JournalEntry createJournalEntry(JournalEntryRequest request) {
+    public String createJournalEntry(JournalEntryRequest request, AppUser user) {
         ChartOfAccount account = chartOfAccountRepository.findByAccountCode(request.getAccountCode())
                 .orElseThrow(() -> new RuntimeException("Account not found: " + request.getAccountCode()));
 
@@ -49,54 +52,61 @@ public class JournalEntryService {
 
         log.info("✅ Single Journal Entry created: [{}] - {} {}",
                 request.getTransactionType(), request.getAccountCode(), request.getAmount());
-        return entry;
+
+        return aesService.encrypt(SecureResponseUtil.success("Journal entry recorded successfully.", Map.of(
+                "entryId", entry.getId(),
+                "account", entry.getAccount().getAccountCode(),
+                "classification", entry.getAccount().getClassification(),
+                "amount", entry.getAmount(),
+                "transactionType", entry.getTransactionType(),
+                "date", entry.getTransactionDate().toString(),
+                "businessUnit", entry.getBusinessUnit()
+        )), user);
     }
 
-    /**
-     * Record a double-entry journal (Debit and Credit entries for accounting compliance).
-     */
-    public void recordDoubleEntry(
-            String debitAccountCode,
-            String creditAccountCode,
-            String reference,
-            String description,
-            BigDecimal amount,
-            String department,
-            String businessUnit,
-            LocalDateTime transactionDate
-    ) {
-        ChartOfAccount debitAccount = chartOfAccountRepository.findByAccountCode(debitAccountCode)
-                .orElseThrow(() -> new RuntimeException("Debit account not found: " + debitAccountCode));
+    public String recordDoubleEntry(DoubleEntryRequest request, AppUser user) {
+        ChartOfAccount debitAccount = chartOfAccountRepository.findByAccountCode(request.getDebitAccountCode())
+                .orElseThrow(() -> new RuntimeException("Debit account not found: " + request.getDebitAccountCode()));
 
-        ChartOfAccount creditAccount = chartOfAccountRepository.findByAccountCode(creditAccountCode)
-                .orElseThrow(() -> new RuntimeException("Credit account not found: " + creditAccountCode));
+        ChartOfAccount creditAccount = chartOfAccountRepository.findByAccountCode(request.getCreditAccountCode())
+                .orElseThrow(() -> new RuntimeException("Credit account not found: " + request.getCreditAccountCode()));
 
-        LocalDate entryDate = transactionDate != null ? transactionDate.toLocalDate() : LocalDate.now();
+        LocalDate entryDate = request.getTransactionDate() != null
+                ? request.getTransactionDate().toLocalDate()
+                : LocalDate.now();
 
         JournalEntry debitEntry = new JournalEntry();
         debitEntry.setAccount(debitAccount);
         debitEntry.setTransactionType(TransactionType.DEBIT);
-        debitEntry.setAmount(amount);
-        debitEntry.setDescription(description);
-        debitEntry.setReference(reference);
-        debitEntry.setDepartment(department);
-        debitEntry.setBusinessUnit(businessUnit);
+        debitEntry.setAmount(request.getAmount());
+        debitEntry.setDescription(request.getDescription());
+        debitEntry.setReference(request.getReference());
+        debitEntry.setDepartment(request.getDepartment());
+        debitEntry.setBusinessUnit(request.getBusinessUnit());
         debitEntry.setTransactionDate(entryDate);
 
         JournalEntry creditEntry = new JournalEntry();
         creditEntry.setAccount(creditAccount);
         creditEntry.setTransactionType(TransactionType.CREDIT);
-        creditEntry.setAmount(amount);
-        creditEntry.setDescription(description);
-        creditEntry.setReference(reference);
-        creditEntry.setDepartment(department);
-        creditEntry.setBusinessUnit(businessUnit);
+        creditEntry.setAmount(request.getAmount());
+        creditEntry.setDescription(request.getDescription());
+        creditEntry.setReference(request.getReference());
+        creditEntry.setDepartment(request.getDepartment());
+        creditEntry.setBusinessUnit(request.getBusinessUnit());
         creditEntry.setTransactionDate(entryDate);
 
         journalEntryRepository.save(debitEntry);
         journalEntryRepository.save(creditEntry);
 
         log.info("📘 Double entry posted: DR [{}] → CR [{}] | Amount: {} | Ref: {}",
-                debitAccountCode, creditAccountCode, amount, reference);
+                request.getDebitAccountCode(), request.getCreditAccountCode(), request.getAmount(), request.getReference());
+
+        return aesService.encrypt(SecureResponseUtil.success("Double-entry journal successfully recorded.", Map.of(
+                "reference", request.getReference(),
+                "amount", request.getAmount(),
+                "debitAccount", debitAccount.getAccountName(),
+                "creditAccount", creditAccount.getAccountName(),
+                "date", entryDate.toString()
+        )), user);
     }
 }

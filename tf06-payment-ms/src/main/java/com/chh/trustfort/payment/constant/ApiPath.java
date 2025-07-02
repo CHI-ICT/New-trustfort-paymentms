@@ -93,6 +93,11 @@ public class ApiPath {
     public static final String INITIATE_FLW_PAYMENT = "/initiate-flw-payment";
     public static final String GET_ALL_WALLETS_BY_USER_ID = "/wallets/user";
     public static final String FLUTTERWAVE_WEBHOOK = "/webhook/flutterwave";
+    public static final String VERIFY_FLW_PAYMENT = "/verify-flutterwave-payment";
+    public static final String REVERIFY_FLUTTER = "/test-reverify";
+    public static final String ENCRYPT_PAYLOAD= "/test/encrypt-payload";
 
-
+    public static final String FLUTTERWAVE_REDIRECT = "/flutterwave-redirect";
+    public static final String RETRY_FLW_PAYMENT = "/retry-flutterwave-payment";
+    public static final String REVERIFY_FAILED_TX= "/admin/reverify-payment";
 }

@@ -1,6 +1,6 @@
 package com.chh.trustfort.accounting.dto;
 
-import com.chh.trustfort.accounting.Responses.EncryptResponse;
+import com.google.gson.Gson;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,6 +26,7 @@ public class ApiResponse {
     private String status;
     private String message;
     private Object data;
+    private static final Gson gson = new Gson();
 
     // Optional: constructor for simple response with only message
     public ApiResponse(String message) {
@@ -44,11 +45,12 @@ public class ApiResponse {
     }
 
     // ✅ Static method for success responses (optional)
-    public static ApiResponse success(String message, Object data) {
-        return ApiResponse.builder()
+    public static String success(String message, Object data) {
+        ApiResponse response = ApiResponse.builder()
                 .status("success")
                 .message(message)
                 .data(data)
                 .build();
+        return gson.toJson(response); // ✅ Convert to String
     }
 }

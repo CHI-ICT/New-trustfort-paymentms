@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ledger_entries")
+@Table(name = "wallet_ledger_entries")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -53,7 +53,7 @@ public class LedgerEntry {
     @Column(name = "reference", unique = true)
     private String reference;
 
-    @Column(name = "narration", unique = true)
+    @Column(name = "narration")
     private String narration;
 
 }

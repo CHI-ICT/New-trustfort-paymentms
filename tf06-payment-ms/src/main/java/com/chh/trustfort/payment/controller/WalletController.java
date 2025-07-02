@@ -7,6 +7,7 @@ import com.chh.trustfort.payment.Util.SecureResponseUtil;
 import com.chh.trustfort.payment.component.RequestManager;
 import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.constant.ApiPath;
+import com.chh.trustfort.payment.dto.LedgerEntryDTO;
 import com.chh.trustfort.payment.enums.Role;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
@@ -79,7 +80,6 @@ public class WalletController {
 //        }
 //    }
 
-
     @GetMapping(value = ApiPath.GET_ALL_WALLETS_BY_USER_ID, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getWalletsByPhoneNumber(
             @RequestParam String phoneNumber,
@@ -146,8 +146,6 @@ public class WalletController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-
-
     @PostMapping(value = ApiPath.FUND_WALLET, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> fundWallet(@RequestParam String idToken, @RequestBody String requestPayload, HttpServletRequest httpRequest) {
 
@@ -188,7 +186,6 @@ public class WalletController {
         String encryptedResponse = walletService.fetchAllWallets(String.valueOf(user.getId()), user);
         return new ResponseEntity<>(encryptedResponse, HttpStatus.OK);
     }
-
 
 
     @PostMapping(value = ApiPath.TRANSFER_FUNDS, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -251,60 +248,96 @@ public class WalletController {
     }
 
 
+//    @GetMapping(value = ApiPath.TRANSACTION_HISTORY, produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<?> processTransactionHistoryRequest(
+//            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+//            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+//            @RequestParam("phoneNumber") String phoneNumber,
+//            @RequestHeader("Authorization") String jwtToken,
+//            HttpServletRequest httpRequest) {
+//
+//        // ✅ Validate using JWT token (no idToken or payload involved)
+//        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+//                Role.TRANSACTION_HISTORY.getValue(), null, httpRequest, jwtToken
+//        );
+//
+//        if (request.isError || request.appUser == null) {
+//            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+//                    new ErrorResponse("06", "Unauthorized request")
+//            ), null));
+//        }
+//
+//        AppUser appUser = request.appUser;
+//
+//        log.info("🔍 PhoneNumber passed in request param: {}", phoneNumber);
+//
+//        // 🔍 Find wallet by phone number (stored as userId)
+//        Optional<Wallet> walletOpt = walletRepository.findByUserId(phoneNumber).stream().findFirst();
+//
+//        if (!walletOpt.isPresent()) {
+//            log.warn("❌ No wallet found for phoneNumber: {}", phoneNumber);
+//            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+//                    new ErrorResponse("06", "Wallet not found for user")
+//            ), appUser));
+//        }
+//
+//        String walletId = walletOpt.get().getWalletId();
+//
+//        try {
+//            List<LedgerEntry> transactions = walletService.getTransactionHistory(walletId, startDate, endDate, phoneNumber).getBody();
+//            return ResponseEntity.ok(aesService.encrypt(gson.toJson(transactions), appUser));
+//        } catch (WalletException e) {
+//            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+//                    new ErrorResponse("06", e.getMessage())
+//            ), appUser));
+//        } catch (Exception e) {
+//            log.error("❌ Error retrieving transaction history: {}", e.getMessage(), e);
+//            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+//                    new ErrorResponse("06", "Internal server error")
+//            ), appUser));
+//        }
+//    }
+@GetMapping(value = ApiPath.TRANSACTION_HISTORY, produces = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<?> processTransactionHistoryRequest(
+        @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+        @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+        @RequestParam("phoneNumber") String phoneNumber,
+        @RequestHeader("Authorization") String jwtToken,
+        HttpServletRequest httpRequest) {
 
+    Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+            Role.TRANSACTION_HISTORY.getValue(), null, httpRequest, jwtToken
+    );
 
-
-
-    @GetMapping(value = ApiPath.TRANSACTION_HISTORY, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> processTransactionHistoryRequest(
-            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam("phoneNumber") String phoneNumber,
-            @RequestHeader("Authorization") String jwtToken,
-            HttpServletRequest httpRequest) {
-
-        // ✅ Validate using JWT token (no idToken or payload involved)
-        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.TRANSACTION_HISTORY.getValue(), null, httpRequest, jwtToken
-        );
-
-        if (request.isError || request.appUser == null) {
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
-                    new ErrorResponse("06", "Unauthorized request")
-            ), null));
-        }
-
-        AppUser appUser = request.appUser;
-
-        log.info("🔍 PhoneNumber passed in request param: {}", phoneNumber);
-
-        // 🔍 Find wallet by phone number (stored as userId)
-        Optional<Wallet> walletOpt = walletRepository.findByUserId(phoneNumber).stream().findFirst();
-
-        if (!walletOpt.isPresent()) {
-            log.warn("❌ No wallet found for phoneNumber: {}", phoneNumber);
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
-                    new ErrorResponse("06", "Wallet not found for user")
-            ), appUser));
-        }
-
-        String walletId = walletOpt.get().getWalletId();
-
-        try {
-            List<LedgerEntry> transactions = walletService.getTransactionHistory(walletId, startDate, endDate, phoneNumber).getBody();
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(transactions), appUser));
-        } catch (WalletException e) {
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
-                    new ErrorResponse("06", e.getMessage())
-            ), appUser));
-        } catch (Exception e) {
-            log.error("❌ Error retrieving transaction history: {}", e.getMessage(), e);
-            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
-                    new ErrorResponse("06", "Internal server error")
-            ), appUser));
-        }
+    if (request.isError || request.appUser == null) {
+        return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                new ErrorResponse("06", "Unauthorized request")), null));
     }
 
+    AppUser appUser = request.appUser;
+    log.info("🔍 PhoneNumber passed in request param: {}", phoneNumber);
+
+    Optional<Wallet> walletOpt = walletRepository.findByUserId(phoneNumber).stream().findFirst();
+    if (!walletOpt.isPresent()) {
+        log.warn("❌ No wallet found for phoneNumber: {}", phoneNumber);
+        return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                new ErrorResponse("06", "Wallet not found for user")), appUser));
+    }
+
+    String walletId = walletOpt.get().getWalletId();
+
+    try {
+        List<LedgerEntryDTO> transactions = walletService.getTransactionHistory(walletId, startDate, endDate, phoneNumber).getBody();
+        return ResponseEntity.ok(aesService.encrypt(gson.toJson(transactions), appUser));
+    } catch (WalletException e) {
+        return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                new ErrorResponse("06", e.getMessage())), appUser));
+    } catch (Exception e) {
+        log.error("❌ Error retrieving transaction history: {}", e.getMessage(), e);
+        return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                new ErrorResponse("06", "Internal server error")), appUser));
+    }
+}
 
 
 

@@ -2,6 +2,8 @@ package com.chh.trustfort.payment.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.*;
 
 import com.chh.trustfort.payment.component.UserClass;
@@ -35,4 +37,8 @@ public class Users implements Serializable {
 
     @Column(name = "phone_number")
     public String phoneNumber;
+
+    // ✅ Add this to map the one-to-many relationship
+    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Wallet> wallets = new ArrayList<>();
 }

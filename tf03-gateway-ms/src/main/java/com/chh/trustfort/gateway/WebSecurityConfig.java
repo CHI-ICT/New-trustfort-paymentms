@@ -40,6 +40,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         private static final String[] AUTH_WHITE_LIST = {
         "/","/trustfort/api/v1/token/generate-token", "/h2-console/**", "/trustfort/api/doc",
                 "/trustfort/api/v1/paymentService/webhook/flutterwave",
+                "/trustfort/api/v1/paymentService/flutterwave-redirect",
         "/css/**", "/js/**",
         "/swagger-resources/**",
         "/swagger-ui.html",

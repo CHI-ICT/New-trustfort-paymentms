@@ -1,12 +1,14 @@
 package com.chh.trustfort.accounting.controller;
 
-import com.chh.trustfort.accounting.Responses.EncryptResponse;
+import com.chh.trustfort.accounting.Quintuple;
+import com.chh.trustfort.accounting.component.RequestManager;
+import com.chh.trustfort.accounting.component.Role;
 import com.chh.trustfort.accounting.constant.ApiPath;
-import com.chh.trustfort.accounting.dto.ApiResponse;
+import com.chh.trustfort.accounting.model.AppUser;
 import com.chh.trustfort.accounting.model.PurchaseOrder;
-import com.chh.trustfort.accounting.repository.PurchaseOrderRepository;
-import com.chh.trustfort.accounting.service.PurchaseOrderService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import com.chh.trustfort.accounting.security.AesService;
+import com.chh.trustfort.accounting.service.serviceImpl.PurchaseOrderServiceImpl;
+import com.google.gson.Gson;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,45 +17,45 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
-@RequestMapping(ApiPath.BASE_API)
 @RequiredArgsConstructor
-@EncryptResponse
-@Tag(name = "Purchase Order", description = "Manage Purchase Orders")
-@SecurityRequirement(name = "bearerAuth")
 @Slf4j
+@Tag(name = "Purchase Order", description = "Manage Purchase Orders")
 public class PurchaseOrderController {
 
-    private final PurchaseOrderService purchaseOrderService;
+    private final PurchaseOrderServiceImpl purchaseOrderService;
+    private final RequestManager requestManager;
+    private final AesService aesService;
+    private final Gson gson;
 
     @PostMapping(value = ApiPath.CREATE_PO, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> createPO(@RequestBody PurchaseOrder request) {
-        try {
-            PurchaseOrder saved = purchaseOrderService.create(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.builder()
-                            .status("success")
-                            .message("Purchase order created successfully")
-                            .data(saved)
-                            .build());
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.builder()
-                            .status("error")
-                            .message(e.getMessage())
-                            .build());
-        } catch (Exception e) {
-            log.error("Unexpected error during PO creation", e);
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.builder()
-                            .status("error")
-                            .message("An unexpected error occurred")
-                            .build());
+    public ResponseEntity<?> createPO(@RequestParam String idToken, @RequestBody String requestPayload, HttpServletRequest httpRequest) {
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.CREATE_PURCHASE_ORDER.getValue(), requestPayload, httpRequest, idToken
+        );
+
+        if (request.isError) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(request.payload);
         }
+
+        PurchaseOrder po = gson.fromJson(request.payload, PurchaseOrder.class);
+        String encryptedResponse = purchaseOrderService.createPurchaseOrder(po, request.appUser);
+        return ResponseEntity.ok(encryptedResponse);
     }
 
-    @GetMapping(ApiPath.ALL_PO)
-    public ResponseEntity<?> getAllPOs() {
-        return ResponseEntity.ok(purchaseOrderService.getAll());
+    @GetMapping(value = ApiPath.ALL_PO, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getAllPOs(@RequestParam String idToken, HttpServletRequest httpRequest) {
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.VIEW_PURCHASE_ORDER.getValue(), "", httpRequest, idToken
+        );
+
+        if (request.isError) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(request.payload);
+        }
+
+        String encryptedResponse = purchaseOrderService.getAllPurchaseOrders(request.appUser);
+        return ResponseEntity.ok(encryptedResponse);
     }
 }

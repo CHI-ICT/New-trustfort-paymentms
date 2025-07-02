@@ -37,11 +37,12 @@ public class UserGroup implements Serializable {
     @Basic(optional = false)
     @Column(name = "id")
     private Long id;
-    @Column(name = "group_name", nullable = false, length = 30)
+    @Column(name = "group_name", nullable = true, length = 30)
     private String groupName;
-    @Column(name = "group_desc", nullable = false, length = 80)
+    @Column(name = "group_desc", nullable = true, length = 80)
     private String groupDesc;
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
 }
 

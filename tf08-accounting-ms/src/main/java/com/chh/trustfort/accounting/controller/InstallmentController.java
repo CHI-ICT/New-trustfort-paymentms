@@ -1,11 +1,18 @@
 package com.chh.trustfort.accounting.controller;
 
+import com.chh.trustfort.accounting.Quintuple;
 import com.chh.trustfort.accounting.Responses.EncryptResponse;
+import com.chh.trustfort.accounting.component.RequestManager;
+import com.chh.trustfort.accounting.component.Role;
 import com.chh.trustfort.accounting.constant.ApiPath;
 import com.chh.trustfort.accounting.dto.InstallmentRequestDto;
+import com.chh.trustfort.accounting.model.AppUser;
 import com.chh.trustfort.accounting.model.PayableInvoice;
+import com.chh.trustfort.accounting.payload.OmniResponsePayload;
 import com.chh.trustfort.accounting.repository.PayableInvoiceRepository;
+import com.chh.trustfort.accounting.security.AesService;
 import com.chh.trustfort.accounting.service.InstallmentService;
+import com.google.gson.Gson;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -15,59 +22,39 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping(ApiPath.BASE_API)
 @RequiredArgsConstructor
 @Slf4j
-@EncryptResponse
 @Tag(name = "Installment Management", description = "Generate and manage invoice payment installments")
-@SecurityRequirement(name = "bearerAuth")
 public class InstallmentController {
 
     private final InstallmentService installmentService;
-
-    private final PayableInvoiceRepository payableInvoiceRepository;
-
+    private final RequestManager requestManager;
+    private final AesService aesService;
+    private final Gson gson;
 
     @PostMapping(value = ApiPath.CREATE_INSTALLMENTS, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> generateInstallments(@RequestBody InstallmentRequestDto request) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            // Fetch the invoice
-            PayableInvoice invoice = payableInvoiceRepository.findById(request.getInvoiceId())
-                    .orElseThrow(() -> new RuntimeException("Invoice not found with ID: " + request.getInvoiceId()));
+    public ResponseEntity<String> generateInstallments(@RequestParam String idToken, @RequestBody String requestPayload, HttpServletRequest httpRequest) {
 
-            // Generate installments
-            installmentService.generateInstallments(request.getInvoiceId(), request.getNumberOfInstallments());
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.CREATE_INSTALLMENTS.getValue(), requestPayload, httpRequest, idToken);
 
-            // Prepare success response
-            response = new HashMap<>();
-            response.put("status", "success");
-            response.put("message", "Payment installments generated successfully.");
-            response.put("invoiceId", invoice.getId());
-            response.put("installments", request.getNumberOfInstallments());
-            response.put("invoiceDetails", Map.of(
-                    "invoiceNumber", invoice.getInvoiceNumber(),
-                    "vendorName", invoice.getVendorName(),
-                    "amount", invoice.getAmount(),
-                    "dueDate", invoice.getDueDate(),
-                    "status", invoice.getStatus()
-            ));
-
-            return ResponseEntity.ok(response);
-        } catch (IllegalStateException ex) {
-            response.put("status", "error");
-            response.put("message", ex.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        } catch (Exception e) {
-            log.error("Failed to generate installments for invoice ID {}: {}", request.getInvoiceId(), e.getMessage());
-            response.put("status", "error");
-            response.put("message", "Failed to generate payment installments.");
-            response.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        if (request.isError) {
+            log.warn("❌ Unauthorized attempt to generate installments: {}", request.payload);
+            OmniResponsePayload error = gson.fromJson(request.payload, OmniResponsePayload.class);
+            return ResponseEntity.badRequest().body(
+                    aesService.encrypt(gson.toJson(error), null));
         }
+
+        InstallmentRequestDto dto = gson.fromJson(request.payload, InstallmentRequestDto.class);
+        log.info("📌 Generating {} installments for invoice ID {} by user [{}]",
+                dto.getNumberOfInstallments(), dto.getInvoiceId(), request.appUser.getEmail());
+
+        String encryptedResponse = installmentService.generateInstallments(dto, request.appUser);
+        return ResponseEntity.ok(encryptedResponse);
     }
 }

@@ -1,7 +1,9 @@
 package com.chh.trustfort.accounting.service;
 
+import com.chh.trustfort.accounting.model.AppUser;
+
 import java.util.List;
 
 public interface PayableAlertService {
-    List<String> generateAlerts();
+    String generateAlerts(AppUser user);
 }

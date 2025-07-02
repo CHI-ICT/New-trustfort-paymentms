@@ -2,6 +2,7 @@ package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.Responses.WalletBalanceResponse;
 import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
+import com.chh.trustfort.payment.dto.LedgerEntryDTO;
 import com.chh.trustfort.payment.dto.WalletDTO;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
@@ -21,6 +22,9 @@ import java.util.List;
 public interface WalletService {
     List<WalletDTO> getWalletsByUserId(String userId);
 
+    public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String narration);
+
+
     String checkBalanceByPhoneNumber(String phoneNumber, AppUser appUser);
     String getWalletsByPhoneNumber(String phoneNumber, AppUser appUser);
 
@@ -34,7 +38,9 @@ public String transferFunds(FundsTransferRequestPayload payload, String idToken,
 
 public WalletBalanceResponse getWalletBalance(String walletId, String userId);
 
-public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId);
+//public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId);
+public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
+        String walletId, LocalDate startDate, LocalDate endDate, String userId);
 
 public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser);
 

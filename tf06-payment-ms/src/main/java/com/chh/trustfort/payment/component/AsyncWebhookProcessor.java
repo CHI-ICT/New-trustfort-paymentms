@@ -50,7 +50,7 @@ public class AsyncWebhookProcessor {
 
             // ✅ Save webhook log
             WebhookLog logEntry = new WebhookLog();
-            logEntry.setReference(reference);
+            logEntry.setTxRef(reference);
             logEntry.setEventType(event);
             webhookLogRepository.save(logEntry);
 

@@ -79,4 +79,8 @@ public class Wallet implements Serializable {
 
     private String phoneNumber;
 
+    @Column(name = "account_code")
+    private String accountCode;
+
+
 }

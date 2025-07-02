@@ -27,11 +27,9 @@ public class EquityStatementService {
     private final JournalEntryRepository journalEntryRepository;
 
     public EquityStatementResponse generateStatement(StatementFilterDTO filter) {
-
         List<JournalEntry> entries = journalEntryRepository.findEquityEntriesBetweenDates(
                 filter.getStartDate(), filter.getEndDate(), AccountClassification.EQUITY);
 
-        // Filter by department and business unit
         if (filter.getDepartment() != null && !filter.getDepartment().isBlank()) {
             entries = entries.stream()
                     .filter(entry -> filter.getDepartment().equalsIgnoreCase(entry.getDepartment()))
@@ -44,7 +42,6 @@ public class EquityStatementService {
                     .collect(Collectors.toList());
         }
 
-        // Initialize components
         BigDecimal retainedEarnings = BigDecimal.ZERO;
         BigDecimal contributions = BigDecimal.ZERO;
         BigDecimal dividends = BigDecimal.ZERO;
@@ -63,29 +60,24 @@ public class EquityStatementService {
             }
         }
 
-        // Stubbed opening equity - replace with logic if historical tracking is required
         BigDecimal openingEquity = BigDecimal.ZERO;
 
-        // Closing equity = opening + contributions + retained earnings - dividends
         BigDecimal closingEquity = openingEquity
                 .add(contributions)
                 .add(retainedEarnings)
                 .subtract(dividends);
 
-        // Build response
-        EquityStatementResponse response = new EquityStatementResponse();
-        response.setOpeningEquity(openingEquity);
-        response.setContributions(contributions);
-        response.setRetainedEarnings(retainedEarnings);
-        response.setDividends(dividends);
-        response.setClosingEquity(closingEquity);
-
-        return response;
+        return EquityStatementResponse.builder()
+                .openingEquity(openingEquity)
+                .contributions(contributions)
+                .retainedEarnings(retainedEarnings)
+                .dividends(dividends)
+                .closingEquity(closingEquity)
+                .build();
     }
 
     public List<ReportViewerResponse> generateEquityStatementForViewer(StatementFilterDTO filter) {
         EquityStatementResponse response = generateStatement(filter);
-
         return List.of(
                 new ReportViewerResponse(Map.of("Category", "Opening Equity", "Amount", response.getOpeningEquity())),
                 new ReportViewerResponse(Map.of("Category", "Contributions", "Amount", response.getContributions())),
@@ -94,6 +86,4 @@ public class EquityStatementService {
                 new ReportViewerResponse(Map.of("Category", "Closing Equity", "Amount", response.getClosingEquity()))
         );
     }
-
 }
-

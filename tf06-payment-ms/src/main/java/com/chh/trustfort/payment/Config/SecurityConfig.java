@@ -26,7 +26,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/api/v1/paymentService/webhook/flutterwave").permitAll()
+                .antMatchers("/api/v1/paymentService/webhook/flutterwave","/trustfort/api/v1/paymentService/flutterwave-redirect").permitAll()
                 .anyRequest().permitAll(); // 🚨 Allows all requests without authentication
     }
 

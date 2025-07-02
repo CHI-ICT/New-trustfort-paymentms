@@ -1,13 +1,18 @@
 package com.chh.trustfort.accounting.service;
 
+import com.chh.trustfort.accounting.Util.SecureResponseUtil;
 import com.chh.trustfort.accounting.dto.ReconciliationResult;
 import com.chh.trustfort.accounting.enums.InvoiceStatus;
+import com.chh.trustfort.accounting.enums.PayoutCategory;
+import com.chh.trustfort.accounting.model.AppUser;
 import com.chh.trustfort.accounting.model.BankTransaction;
 import com.chh.trustfort.accounting.model.PayableInvoice;
 import com.chh.trustfort.accounting.model.PaymentDiscrepancy;
 import com.chh.trustfort.accounting.repository.BankTransactionRepository;
 import com.chh.trustfort.accounting.repository.PayableInvoiceRepository;
 import com.chh.trustfort.accounting.repository.PaymentDiscrepancyRepository;
+import com.chh.trustfort.accounting.security.AesService;
+import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,18 +22,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VendorPaymentReconciler {
 
     private final PayableInvoiceRepository invoiceRepo;
     private final BankTransactionRepository bankRepo;
     private final PaymentDiscrepancyRepository discrepancyRepo;
     private final PayoutClassifierService payoutClassifierService;
+    private final AesService aesService;
+    private final Gson gson;
 
-    public ReconciliationResult reconcileVendorPayments() {
-        log.info("Starting vendor payment reconciliation...");
+    public String reconcileVendorPayments(AppUser appUser) {
+        log.info("🔄 Starting vendor payment reconciliation...");
 
         List<PayableInvoice> invoices = invoiceRepo.findByStatus(InvoiceStatus.APPROVED);
         List<BankTransaction> bankTransactions = bankRepo.findAllByMatchedFalse();
@@ -38,20 +45,22 @@ public class VendorPaymentReconciler {
 
         for (PayableInvoice invoice : invoices) {
             Optional<BankTransaction> match = bankTransactions.stream()
-                    .filter(tx -> tx.getTransactionReference().equals(invoice.getReference()) &&
-                            tx.getAmount().compareTo(invoice.getAmount()) == 0)
+                    .filter(tx -> tx.getTransactionReference().equals(invoice.getReference())
+                            && tx.getAmount().compareTo(invoice.getAmount()) == 0)
                     .findFirst();
 
             if (match.isPresent()) {
                 BankTransaction tx = match.get();
                 invoice.setStatus(InvoiceStatus.RECONCILED);
-                invoice.setPayoutCategory(payoutClassifierService.classify(invoice));
+                PayoutCategory category = payoutClassifierService.resolveCategory(invoice);
+                invoice.setPayoutCategory(category);
                 tx.setMatched(true);
 
                 invoiceRepo.save(invoice);
                 bankRepo.save(tx);
                 reconciled.add(invoice.getInvoiceNumber());
-                log.info("Reconciled invoice {} with bank transaction {}", invoice.getInvoiceNumber(), tx.getTransactionReference());
+
+                log.info("✅ Reconciled invoice {} with transaction {}", invoice.getInvoiceNumber(), tx.getTransactionReference());
             } else {
                 discrepancyRepo.save(PaymentDiscrepancy.builder()
                         .invoiceNumber(invoice.getInvoiceNumber())
@@ -64,16 +73,16 @@ public class VendorPaymentReconciler {
                         .build());
 
                 failed.add(invoice.getInvoiceNumber());
-                log.warn("No matching payment found for invoice {}", invoice.getInvoiceNumber());
+                log.warn("⚠️ No match for invoice {}", invoice.getInvoiceNumber());
             }
-
-
         }
 
-        log.info("Reconciliation process completed.");
-        return ReconciliationResult.builder()
+        ReconciliationResult result = ReconciliationResult.builder()
                 .reconciledInvoices(reconciled)
                 .discrepancies(failed)
                 .build();
+
+        log.info("🎯 Reconciliation complete. Success: {}, Failed: {}", reconciled.size(), failed.size());
+        return aesService.encrypt(SecureResponseUtil.success("Reconciliation completed", result), appUser);
     }
 }

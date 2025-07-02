@@ -109,4 +109,21 @@ public class ApiPath {
 
     public static final String REPORT_VIEWER = "/viewer";
     public static final String RECONCILE_BANK = "/bank/reconcile";
+    public static final String REVERSE_DEBIT_NOTE = "/reverse-debit-note";
+    public static final String OVERDUE_DEBTORS = "/overdue-debtors";
+    public static final String CREATE_DEPARTMENT_CODE = "/department-code/create";
+    public static final String UPDATE_DEPARTMENT_CODE = "/department-code/update";
+    public static final String ALL_DEPARTMENT_CODES = "/department-code/all";
+    public static final String GET_DEPARTMENT_CODE_BY_CODE = "/department-code/by-code";
+    public static final String DELETED_DEPARTMENT_CODES = "/department-code/deleted";
+    public static final String DELETE_DEPARTMENT_CODE = "/department-code/delete";
+    public static final String RESTORE_DEPARTMENT_CODE = "/department-code/restore";
+    public static final String GET_ENTITY_CODES = "/get-entity-codes";
+    public static final String GET_ENTITY_CODE_BY_ID = "/get-entity-code/by-id";
+    public static final String UPDATE_ENTITY_CODE = "/update-entity-code/update";
+    public static final String DELETE_ENTITY_CODE ="/delete-entity-code/delete" ;
+    public static final String CREATE_ENTITY_CODE = "create-entity-code/create" ;
+    public static final String GENERATE_EOP = "/payables/{invoiceId}/generate-eop";
+    public static final String GET_EOP = "/payables/{invoiceId}/eop";
+
 }

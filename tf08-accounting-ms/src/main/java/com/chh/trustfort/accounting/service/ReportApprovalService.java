@@ -4,21 +4,22 @@ import com.chh.trustfort.accounting.Responses.GenericApiResponse;
 import com.chh.trustfort.accounting.Responses.ReportApprovalResponse;
 import com.chh.trustfort.accounting.dto.ReportApprovalRequest;
 import com.chh.trustfort.accounting.enums.ApprovalStatus;
+import com.chh.trustfort.accounting.model.AppUser;
 
 import java.util.List;
 
 public interface ReportApprovalService {
 
-    GenericApiResponse<ReportApprovalResponse> initiateApproval(ReportApprovalRequest request);
+    String initiateApproval(ReportApprovalRequest request, AppUser user);
 
-    GenericApiResponse<ReportApprovalResponse> approveReport(Long approvalId, String approverEmail, String remarks);
+    String approveReport(Long approvalId, String approverEmail, String remarks, AppUser user);
 
-    GenericApiResponse<ReportApprovalResponse> rejectReport(Long approvalId, String approverEmail, String remarks);
+    String rejectReport(Long approvalId, String approverEmail, String remarks, AppUser user);
 
-    GenericApiResponse<List<ReportApprovalResponse>> getApprovalsForReport(String reportId);
+    String getApprovalsForReport(String reportId, AppUser user);
 
-    GenericApiResponse<ReportApprovalResponse> getApprovalById(Long approvalId);
+    String getApprovalById(Long approvalId, AppUser user);
 
-    GenericApiResponse<List<ReportApprovalResponse>> getApprovalsByStatus(ApprovalStatus status);
+    String getApprovalsByStatus(ApprovalStatus status, AppUser user);
 }
 
