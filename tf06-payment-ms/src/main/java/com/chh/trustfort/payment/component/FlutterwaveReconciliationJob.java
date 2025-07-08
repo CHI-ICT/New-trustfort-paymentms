@@ -3,9 +3,11 @@ package com.chh.trustfort.payment.component;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
 import com.chh.trustfort.payment.model.PaymentReference;
 import com.chh.trustfort.payment.repository.PaymentReferenceRepository;
+import com.chh.trustfort.payment.service.ServiceImpl.FlutterwavePaymentService;
 import com.chh.trustfort.payment.service.ServiceImpl.FlutterwavePaymentServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -13,11 +15,12 @@ import java.util.List;
 
 @Slf4j
 @Component
+@Lazy
 @RequiredArgsConstructor
 public class FlutterwaveReconciliationJob {
 
     private final PaymentReferenceRepository paymentReferenceRepository;
-    private final FlutterwavePaymentServiceImpl flutterwavePaymentService;
+    private final FlutterwavePaymentService flutterwavePaymentService;
 
     /**
      * Reconciliation job runs every 5 minutes to verify pending references.

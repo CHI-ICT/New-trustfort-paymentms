@@ -2,7 +2,7 @@ package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.enums.TransactionStatus;
 import com.chh.trustfort.payment.model.AppUser;
-import com.chh.trustfort.payment.model.LedgerEntry;
+import com.chh.trustfort.payment.model.WalletLedgerEntry;
 import com.chh.trustfort.payment.model.SettlementAccount;
 import com.chh.trustfort.payment.payload.UpdateWalletBalancePayload;
 import com.chh.trustfort.payment.repository.LedgerEntryRepository;
@@ -30,12 +30,12 @@ public class ReconciliationRetryService {
     public void retryFailedWithdrawals() {
         log.info("🔁 Starting reconciliation retry job...");
 
-        List<LedgerEntry> failedOrPendingEntries = ledgerEntryRepository.findByStatusIn(List.of(
+        List<WalletLedgerEntry> failedOrPendingEntries = ledgerEntryRepository.findByStatusIn(List.of(
                 TransactionStatus.FAILED,
                 TransactionStatus.PENDING
         ));
 
-        for (LedgerEntry entry : failedOrPendingEntries) {
+        for (WalletLedgerEntry entry : failedOrPendingEntries) {
             try {
                 log.info("🔄 Retrying ledger entry ID: {} for wallet ID: {}", entry.getId(), entry.getWalletId());
 

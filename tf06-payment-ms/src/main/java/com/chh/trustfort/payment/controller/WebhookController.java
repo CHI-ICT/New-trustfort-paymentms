@@ -9,7 +9,7 @@ import com.chh.trustfort.payment.dto.WebhookPayload;
 import com.chh.trustfort.payment.enums.TransactionStatus;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
-import com.chh.trustfort.payment.model.LedgerEntry;
+import com.chh.trustfort.payment.model.WalletLedgerEntry;
 import com.chh.trustfort.payment.model.SettlementAccount;
 import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.payload.OmniResponsePayload;
@@ -28,7 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -69,24 +68,24 @@ public class WebhookController {
                 .orElseThrow(() -> new WalletException("Wallet not found"));
 
         // Step 5: Fetch pending ledger
-        LedgerEntry ledgerEntry = ledgerEntryRepository.findPendingByWalletId(wallet.getWalletId())
+        WalletLedgerEntry walletLedgerEntry = ledgerEntryRepository.findPendingByWalletId(wallet.getWalletId())
                 .orElseThrow(() -> new WalletException("No pending ledger found"));
 
         BigDecimal amount = BigDecimal.valueOf(payload.getAmount());
 
         // Step 6: Process based on transfer status
         if ("SUCCESS".equalsIgnoreCase(payload.getTransferStatus())) {
-            ledgerEntry.setStatus(TransactionStatus.COMPLETED);
+            walletLedgerEntry.setStatus(TransactionStatus.COMPLETED);
             log.info("✅ Ledger updated to COMPLETED");
         } else {
             wallet.setBalance(wallet.getBalance().add(amount));
             walletRepository.updateUser(wallet);
 
-            ledgerEntry.setStatus(TransactionStatus.FAILED);
+            walletLedgerEntry.setStatus(TransactionStatus.FAILED);
             log.warn("❌ Transfer failed. Wallet refunded");
         }
 
-        ledgerEntryRepository.save(ledgerEntry);
+        ledgerEntryRepository.save(walletLedgerEntry);
 
         // Step 7: Update settlement account
         SettlementAccount account = settlementAccountRepository.findByAccountNumber("MOCK-FCMB-001");

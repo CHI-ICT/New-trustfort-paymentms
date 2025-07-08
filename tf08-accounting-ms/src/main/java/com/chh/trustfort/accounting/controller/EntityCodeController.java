@@ -34,25 +34,40 @@ public class EntityCodeController {
     private final AesService aesService;
     private final Gson gson;
 
-    @PostMapping(value = ApiPath.CREATE_ENTITY_CODE, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> create(@RequestParam String idToken, @RequestBody String requestPayload, HttpServletRequest httpRequest) {
+    @PostMapping(value = ApiPath.CREATE_ENTITY_CODE, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> createEntityCode(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
+    ) {
+        String idToken = authorizationHeader.replace("Bearer ", "").trim();
+        log.info("🔐 ID TOKEN: {}", idToken);
+        log.info("📥 RAW ENCRYPTED PAYLOAD: {}", requestPayload);
+
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
                 Role.CREATE_ENTITY_CODE.getValue(), requestPayload, httpRequest, idToken
         );
 
+        AppUser appUser = request.appUser;
+        appUser.setIpAddress(httpRequest.getRemoteAddr());
+
         if (request.isError) {
-            OmniResponsePayload response = gson.fromJson(request.payload, OmniResponsePayload.class);
-            return ResponseEntity.badRequest().body(
-                    aesService.encrypt(SecureResponseUtil.error(response.getResponseMessage(), response.getResponseCode(), "fail"), request.appUser)
-            );
+            String decryptedError = aesService.decrypt(request.payload, appUser);
+            OmniResponsePayload error = gson.fromJson(decryptedError, OmniResponsePayload.class);
+            return ResponseEntity.ok(aesService.encrypt(
+                    SecureResponseUtil.error(error.getResponseMessage(), error.getResponseCode(), "fail"), appUser
+            ));
         }
 
+        log.info("📥 Decrypted Payload: {}", request.payload);
         EntityCodeRequest dto = gson.fromJson(request.payload, EntityCodeRequest.class);
-        EntityCode created = service.create(dto);
-        return ResponseEntity.ok().body(
-                aesService.encrypt(SecureResponseUtil.success("Entity code created successfully", created), request.appUser)
-        );
+
+        String created = service.create(dto, appUser);
+        return ResponseEntity.ok(aesService.encrypt(
+                SecureResponseUtil.success("Entity code created successfully", created), appUser
+        ));
     }
+
 
     @GetMapping(value = ApiPath.GET_ENTITY_CODES, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getAll(@RequestParam String idToken, HttpServletRequest httpRequest) {

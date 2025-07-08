@@ -12,7 +12,7 @@
     <groupId>com.chh.trustfort</groupId>
     <artifactId>tf08-accounting-ms</artifactId>
     <version>3.0.0</version>
-    <name>tf06-accounting-ms</name>
+    <name>tf08-accounting-ms</name>
     <description>TrustFort: Omni Channel Accounting Microservice</description>
     
     <properties>
@@ -165,11 +165,6 @@
             <version>2.1.6</version>
             <type>jar</type>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.chh.trustfort</groupId>-->
-<!--            <artifactId>shared-lib</artifactId>-->
-<!--            <version>0.0.1-SNAPSHOT</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>
@@ -178,8 +173,15 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <type>jar</type>
+            <version>2.10.1</version>
         </dependency>
+
+
+<!--        <dependency>-->
+<!--            <groupId>com.google.code.gson</groupId>-->
+<!--            <artifactId>gson</artifactId>-->
+<!--            <type>jar</type>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.mashape.unirest</groupId>
             <artifactId>unirest-java</artifactId>
@@ -233,12 +235,12 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-config</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.techplanet.expertbridge</groupId>
-            <artifactId>tf06-payment-ms</artifactId>
-            <version>3.0.0</version>
-            <scope>compile</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.techplanet.expertbridge</groupId>-->
+<!--            <artifactId>tf06-payment-ms</artifactId>-->
+<!--            <version>3.0.0</version>-->
+<!--            <scope>compile</scope>-->
+<!--        </dependency>-->
     </dependencies>
     
     <dependencyManagement>

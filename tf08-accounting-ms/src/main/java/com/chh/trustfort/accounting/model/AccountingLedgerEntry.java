@@ -2,7 +2,6 @@ package com.chh.trustfort.accounting.model;
 
 
 import com.chh.trustfort.accounting.enums.GLPostingType;
-import com.chh.trustfort.accounting.enums.TransactionStatus;
 import com.chh.trustfort.accounting.enums.TransactionType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -18,7 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LedgerEntry {
+public class AccountingLedgerEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,5 +41,4 @@ public class LedgerEntry {
     @CreationTimestamp
     private LocalDateTime createdAt;
 }
-
 

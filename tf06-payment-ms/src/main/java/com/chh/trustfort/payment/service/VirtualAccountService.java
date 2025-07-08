@@ -4,7 +4,7 @@ import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
 import com.chh.trustfort.payment.dto.GenerateAccountNumberResponse;
 import com.chh.trustfort.payment.enums.TransactionStatus;
 import com.chh.trustfort.payment.enums.TransactionType;
-import com.chh.trustfort.payment.model.LedgerEntry;
+import com.chh.trustfort.payment.model.WalletLedgerEntry;
 import com.chh.trustfort.payment.model.VirtualAccount;
 import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.repository.LedgerEntryRepository;
@@ -72,7 +72,7 @@ public class VirtualAccountService {
         walletRepository.updateUser(wallet);
 
         // ✅ Step 4: Log the ledger entry
-        LedgerEntry ledger = new LedgerEntry();
+        WalletLedgerEntry ledger = new WalletLedgerEntry();
         ledger.setWalletId(wallet.getWalletId());
         ledger.setTransactionType(TransactionType.CREDIT);
         ledger.setAmount(request.getAmount());

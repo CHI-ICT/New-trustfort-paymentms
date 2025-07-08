@@ -1,30 +1,18 @@
 package com.chh.trustfort.payment.service.ServiceImpl;
 
-import com.chh.trustfort.payment.dto.JournalEntryRequest;
-import com.chh.trustfort.payment.enums.TransactionStatus;
-import com.chh.trustfort.payment.enums.TransactionType;
-import com.chh.trustfort.payment.model.LedgerEntry;
-import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.model.WebhookLog;
 import com.chh.trustfort.payment.repository.LedgerEntryRepository;
 import com.chh.trustfort.payment.repository.WalletRepository;
 import com.chh.trustfort.payment.repository.WebhookLogRepository;
 import com.chh.trustfort.payment.service.FlutterwaveWebhookService;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.transaction.Transactional;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor

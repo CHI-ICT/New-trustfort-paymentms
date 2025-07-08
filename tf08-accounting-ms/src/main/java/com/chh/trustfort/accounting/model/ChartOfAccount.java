@@ -23,12 +23,12 @@ public class ChartOfAccount {
     private Long id;
 
 
-    @Column(name = "code", unique = true, nullable = false)
+    @Column(name = "account_code", unique = true, nullable = false)
     private String accountCode;
 
 
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "account_name", nullable = false)
     private String accountName;
 
 

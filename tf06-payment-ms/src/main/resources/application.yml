@@ -42,8 +42,12 @@ flutterwave:
 
 
 paystack:
-  secret:
-    key: sk_live_9aeeff47588ebfdcb313d3c5b746159e2e52b055
+  secret-key: sk_live_9aeeff47588ebfdcb313d3c5b746159e2e52b055
+  initiate-url: https://api.paystack.co/transaction/initialize
+  verify-url: https://api.paystack.co/transaction/verify
+  callback-url: https://webhook.site/9c0dd086-b3a5-46b6-9df7-b43da5d8415b/webhook-paystack  # Optional override
+
+
 
 
 #    logging:
@@ -76,9 +80,12 @@ admin:
   ip: ${ADMIN_IP:127.0.0.1}
 
 
-accounting:
-  service:
-    url: http://localhost:1007/trustfort/api/v1
+#accounting:
+#  service:
+#    url: https://localhost:8445/trustfort/api/v1/accountingService
+ACCOUNTING_SERVICE_URL: https://localhost:8445/trustfort/api/v1/accountingService
+
+
 
 email:
   notification:

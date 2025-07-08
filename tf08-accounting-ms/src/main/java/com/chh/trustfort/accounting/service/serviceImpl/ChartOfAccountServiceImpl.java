@@ -22,6 +22,7 @@ public class ChartOfAccountServiceImpl implements ChartOfAccountService {
     private final ChartOfAccountAccountRepository accountRepository;
     private final AccountCategoryRepository categoryRepo;
     private final EntityCodeRepository entityRepo;
+    private final DepartmentRepository departmentRepository;
 
     @Override
     public ChartOfAccount createAccount(CreateCOARequestPayload req) {
@@ -41,10 +42,28 @@ public class ChartOfAccountServiceImpl implements ChartOfAccountService {
                 .orElseThrow(() -> new IllegalArgumentException("Entity code not found"))
                 .getCode();
 
-        String deptCode = req.getDepartmentCode() != null ? req.getDepartmentCode() : "001";
+//        String deptCode = req.getDepartmentCode() != null ? req.getDepartmentCode() : "001";
 
-        String fullCode = entityCode + "-" + generatedCode + "-" + deptCode;
-        String currencyPrefixed = req.getCurrency() + entityCode + generatedCode + deptCode;
+        String deptCode;
+        if (req.getDepartmentCode() != null) {
+            deptCode = req.getDepartmentCode();
+        } else {
+            // Fallback or throw if departmentCode is required
+            throw new IllegalArgumentException("Department code is required");
+        }
+
+// Optionally validate that it exists
+        departmentRepository.findByDepartmentCode(deptCode)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid department code"));
+
+
+
+//        String fullCode = entityCode + "-" + generatedCode + "-" + deptCode;
+//        String currencyPrefixed = req.getCurrency() + entityCode + generatedCode + deptCode;
+
+        String fullCode = entityCode + generatedCode + deptCode;  // No hyphens
+        String currencyPrefixed = req.getCurrency() + fullCode;   // e.g. NGN1001000001
+
 
         ChartOfAccount account = ChartOfAccount.builder()
                 .accountName(req.getName())

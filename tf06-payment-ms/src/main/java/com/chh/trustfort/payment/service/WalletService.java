@@ -6,8 +6,6 @@ import com.chh.trustfort.payment.dto.LedgerEntryDTO;
 import com.chh.trustfort.payment.dto.WalletDTO;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
-import com.chh.trustfort.payment.model.LedgerEntry;
-import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.payload.*;
 import org.springframework.http.ResponseEntity;
 
@@ -21,17 +19,16 @@ import java.util.List;
  */
 public interface WalletService {
     List<WalletDTO> getWalletsByUserId(String userId);
-
     public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String narration);
-
-
+    WalletBalanceResponse checkBalancePlain(String phoneNumber);
     String checkBalanceByPhoneNumber(String phoneNumber, AppUser appUser);
     String getWalletsByPhoneNumber(String phoneNumber, AppUser appUser);
-
     String createWallet(CreateWalletRequestPayload requestPayload, AppUser appUser);
 
-String fundWallet(FundWalletRequestPayload payload, String userId, String emailAddress);
+    String initiateWalletFunding(FundWalletRequestPayload payload, AppUser appUser);
 
+//String fundWalletInternally(FundWalletRequestPayload payload, String userId, String emailAddress);
+    public String fundWalletInternally(FundWalletRequestPayload payload, AppUser appUser);
 String fetchAllWallets(String userId, AppUser user);
 
 public String transferFunds(FundsTransferRequestPayload payload, String idToken, AppUser appUser, AppUser ecred);
@@ -42,7 +39,7 @@ public WalletBalanceResponse getWalletBalance(String walletId, String userId);
 public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         String walletId, LocalDate startDate, LocalDate endDate, String userId);
 
-public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser);
+//public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser);
 
 public String freezeWallet(String requestPayload, String idToken, AppUser appUser);
 

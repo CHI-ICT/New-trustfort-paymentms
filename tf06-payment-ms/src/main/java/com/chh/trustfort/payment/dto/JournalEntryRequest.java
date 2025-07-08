@@ -1,6 +1,7 @@
 package com.chh.trustfort.payment.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -8,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
+//@Builder
 public class JournalEntryRequest {
 //    private String accountCode; // e.g. "REV001" or "EXP001"
 //    private BigDecimal amount;
@@ -34,6 +36,7 @@ public class JournalEntryRequest {
         private String reference;
         private String department;
         private String businessUnit;
-    }
+
+}
 
 

@@ -1,21 +1,19 @@
 package com.chh.trustfort.payment.service.ServiceImpl;
 
 import com.chh.trustfort.payment.Responses.*;
-import com.chh.trustfort.payment.component.AccountingClient;
+//import com.chh.trustfort.payment.component.AccountingClient;
 import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.component.WalletUtil;
 import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
 import com.chh.trustfort.payment.dto.JournalEntryRequest;
 import com.chh.trustfort.payment.dto.LedgerEntryDTO;
 import com.chh.trustfort.payment.dto.WalletDTO;
-import com.chh.trustfort.payment.enums.ReferenceStatus;
-import com.chh.trustfort.payment.enums.TransactionStatus;
-import com.chh.trustfort.payment.enums.TransactionType;
-import com.chh.trustfort.payment.enums.WalletStatus;
+import com.chh.trustfort.payment.enums.*;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.*;
 import com.chh.trustfort.payment.payload.*;
 import com.chh.trustfort.payment.repository.*;
+
 import com.chh.trustfort.payment.security.AesService;
 import com.chh.trustfort.payment.service.*;
 import com.google.gson.Gson;
@@ -23,15 +21,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -65,12 +62,11 @@ public class WalletServiceImpl implements WalletService {
     private final NotificationService notificationService;
     private final MessageSource messageSource;
     private final LedgerEntryRepository ledgerEntryRepository;
-    private final SettlementAccountRepository settlementAccountRepository;
-    private final FraudDetectionService fraudDetectionService;
-    private final MockFCMBIntegrationService fcmbIntegrationService;
     private final PaymentReferenceRepository paymentReferenceRepository;
-    private final SystemParameterService systemParameterService;
-    private final PaystackTransferService paystackTransferService;
+    private final PaystackPaymentService paystackPaymentService;
+    private final FlutterwavePaymentService flutterwavePaymentService;
+
+
     private final Gson gson;
     @Autowired
     private HttpServletRequest httpServletRequest;
@@ -180,6 +176,19 @@ public class WalletServiceImpl implements WalletService {
         }
     }
 
+    public WalletBalanceResponse checkBalancePlain(String phoneNumber) {
+        Wallet wallet = walletRepository.findByUserId(phoneNumber).stream().findFirst()
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+
+        WalletBalanceResponse response = new WalletBalanceResponse();
+        response.setResponseCode("00");
+        response.setMessage("Success");
+        response.setWalletId(wallet.getWalletId()); // ✅ Add this line
+        response.setBalance(wallet.getBalance());
+        response.setLedgerBalance(wallet.getLedgerBalance());
+        return response;
+    }
+
     @Override
     public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String narration) {
         try {
@@ -205,7 +214,7 @@ public class WalletServiceImpl implements WalletService {
 //            walletRepository.updateUser(wallet);
 
             // Log to ledger
-            LedgerEntry ledger = new LedgerEntry();
+            WalletLedgerEntry ledger = new WalletLedgerEntry();
             ledger.setWallet(wallet);
             ledger.setWalletId(wallet.getWalletId());
             ledger.setAmount(amount);
@@ -310,7 +319,6 @@ public class WalletServiceImpl implements WalletService {
         return aesService.encrypt(gson.toJson(response), appUser);
     }
 
-
     @Override
     public WalletBalanceResponse getWalletBalance(String walletId, String userId) {
         log.info("Fetching balance for Wallet ID: {}", walletId);
@@ -368,7 +376,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         throw new WalletException("Unauthorized access to this wallet");
     }
 
-    List<LedgerEntry> entries = ledgerEntryRepository.findByWalletId(walletId);
+    List<WalletLedgerEntry> entries = ledgerEntryRepository.findByWalletId(walletId);
 
     // ✅ Convert entities to DTOs
     List<LedgerEntryDTO> dtos = entries.stream()
@@ -377,8 +385,6 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
     return ResponseEntity.ok(dtos);
 }
-
-
 
     @Override
     @Transactional
@@ -427,7 +433,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         }
 
         // ✅ Ledger entries
-        LedgerEntry senderEntry = new LedgerEntry();
+        WalletLedgerEntry senderEntry = new WalletLedgerEntry();
         senderEntry.setWalletId(senderWallet.getWalletId());
         senderEntry.setTransactionType(TransactionType.DEBIT);
         senderEntry.setAmount(transferAmount);
@@ -435,7 +441,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         senderEntry.setDescription("Transfer to " + receiverWallet.getWalletId());
         ledgerEntryRepository.save(senderEntry);
 
-        LedgerEntry receiverEntry = new LedgerEntry();
+        WalletLedgerEntry receiverEntry = new WalletLedgerEntry();
         receiverEntry.setWalletId(receiverWallet.getWalletId());
         receiverEntry.setTransactionType(TransactionType.CREDIT);
         receiverEntry.setAmount(transferAmount);
@@ -454,7 +460,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         debitEntry.setDepartment("Wallet");
         debitEntry.setBusinessUnit("Retail");
         debitEntry.setTransactionDate(now);
-        accountingClient.postJournalEntry(debitEntry);
+        accountingClient.postJournalEntryInternal(debitEntry);
 
         JournalEntryRequest creditEntry = new JournalEntryRequest();
         creditEntry.setAccountCode("WALLET001");
@@ -464,7 +470,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         creditEntry.setDepartment("Wallet");
         creditEntry.setBusinessUnit("Retail");
         creditEntry.setTransactionDate(now);
-        accountingClient.postJournalEntry(creditEntry);
+        accountingClient.postJournalEntryInternal(creditEntry);
 
         // ✅ Notifications
         notificationService.sendEmail(
@@ -490,57 +496,114 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
     @Override
     @Transactional
-    public String fundWallet(FundWalletRequestPayload payload, String userId, String emailAddress) {
-        log.info("Funding wallet for user ID: {}", userId);
+    public String initiateWalletFunding(FundWalletRequestPayload payload, AppUser appUser) {
+        PaymentMethod method = payload.getPaymentMethod();
+        log.info("⚙️ Initiating wallet funding via method: {}", method);
 
-        Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
-                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + payload.getWalletId()));
+        switch (method) {
+            case WALLET:
+                return fundWalletInternally(payload, appUser);
 
-        if (wallet.getStatus() == WalletStatus.SUSPENDED || wallet.getStatus() == WalletStatus.CLOSED) {
-            return gson.toJson(new ErrorResponse("Wallet is not active", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
+            case PAYSTACK:
+                return paystackPaymentService.initiatePaystackPayment(payload, appUser);
+
+            case FLUTTERWAVE:
+                return flutterwavePaymentService.initiateFlutterwavePayment(payload, appUser);
+
+            case BANK_TRANSFER:
+                return initiateBankTransferFunding(payload, appUser);
+
+            default:
+                String errorMsg = "❌ Invalid payment method: " + method;
+                log.warn(errorMsg);
+                return aesService.encrypt(gson.toJson(new ErrorResponse(errorMsg, "91")), appUser);
         }
-
-        if (!wallet.getUserId().equals(userId)) {
-            return gson.toJson(new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
-        }
-
-        BigDecimal creditAmount = payload.getAmount();
-        wallet.setBalance(wallet.getBalance().add(creditAmount));
-        walletRepository.updateUser(wallet);
-
-        LedgerEntry ledgerEntry = new LedgerEntry();
-        ledgerEntry.setWalletId(wallet.getWalletId());
-        ledgerEntry.setTransactionType(TransactionType.CREDIT);
-        ledgerEntry.setAmount(creditAmount);
-        ledgerEntry.setStatus(TransactionStatus.COMPLETED);
-        ledgerEntry.setDescription("Wallet Funding");
-        ledgerEntryRepository.save(ledgerEntry);
-
-        JournalEntryRequest journal = new JournalEntryRequest();
-        journal.setAccountCode("REV001");
-        journal.setAmount(creditAmount);
-        journal.setDescription("Wallet Funding");
-        journal.setTransactionType("CREDIT");
-        journal.setDepartment("Wallet");
-        journal.setBusinessUnit("Retail");
-        journal.setTransactionDate(LocalDateTime.now());
-
-        accountingClient.postJournalEntry(journal);
-
-        SuccessResponse response = new SuccessResponse();
-        response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
-        response.setResponseMessage("Wallet funded successfully");
-        response.setNewBalance(wallet.getBalance());
-
-        notificationService.sendEmail(emailAddress,
-                "🔺 Wallet Funded",
-                "Your wallet was credited with ₦" + creditAmount + " via manual funding.");
-
-        log.info("Wallet ID: {} funded successfully. New balance: {}", wallet.getWalletId(), wallet.getBalance());
-
-        return gson.toJson(response);
     }
 
+
+    public String initiateBankTransferFunding(FundWalletRequestPayload payload, AppUser appUser) {
+        String virtualAcctInfo = "Bank: Zenith\nAccount Number: 0101010101\nAccount Name: TRUSTFORT WALLET\nReference: " + System.currentTimeMillis();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "pending");
+        response.put("message", "Kindly transfer to the bank details below and include the reference.");
+        response.put("bankDetails", virtualAcctInfo);
+
+        return aesService.encrypt(gson.toJson(response), appUser);
+    }
+
+//    @Override
+//    @Transactional
+//    public String fundWalletInternally(FundWalletRequestPayload payload, String userId, String emailAddress) {
+//        log.info("🔄 Funding wallet for user ID: {}", userId);
+//
+//        // 🔍 Step 1: Fetch wallet and validate
+//        Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
+//                .orElseThrow(() -> new WalletException("❌ Wallet not found for ID: " + payload.getWalletId()));
+//
+//        if (wallet.getStatus() == WalletStatus.SUSPENDED || wallet.getStatus() == WalletStatus.CLOSED) {
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Wallet is not active", ResponseCode.FAILED_TRANSACTION.getResponseCode())), new AppUser());
+//        }
+//
+//        if (!wallet.getUserId().equals(userId)) {
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode())), new AppUser());
+//        }
+//
+//        // 💳 Step 2: Credit wallet
+//        BigDecimal creditAmount = payload.getAmount();
+//        wallet.setBalance(wallet.getBalance().add(creditAmount));
+//        walletRepository.updateUser(wallet);
+//
+//        String internalRef = "MWF-" + System.currentTimeMillis();
+//        // 🧾 Step 3: Save Ledger Entry
+//        WalletLedgerEntry ledgerEntry = WalletLedgerEntry.builder()
+//                .walletId(wallet.getWalletId())
+//                .transactionType(TransactionType.CREDIT)
+//                .amount(creditAmount)
+//                .status(TransactionStatus.COMPLETED)
+//                .description("Wallet Funding")
+//                .reference(internalRef)
+//                .build();
+//
+//        ledgerEntryRepository.save(ledgerEntry);
+//
+//        // 📒 Step 4: Post Journal Entry to Accounting
+//        JournalEntryRequest journal = new JournalEntryRequest();
+//        journal.setAccountCode(wallet.getAccountCode() != null ? wallet.getAccountCode() : "WALLET-FUNDING");
+//        journal.setAmount(creditAmount);
+//        journal.setDescription("Wallet Funding");
+//        journal.setTransactionType("CREDIT");
+//        journal.setReference(internalRef);
+//        journal.setDepartment("WALLET");
+//        journal.setBusinessUnit("TRUSTFORT");
+//        journal.setTransactionDate(LocalDateTime.now());
+//        journal.setWalletId(wallet.getWalletId());
+//
+//        try {
+//            accountingClient.postJournalEntryInternal(journal);
+//            log.info("📘 Journal entry posted successfully for manual wallet funding.");
+//        } catch (Exception e) {
+//            log.error("❌ Failed to post journal entry: {}", e.getMessage(), e);
+//        }
+//
+//        // 📧 Step 5: Send email notification
+//        notificationService.sendEmail(
+//                emailAddress,
+//                "🔺 Wallet Funded",
+//                "Your wallet was credited with ₦" + creditAmount + " via manual funding."
+//        );
+//
+//        // ✅ Step 6: Build success response
+//        SuccessResponse response = new SuccessResponse();
+//        response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+//        response.setResponseMessage("Wallet funded successfully");
+//        response.setNewBalance(wallet.getBalance());
+//
+//        log.info("✅ Wallet ID {} funded successfully. New Balance: {}", wallet.getWalletId(), wallet.getBalance());
+//
+//        return aesService.encrypt(gson.toJson(response), new AppUser());
+//        // Return encrypted response for external use
+//    }
     @Override
     public String fetchAllWallets(String userId, AppUser user) {
         List<Wallet> wallets = walletRepository.findByUserId(userId);
@@ -562,143 +625,210 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         return aesService.encrypt(gson.toJson(walletResponse), user);
     }
 
+//    @Override
+//    @Transactional
+//    public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser) {
+//        log.info("💸 Processing withdrawal for wallet ID: {}", payload.getWalletId());
+//
+//        // 🔐 Step 1: Validate User
+//        Users user = usersRepository.findByEmail(email)
+//                .orElseThrow(() -> new WalletException("User not found: " + email));
+//
+//        if (!otpService.validateOtp(Long.valueOf(user.getId()), String.valueOf(payload.getOtpCode()), "WITHDRAW_FUNDS")) {
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Invalid or expired OTP", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+//        }
+//
+//        // 🔍 Step 2: Fetch Wallet and Validate
+//        Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
+//                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + payload.getWalletId()));
+//
+//        if (!wallet.getUserId().equals(userId)) {
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+//        }
+//
+//        if (wallet.getStatus() != WalletStatus.ACTIVE) {
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Wallet is " + wallet.getStatus(), ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+//        }
+//
+//        // 🔒 Step 3: Fraud Check & Balance Validation
+//        BigDecimal withdrawalAmount = payload.getAmount();
+//        if (fraudDetectionService.isFraudulentWithdrawal(user, withdrawalAmount)) {
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Suspicious transaction: Limit exceeded", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+//        }
+//
+//        if (wallet.getBalance().compareTo(withdrawalAmount) < 0) {
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Insufficient funds", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+//        }
+//
+//        // ⚙️ Step 4: System Parameters
+//        String debitAccount = systemParameterService.getValue("WALLET_WITHDRAWAL_DEBIT_ACCOUNT");
+//        String creditAccount = systemParameterService.getValue("WALLET_WITHDRAWAL_CREDIT_ACCOUNT");
+//        String department = systemParameterService.getValue("WALLET_DEPARTMENT");
+//        String businessUnit = systemParameterService.getValue("WALLET_BUSINESS_UNIT");
+//        String settlementAccountNo = systemParameterService.getValue("WALLET_SETTLEMENT_ACCOUNT");
+//
+//        // 💳 Step 5: Debit Wallet
+//        wallet.setBalance(wallet.getBalance().subtract(withdrawalAmount));
+//        walletRepository.updateUser(wallet);
+//
+//        // 📘 Step 6: Journal Entries
+//        JournalEntryRequest debitEntry = JournalEntryRequest.builder()
+//                .accountCode(debitAccount)
+//                .amount(withdrawalAmount)
+//                .transactionType("DEBIT")
+//                .description("Wallet Withdrawal")
+//                .department(department)
+//                .businessUnit(businessUnit)
+//                .transactionDate(LocalDateTime.now())
+//                .walletId(wallet.getWalletId())
+//                .build();
+//        accountingClient.postJournalEntryInternal(debitEntry);
+//
+//        JournalEntryRequest creditEntry = JournalEntryRequest.builder()
+//                .accountCode(creditAccount)
+//                .amount(withdrawalAmount)
+//                .transactionType("CREDIT")
+//                .description("Transfer to Bank")
+//                .department(department)
+//                .businessUnit(businessUnit)
+//                .transactionDate(LocalDateTime.now())
+//                .walletId(wallet.getWalletId())
+//                .build();
+//        accountingClient.postJournalEntryInternal(creditEntry);
+//
+//        // 🔁 Step 7: Create Recipient (Paystack)
+//        String recipientCode;
+//        try {
+//            recipientCode = paystackTransferService.createRecipient(
+//                    payload.getAccountName(), payload.getAccountNumber(), payload.getBankCode());
+//        } catch (Exception e) {
+//            rollbackWallet(wallet, withdrawalAmount, idToken, appUser);
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Recipient creation failed", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+//        }
+//
+//        // 🚀 Step 8: Initiate Transfer
+//        String transferCode;
+//        try {
+//            transferCode = paystackTransferService.initiateTransfer(
+//                    withdrawalAmount, recipientCode, "Wallet withdrawal for " + user.getUserName());
+//        } catch (Exception e) {
+//            rollbackWallet(wallet, withdrawalAmount, idToken, appUser);
+//            return aesService.encrypt(gson.toJson(new ErrorResponse("Transfer failed", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+//        }
+//
+//        // 📒 Step 9: Ledger Entry
+//        WalletLedgerEntry ledgerEntry = WalletLedgerEntry.builder()
+//                .walletId(wallet.getWalletId())
+//                .transactionType(TransactionType.DEBIT)
+//                .amount(withdrawalAmount)
+//                .status(TransactionStatus.PENDING)
+//                .description("Wallet Withdrawal - Pending Settlement")
+//                .reference(transferCode)
+//                .build();
+//        ledgerEntryRepository.save(ledgerEntry);
+//
+//        // 🏦 Step 10: Update Settlement Account
+//        SettlementAccount settlement = settlementAccountRepository.findByAccountNumber(settlementAccountNo);
+//        if (settlement == null) {
+//            settlement = new SettlementAccount();
+//            settlement.setAccountNumber(settlementAccountNo);
+//            settlement.setBalance(BigDecimal.ZERO);
+//        }
+//        settlement.setBalance(settlement.getBalance().add(withdrawalAmount));
+//        settlementAccountRepository.save(settlement);
+//
+//        // 🔄 Step 11: Final Transfer to Bank (Mock FCMB)
+//        boolean fcmbSuccess = fcmbIntegrationService.transferFunds(settlementAccountNo, withdrawalAmount);
+//        ledgerEntry.setStatus(fcmbSuccess ? TransactionStatus.COMPLETED : TransactionStatus.FAILED);
+//        ledgerEntryRepository.save(ledgerEntry);
+//
+//        if (!fcmbSuccess) {
+//            rollbackWallet(wallet, withdrawalAmount, idToken, appUser);
+//        }
+//
+//        // 📩 Step 12: Send Notification
+//        notificationService.sendEmail(email,
+//                "🔻 Debit Alert - Wallet Withdrawal",
+//                "Your wallet was debited with ₦" + withdrawalAmount + "\nRef: " + transferCode);
+//
+//        // ✅ Step 13: Final Encrypted Response
+//        SuccessResponse response = new SuccessResponse();
+//        response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+//        response.setResponseMessage(fcmbSuccess ? "Withdrawal successful" : "Transfer failed, funds refunded");
+//        response.setNewBalance(wallet.getBalance());
+//
+//        return aesService.encrypt(gson.toJson(response), appUser);
+//    }
+
     @Override
     @Transactional
-    public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser) {
-        log.info("Processing withdrawal for wallet ID: {}", payload.getWalletId());
+    public String fundWalletInternally(FundWalletRequestPayload payload, AppUser appUser) {
+        log.info("🔄 Funding wallet for user ID: {}", appUser.getPhoneNumber());
 
-        Users user = usersRepository.findByEmail(email)
-                .orElseThrow(() -> new WalletException("User not found: " + email));
-
-        if (!otpService.validateOtp(Long.valueOf(user.getId()), String.valueOf(payload.getOtpCode()), "WITHDRAW_FUNDS")) {
-            log.warn("Invalid or expired OTP for user: {}", user.getUserName());
-            return aesService.encrypt(gson.toJson(new ErrorResponse("Invalid or expired OTP",
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
-        }
-
+        // 🔍 Step 1: Fetch wallet and validate
         Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
-                .orElseThrow(() -> new WalletException("Wallet not found for ID: " + payload.getWalletId()));
+                .orElseThrow(() -> new WalletException("❌ Wallet not found for ID: " + payload.getWalletId()));
 
-        if (!wallet.getUserId().equals(userId)) {
-            return aesService.encrypt(gson.toJson(new ErrorResponse("Unauthorized access",
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+        if (wallet.getStatus() == WalletStatus.SUSPENDED || wallet.getStatus() == WalletStatus.CLOSED) {
+            return aesService.encrypt(gson.toJson(new ErrorResponse("Wallet is not active", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
         }
 
-        if (wallet.getStatus() != WalletStatus.ACTIVE) {
-            return aesService.encrypt(gson.toJson(new ErrorResponse("Withdrawal not allowed. Wallet is " + wallet.getStatus(),
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
+        if (!wallet.getUserId().equals(appUser.getPhoneNumber())) {
+            return aesService.encrypt(gson.toJson(new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
         }
 
-        if (fraudDetectionService.isFraudulentWithdrawal(user, payload.getAmount())) {
-            return aesService.encrypt(gson.toJson(new ErrorResponse("Suspicious transaction: Limit exceeded",
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
-        }
-
-        BigDecimal withdrawalAmount = payload.getAmount();
-        if (wallet.getBalance().compareTo(withdrawalAmount) < 0) {
-            return aesService.encrypt(gson.toJson(new ErrorResponse("Insufficient funds",
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
-        }
-
-        // System Parameters
-        String debitAccount = systemParameterService.getValue("WALLET_WITHDRAWAL_DEBIT_ACCOUNT");
-        String creditAccount = systemParameterService.getValue("WALLET_WITHDRAWAL_CREDIT_ACCOUNT");
-        String department = systemParameterService.getValue("WALLET_DEPARTMENT");
-        String businessUnit = systemParameterService.getValue("WALLET_BUSINESS_UNIT");
-        String settlementAccountNo = systemParameterService.getValue("WALLET_SETTLEMENT_ACCOUNT");
-
-        wallet.setBalance(wallet.getBalance().subtract(withdrawalAmount));
+        // 💳 Step 2: Credit wallet
+        BigDecimal creditAmount = payload.getAmount();
+        wallet.setBalance(wallet.getBalance().add(creditAmount));
         walletRepository.updateUser(wallet);
 
-        // Journal Entries
-        JournalEntryRequest debitEntry = new JournalEntryRequest();
-        debitEntry.setAccountCode(debitAccount);
-        debitEntry.setAmount(withdrawalAmount);
-        debitEntry.setDescription("Wallet Withdrawal");
-        debitEntry.setTransactionType("DEBIT");
-        debitEntry.setDepartment(department);
-        debitEntry.setBusinessUnit(businessUnit);
-        debitEntry.setTransactionDate(LocalDateTime.now());
-        accountingClient.postJournalEntry(debitEntry);
+        String internalRef = "MWF-" + System.currentTimeMillis();
 
-        JournalEntryRequest creditEntry = new JournalEntryRequest();
-        creditEntry.setAccountCode(creditAccount);
-        creditEntry.setAmount(withdrawalAmount);
-        creditEntry.setDescription("Transfer to Bank");
-        creditEntry.setTransactionType("CREDIT");
-        creditEntry.setDepartment(department);
-        creditEntry.setBusinessUnit(businessUnit);
-        creditEntry.setTransactionDate(LocalDateTime.now());
-        accountingClient.postJournalEntry(creditEntry);
+        // 🧾 Step 3: Save Ledger Entry
+        WalletLedgerEntry ledgerEntry = WalletLedgerEntry.builder()
+                .walletId(wallet.getWalletId())
+                .transactionType(TransactionType.CREDIT)
+                .amount(creditAmount)
+                .status(TransactionStatus.COMPLETED)
+                .description("Wallet Funding")
+                .reference(internalRef)
+                .build();
 
-        // Recipient Creation
-        String recipientCode;
-        try {
-            recipientCode = paystackTransferService.createRecipient(payload.getAccountName(), payload.getAccountNumber(), payload.getBankCode());
-        } catch (Exception e) {
-            UpdateWalletBalancePayload updatePayload = new UpdateWalletBalancePayload();
-            updatePayload.setWalletId(wallet.getWalletId());
-            updatePayload.setAmount(withdrawalAmount.doubleValue());
-            walletService.updateWalletBalance(updatePayload, idToken, appUser);
-
-            return aesService.encrypt(gson.toJson(new ErrorResponse("Recipient creation failed",
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
-        }
-
-        // Fund Transfer
-        String transferCode;
-        try {
-            transferCode = paystackTransferService.initiateTransfer(withdrawalAmount, recipientCode,
-                    "Wallet withdrawal for " + user.getUserName());
-        } catch (Exception e) {
-            UpdateWalletBalancePayload updatePayload = new UpdateWalletBalancePayload();
-            updatePayload.setWalletId(wallet.getWalletId());
-            updatePayload.setAmount(withdrawalAmount.doubleValue());
-            walletService.updateWalletBalance(updatePayload, idToken, appUser);
-
-            return aesService.encrypt(gson.toJson(new ErrorResponse("Transfer failed",
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);
-        }
-
-        // Ledger Entry
-        LedgerEntry ledgerEntry = new LedgerEntry();
-        ledgerEntry.setWalletId(wallet.getWalletId());
-        ledgerEntry.setTransactionType(TransactionType.DEBIT);
-        ledgerEntry.setAmount(withdrawalAmount);
-        ledgerEntry.setStatus(TransactionStatus.PENDING);
-        ledgerEntry.setDescription("Wallet Withdrawal - Pending Settlement");
         ledgerEntryRepository.save(ledgerEntry);
 
-        // Settlement Account
-        SettlementAccount settlementAccount = settlementAccountRepository.findByAccountNumber(settlementAccountNo);
-        if (settlementAccount == null) {
-            settlementAccount = new SettlementAccount();
-            settlementAccount.setAccountNumber(settlementAccountNo);
-            settlementAccount.setBalance(BigDecimal.ZERO);
-        }
-        settlementAccount.setBalance(settlementAccount.getBalance().add(withdrawalAmount));
-        settlementAccountRepository.save(settlementAccount);
+        // 📒 Step 4: Post Journal Entry to Accounting
+        JournalEntryRequest journal = new JournalEntryRequest();
+        journal.setAccountCode(wallet.getAccountCode() != null ? wallet.getAccountCode() : "WALLET-FUNDING");
+        journal.setAmount(creditAmount);
+        journal.setDescription("Wallet Funding");
+        journal.setTransactionType("CREDIT");
+        journal.setReference(internalRef);
+        journal.setDepartment("WALLET");
+        journal.setBusinessUnit("TRUSTFORT");
+        journal.setTransactionDate(LocalDateTime.now());
+        journal.setWalletId(wallet.getWalletId());
 
-        // Final Bank Transfer
-        boolean fcmbSuccess = fcmbIntegrationService.transferFunds(settlementAccountNo, withdrawalAmount);
-        ledgerEntry.setStatus(fcmbSuccess ? TransactionStatus.COMPLETED : TransactionStatus.FAILED);
-        ledgerEntryRepository.save(ledgerEntry);
-
-        if (!fcmbSuccess) {
-            UpdateWalletBalancePayload updatePayload = new UpdateWalletBalancePayload();
-            updatePayload.setWalletId(wallet.getWalletId());
-            updatePayload.setAmount(withdrawalAmount.doubleValue());
-            walletService.updateWalletBalance(updatePayload, idToken, appUser);
+        try {
+            accountingClient.postJournalEntryInternal(journal);
+            log.info("📘 Journal entry posted successfully for manual wallet funding.");
+        } catch (Exception e) {
+            log.error("❌ Failed to post journal entry: {}", e.getMessage(), e);
         }
 
-        // Notification
-        notificationService.sendEmail(email, "🔻 Debit Alert - Wallet Withdrawal",
-                "Your wallet was debited with ₦" + withdrawalAmount + "\nRef: " + transferCode);
+        // 📧 Step 5: Send email notification
+        notificationService.sendEmail(
+                appUser.getEmail(),
+                "🔺 Wallet Funded",
+                "Your wallet was credited with ₦" + creditAmount + " via manual funding."
+        );
 
+        // ✅ Step 6: Build success response
         SuccessResponse response = new SuccessResponse();
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
-        response.setResponseMessage(fcmbSuccess ? "Withdrawal successful" : "Transfer failed, funds refunded");
+        response.setResponseMessage("Wallet funded successfully");
         response.setNewBalance(wallet.getBalance());
+
+        log.info("✅ Wallet ID {} funded successfully. New Balance: {}", wallet.getWalletId(), wallet.getBalance());
 
         return aesService.encrypt(gson.toJson(response), appUser);
     }
@@ -913,7 +1043,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         wallet.setBalance(wallet.getBalance().add(payload.getAmount()));
         walletRepository.updateUser(wallet);
 
-        LedgerEntry entry = new LedgerEntry();
+        WalletLedgerEntry entry = new WalletLedgerEntry();
         entry.setWalletId(wallet.getWalletId());
         entry.setTransactionType(TransactionType.CREDIT);
         entry.setAmount(payload.getAmount());
@@ -950,7 +1080,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         wallet.setBalance(wallet.getBalance().add(amount));
         walletRepository.updateUser(wallet);
 
-        LedgerEntry entry = new LedgerEntry();
+        WalletLedgerEntry entry = new WalletLedgerEntry();
         entry.setWalletId(wallet.getWalletId());
         entry.setTransactionType(TransactionType.CREDIT);
         entry.setAmount(amount);
@@ -988,7 +1118,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         walletRepository.updateUser(wallet);
 
         // ✅ Ledger entry
-        LedgerEntry entry = new LedgerEntry();
+        WalletLedgerEntry entry = new WalletLedgerEntry();
         entry.setWalletId(wallet.getWalletId());
         entry.setTransactionType(TransactionType.CREDIT);
         entry.setAmount(payload.getAmount());

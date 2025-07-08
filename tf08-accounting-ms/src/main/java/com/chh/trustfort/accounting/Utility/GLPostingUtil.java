@@ -2,8 +2,8 @@ package com.chh.trustfort.accounting.Utility;
 
 import com.chh.trustfort.accounting.enums.GLPostingType;
 import com.chh.trustfort.accounting.enums.TransactionType;
-import com.chh.trustfort.accounting.model.LedgerEntry;
-import com.chh.trustfort.accounting.service.LedgerEntryService;
+import com.chh.trustfort.accounting.model.AccountingLedgerEntry;
+import com.chh.trustfort.accounting.service.AccountingLedgerEntryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,13 +14,13 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class GLPostingUtil {
 
-    private final LedgerEntryService ledgerEntryService;
+    private final AccountingLedgerEntryService accountingLedgerEntryService;
 
     public void post(String accountCode, BigDecimal amount, TransactionType type,
                      GLPostingType postingType, String reference, String description,
                      String businessUnit, String department, LocalDate txnDate) {
 
-        LedgerEntry entry = new LedgerEntry();
+        AccountingLedgerEntry entry = new AccountingLedgerEntry();
         entry.setAccountCode(accountCode);
         entry.setAmount(amount);
         entry.setTransactionType(type);
@@ -31,6 +31,6 @@ public class GLPostingUtil {
         entry.setDepartment(department);
         entry.setTransactionDate(txnDate);
 
-        ledgerEntryService.postToGL(entry);
+        accountingLedgerEntryService.postToGL(entry);
     }
 }

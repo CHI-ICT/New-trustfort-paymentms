@@ -1,4 +1,4 @@
-package com.chh.trustfort.accounting.repository;
+//package com.chh.trustfort.accounting.repository;
 
 import com.chh.trustfort.accounting.enums.ExpenseType;
 import com.chh.trustfort.accounting.model.ChartOfAccount;

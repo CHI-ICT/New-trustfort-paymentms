@@ -52,7 +52,7 @@ import java.util.Properties;
 @EnableEncryptableProperties
 @EnableAsync
 @EnableScheduling
-@EnableJpaRepositories("com.chh.trustfort.payment.repository")  // Add this line
+@EnableJpaRepositories("com.chh.trustfort.accounting.repository")  // Add this line
 public class AppConfig extends WebMvcConfigurerAdapter {
 
     @Autowired
@@ -74,7 +74,7 @@ public class AppConfig extends WebMvcConfigurerAdapter {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(@Autowired DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("com.chh.trustfort.payment.model");
+        em.setPackagesToScan("com.chh.trustfort.accounting.model");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

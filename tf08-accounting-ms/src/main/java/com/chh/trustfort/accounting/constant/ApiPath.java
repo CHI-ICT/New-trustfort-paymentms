@@ -34,6 +34,7 @@ public class ApiPath {
     public static final String GENERATE_BALANCE_SHEET="/balance-sheet";
     public static final String GENERATE_INCOME_STATEMENT="/generate-income-statement";
     public static final String JOURNAL_ENTRY ="/journal-entry";
+    public static final String INTERNAL_POST_JOURNAL ="/internal/journal-entry";
     public static final String CREATE_CHART_OF_ACCOUNT ="/create-chart-of-account";
     public static final String CASH_FLOW_STATEMENT ="/api/finance/cash-flow";
     public static final String EQUITY_STATEMENT ="/api/finance/equity-statement";
@@ -126,4 +127,11 @@ public class ApiPath {
     public static final String GENERATE_EOP = "/payables/{invoiceId}/generate-eop";
     public static final String GET_EOP = "/payables/{invoiceId}/eop";
 
+    public static final String CREATE_ACCOUNT_CATEGORY = "/account-categories/create";
+    public static final String GET_ACCOUNT_CATEGORIES = "/account-categories";
+    public static final String GET_ACCOUNT_CATEGORY_BY_ID = "/account-categories/get";
+    public static final String UPDATE_ACCOUNT_CATEGORY = "/account-categories/update";
+
+
+    public static final String ENCRYPT_PAYLOAD ="/test-encrypt-payload";
 }

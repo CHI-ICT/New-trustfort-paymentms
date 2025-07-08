@@ -1,7 +1,7 @@
 package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.enums.TransactionType;
-import com.chh.trustfort.payment.model.LedgerEntry;
+import com.chh.trustfort.payment.model.WalletLedgerEntry;
 import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.repository.LedgerEntryRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +30,11 @@ public class FraudDetectionService {
 
     public boolean isFraudulentWithdrawal(Users user, BigDecimal amount) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        List<LedgerEntry> todayWithdrawals = ledgerEntryRepository.findByWallet_UsersAndTransactionTypeAndCreatedAtAfter(
+        List<WalletLedgerEntry> todayWithdrawals = ledgerEntryRepository.findByWallet_UsersAndTransactionTypeAndCreatedAtAfter(
                 user, TransactionType.DEBIT, startOfDay);
 
         BigDecimal totalToday = todayWithdrawals.stream()
-                .map(LedgerEntry::getAmount)
+                .map(WalletLedgerEntry::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (todayWithdrawals.size() >= MAX_WITHDRAWALS_PER_DAY) {

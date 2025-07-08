@@ -11,23 +11,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication
+@EntityScan(basePackages = {
+        "com.chh.trustfort.accounting.model",
+        "com.chh.trustfort.accounting.component"
+})
+@SpringBootApplication(scanBasePackages = "com.chh.trustfort.accounting")
 @Import(AppConfig.class)
 @EnableHystrixDashboard
 @EnableCircuitBreaker
 @EnableEurekaClient
 @EnableFeignClients
 @EnableScheduling
-
-@EntityScan(basePackages = {
-        "com.chh.trustfort.accounting.model",
-        "com.chh.trustfort.accounting.component"
-})
-@EnableJpaRepositories(basePackages = "com.chh.trustfort.accounting.repository")
 public class AccountingApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(AccountingApplication.class, args);
     }
-
 }

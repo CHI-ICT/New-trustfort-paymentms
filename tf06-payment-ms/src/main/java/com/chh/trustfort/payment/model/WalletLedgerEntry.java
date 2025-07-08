@@ -3,9 +3,11 @@ package com.chh.trustfort.payment.model;
 import com.chh.trustfort.payment.enums.TransactionStatus;
 import com.chh.trustfort.payment.enums.TransactionType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -14,9 +16,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "wallet_ledger_entries")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LedgerEntry {
+public class WalletLedgerEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

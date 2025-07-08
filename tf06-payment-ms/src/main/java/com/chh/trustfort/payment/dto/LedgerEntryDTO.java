@@ -1,6 +1,6 @@
 package com.chh.trustfort.payment.dto;
 
-import com.chh.trustfort.payment.model.LedgerEntry;
+import com.chh.trustfort.payment.model.WalletLedgerEntry;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +23,7 @@ public class LedgerEntryDTO {
     private String status;
     private LocalDateTime transactionDate;
 
-    public static LedgerEntryDTO fromEntity(LedgerEntry entry) {
+    public static LedgerEntryDTO fromEntity(WalletLedgerEntry entry) {
         return new LedgerEntryDTO(
             entry.getWalletId(),
             entry.getAmount(),

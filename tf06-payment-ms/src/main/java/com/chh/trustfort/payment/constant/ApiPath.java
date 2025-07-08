@@ -100,4 +100,10 @@ public class ApiPath {
     public static final String FLUTTERWAVE_REDIRECT = "/flutterwave-redirect";
     public static final String RETRY_FLW_PAYMENT = "/retry-flutterwave-payment";
     public static final String REVERIFY_FAILED_TX= "/admin/reverify-payment";
+    public static final String INTERNAL_CHECK_BALANCE = "/wallet/internal/check-balance";
+    public static final String PAYSTACK_WEBHOOK = "/webhook-paystack";
+    public static final String INITIATE_PAYSTACK_PAYMENT = "/paystack/initiate";
+    public static final String VERIFY_PAYSTACK_PAYMENT = "/paystack/verify";
+    public static final String REVERIFY_PAYSTACK = "/paystack/reverify";
+
 }

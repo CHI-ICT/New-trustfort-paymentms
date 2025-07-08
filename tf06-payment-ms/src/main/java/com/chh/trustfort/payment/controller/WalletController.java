@@ -5,17 +5,14 @@ import com.chh.trustfort.payment.Responses.ErrorResponse;
 import com.chh.trustfort.payment.Responses.WalletBalanceResponse;
 import com.chh.trustfort.payment.Util.SecureResponseUtil;
 import com.chh.trustfort.payment.component.RequestManager;
-import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.constant.ApiPath;
 import com.chh.trustfort.payment.dto.LedgerEntryDTO;
 import com.chh.trustfort.payment.enums.Role;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
-import com.chh.trustfort.payment.model.LedgerEntry;
-import com.chh.trustfort.payment.model.Users;
 import com.chh.trustfort.payment.model.Wallet;
 import com.chh.trustfort.payment.payload.*;
-import com.chh.trustfort.payment.repository.UsersRepository;
+import com.chh.trustfort.payment.repository.AppUserRepository;
 import com.chh.trustfort.payment.repository.WalletRepository;
 import com.chh.trustfort.payment.security.AesService;
 import com.chh.trustfort.payment.service.WalletService;
@@ -25,19 +22,16 @@ import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  *
@@ -55,7 +49,7 @@ public class WalletController {
     private final Gson gson;
     private final WalletService walletService;
     private final WalletRepository walletRepository;
-    private final UsersRepository usersRepository;
+    private final AppUserRepository appUserRepository;
     private final AesService aesService;
 
 
@@ -146,24 +140,35 @@ public class WalletController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    @PostMapping(value = ApiPath.FUND_WALLET, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> fundWallet(@RequestParam String idToken, @RequestBody String requestPayload, HttpServletRequest httpRequest) {
+    @PostMapping(value = ApiPath.FUND_WALLET, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> fundWallet(
+            @RequestParam String idToken,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
+    ) {
+        log.info("📥 Encrypted payload received for wallet funding");
 
+        // 🔐 Step 1: Decrypt & authorize user
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
                 Role.FUND_WALLET.getValue(), requestPayload, httpRequest, idToken
         );
 
-        if (request.isError) {
-            OmniResponsePayload response = gson.fromJson(request.payload, OmniResponsePayload.class);
-            return new ResponseEntity<>(
-                    SecureResponseUtil.error(response.getResponseCode(), response.getResponseMessage(), String.valueOf(HttpStatus.BAD_REQUEST)),
-                    HttpStatus.OK
-            );
+        if (request.isError || request.appUser == null) {
+            log.warn("❌ Wallet funding auth failed: {}", request.payload);
+            OmniResponsePayload error = gson.fromJson(request.payload, OmniResponsePayload.class);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(aesService.encrypt(gson.toJson(error), new AppUser()));
         }
 
-        FundWalletRequestPayload decryptedPayload = gson.fromJson(request.payload, FundWalletRequestPayload.class);
-        String result = walletService.fundWallet(decryptedPayload, String.valueOf(request.appUser.getId()), request.appUser.getEmail());
-        return new ResponseEntity<>(aesService.encrypt(result, request.appUser), HttpStatus.OK);
+        // ✅ Step 2: Extract decrypted payload and AppUser
+        AppUser appUser = request.appUser;
+        FundWalletRequestPayload payload = gson.fromJson(request.payload, FundWalletRequestPayload.class);
+
+        // 🚀 Step 3: Delegate to wallet service's payment method router
+        String encryptedResponse = walletService.initiateWalletFunding(payload, appUser);
+
+        // 📤 Step 4: Return encrypted response
+        return ResponseEntity.ok(encryptedResponse);
     }
 
 
@@ -247,6 +252,78 @@ public class WalletController {
         return ResponseEntity.ok(encryptedResponse);
     }
 
+//    @PostMapping(value = ApiPath.INTERNAL_CHECK_BALANCE, produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<?> internalCheckWalletBalance(
+//            @RequestParam String phoneNumber
+//    ) {
+//        try {
+//            // ✅ Get wallet entity using phoneNumber
+//            List<Wallet> wallets = walletRepository.findByUserId(phoneNumber);
+//            WalletBalanceResponse response = new WalletBalanceResponse();
+//
+//            if (wallets.isEmpty()) {
+//                log.warn("❌ No wallet found for phoneNumber: {}", phoneNumber);
+//                response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+//                response.setMessage("No wallet found for this user");
+//            } else {
+//                Wallet wallet = wallets.get(0); // first match
+//                if (wallet.getStatus() == WalletStatus.SUSPENDED) {
+//                    response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+//                    response.setMessage("Wallet is frozen and cannot be accessed");
+//                } else if (wallet.getStatus() == WalletStatus.CLOSED) {
+//                    response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+//                    response.setMessage("Wallet is closed and cannot be accessed");
+//                } else {
+//                    response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+//                    response.setMessage("Success");
+//                    response.setWalletId(wallet.getWalletId());
+//                    response.setBalance(wallet.getBalance());
+//                    response.setLedgerBalance(wallet.getLedgerBalance());
+//                }
+//            }
+//
+//            // ✅ Encrypt response with internal system user
+//            AppUser internalUser = appUserRepository.getAppUserByUserName("TRUSTFORT001");
+//            if (internalUser == null) {
+//                internalUser = new AppUser(); // fallback dummy encryption key
+//                internalUser.setEncryptionKey("dummy-key-for-encryption");
+//            }
+//
+//            String encrypted = aesService.encrypt(gson.toJson(response), internalUser);
+//            return ResponseEntity.ok(encrypted);
+//
+//        } catch (Exception ex) {
+//            log.error("❌ Error checking wallet balance internally", ex);
+//
+//            WalletBalanceResponse error = new WalletBalanceResponse();
+//            error.setResponseCode("96");
+//            error.setMessage("Internal error: unable to retrieve wallet balance");
+//
+//            AppUser fallback = new AppUser();
+//            fallback.setEncryptionKey("dummy-key-for-encryption");
+//
+//            return ResponseEntity.ok(aesService.encrypt(gson.toJson(error), fallback));
+//        }
+//    }
+
+        @GetMapping(value = ApiPath.INTERNAL_CHECK_BALANCE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> internalCheckWalletBalance(@RequestParam String phoneNumber) {
+        log.info("📡 Internal call to check wallet balance for phone: {}", phoneNumber);
+
+        try {
+            WalletBalanceResponse response = walletService.checkBalancePlain(phoneNumber);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("❌ Error in internal wallet balance check for {}: {}", phoneNumber, e.getMessage(), e);
+
+            WalletBalanceResponse error = new WalletBalanceResponse();
+            error.setResponseCode("96");
+            error.setMessage("Unable to retrieve wallet balance");
+
+            return ResponseEntity.ok(error);
+        }
+    }
 
 //    @GetMapping(value = ApiPath.TRANSACTION_HISTORY, produces = MediaType.APPLICATION_JSON_VALUE)
 //    public ResponseEntity<?> processTransactionHistoryRequest(
@@ -341,29 +418,29 @@ public ResponseEntity<?> processTransactionHistoryRequest(
 
 
 
-    @PostMapping(value = "/withdraw", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> withdrawFunds(@RequestBody String payload, HttpServletRequest httpRequest, @RequestHeader("idToken") String idToken) {
-        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.WITHDRAW_FUNDS.getValue(), payload, httpRequest, idToken
-        );
-
-        if (request.isError) {
-            OmniResponsePayload error = gson.fromJson(request.payload, OmniResponsePayload.class);
-            return ResponseEntity.ok(SecureResponseUtil.error(error.getResponseCode(), error.getResponseMessage(), "400"));
-        }
-
-        WithdrawFundsRequestPayload withdrawPayload = gson.fromJson(request.payload, WithdrawFundsRequestPayload.class);
-
-        String encryptedResponse = walletService.withdrawFunds(
-                withdrawPayload,
-                String.valueOf(request.appUser.getId()),
-                request.appUser.getEmail(),
-                idToken,
-                request.appUser
-        );
-
-        return ResponseEntity.ok(encryptedResponse);
-    }
+//    @PostMapping(value = "/withdraw", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<?> withdrawFunds(@RequestBody String payload, HttpServletRequest httpRequest, @RequestHeader("idToken") String idToken) {
+//        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+//                Role.WITHDRAW_FUNDS.getValue(), payload, httpRequest, idToken
+//        );
+//
+//        if (request.isError) {
+//            OmniResponsePayload error = gson.fromJson(request.payload, OmniResponsePayload.class);
+//            return ResponseEntity.ok(SecureResponseUtil.error(error.getResponseCode(), error.getResponseMessage(), "400"));
+//        }
+//
+//        WithdrawFundsRequestPayload withdrawPayload = gson.fromJson(request.payload, WithdrawFundsRequestPayload.class);
+//
+//        String encryptedResponse = walletService.withdrawFunds(
+//                withdrawPayload,
+//                String.valueOf(request.appUser.getId()),
+//                request.appUser.getEmail(),
+//                idToken,
+//                request.appUser
+//        );
+//
+//        return ResponseEntity.ok(encryptedResponse);
+//    }
 
 
     @PostMapping(value = ApiPath.FREEZE_WALLET, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: trustfort-payment
+    name: trustfort-accounting
   cloud:
     config:
       uri: http://trustfort-config:8888
@@ -23,4 +23,7 @@ email:
 jwt:
   issuer: trustfort
   secret: QmFzZTY0LWVuY29kZWQtc2VjcmV0LWtleQ==
+
+
+
 

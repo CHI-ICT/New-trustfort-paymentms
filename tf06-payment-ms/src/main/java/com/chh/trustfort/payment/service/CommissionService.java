@@ -106,7 +106,7 @@ public class CommissionService {
         walletRepository.updateUser(wallet);
 
         // ✅ Step 4: Log Ledger Entry
-        LedgerEntry ledger = new LedgerEntry();
+        WalletLedgerEntry ledger = new WalletLedgerEntry();
         ledger.setWalletId(wallet.getWalletId());
         ledger.setTransactionType(TransactionType.DEBIT);
         ledger.setAmount(payload.getAmount());

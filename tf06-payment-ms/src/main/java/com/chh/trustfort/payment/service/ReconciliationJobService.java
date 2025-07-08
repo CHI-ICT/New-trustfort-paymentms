@@ -1,10 +1,9 @@
 package com.chh.trustfort.payment.service;
 
 import com.chh.trustfort.payment.enums.TransactionStatus;
-import com.chh.trustfort.payment.model.LedgerEntry;
+import com.chh.trustfort.payment.model.WalletLedgerEntry;
 import com.chh.trustfort.payment.repository.LedgerEntryRepository;
 import com.chh.trustfort.payment.repository.SettlementAccountRepository;
-import com.chh.trustfort.payment.service.FCMBIntegrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,10 +29,10 @@ public class ReconciliationJobService {
         log.info("🔁 Starting reconciliation job for failed FCMB transfers...");
 
         // 1. Find failed withdrawal ledger entries
-        List<LedgerEntry> failedTransfers = ledgerEntryRepository.findByStatusAndDescription(
+        List<WalletLedgerEntry> failedTransfers = ledgerEntryRepository.findByStatusAndDescription(
                 TransactionStatus.FAILED, "Wallet Withdrawal - Pending Settlement");
 
-        for (LedgerEntry entry : failedTransfers) {
+        for (WalletLedgerEntry entry : failedTransfers) {
             log.info("🔄 Retrying transfer for wallet ID: {}, amount: {}", entry.getWalletId(), entry.getAmount());
 
             boolean success = fcmbIntegrationService.transferFunds("FCMB-SETTLEMENT-001", entry.getAmount());

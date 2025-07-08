@@ -1,11 +1,11 @@
 package com.chh.trustfort.accounting.service.serviceImpl;
 
 import com.chh.trustfort.accounting.dto.ReconciliationResultDTO;
+import com.chh.trustfort.accounting.model.AccountingLedgerEntry;
 import com.chh.trustfort.accounting.model.AppUser;
 import com.chh.trustfort.accounting.model.BankStatementRecord;
-import com.chh.trustfort.accounting.model.LedgerEntry;
 import com.chh.trustfort.accounting.repository.BankStatementRepository;
-import com.chh.trustfort.accounting.repository.LedgerEntryRepository;
+import com.chh.trustfort.accounting.repository.AccountingLedgerEntryRepository;
 import com.chh.trustfort.accounting.security.AesService;
 import com.chh.trustfort.accounting.service.BankReconciliationService;
 import com.google.gson.Gson;
@@ -27,9 +27,9 @@ public class BankReconciliationServiceImpl implements BankReconciliationService 
 
     private final BankStatementRepository bankStatementRepository;
 
-    @Qualifier("accountingLedgerEntryRepository")
-    @Autowired
-    private final LedgerEntryRepository ledgerEntryRepository;
+//    @Qualifier("accountingLedgerEntryRepository")
+//    @Autowired
+    private final AccountingLedgerEntryRepository accountingLedgerEntryRepository;
 
     private final AesService aesService;
     private final Gson gson;
@@ -39,12 +39,12 @@ public class BankReconciliationServiceImpl implements BankReconciliationService 
         log.info("🔍 Starting reconciliation from {} to {} by {}", startDate, endDate, user.getEmail());
 
         List<BankStatementRecord> bankRecords = bankStatementRepository.findByTransactionDateBetween(startDate, endDate);
-        List<LedgerEntry> ledgerEntries = ledgerEntryRepository.findByTransactionDateBetween(startDate, endDate);
+        List<AccountingLedgerEntry> ledgerEntries = accountingLedgerEntryRepository.findByTransactionDateBetween(startDate, endDate);
 
         List<ReconciliationResultDTO> results = new ArrayList<>();
 
         for (BankStatementRecord bankRecord : bankRecords) {
-            Optional<LedgerEntry> match = ledgerEntries.stream()
+            Optional<AccountingLedgerEntry> match = ledgerEntries.stream()
                     .filter(entry -> entry.getAmount().compareTo(bankRecord.getAmount()) == 0 &&
                             entry.getTransactionDate().equals(bankRecord.getTransactionDate()))
                     .findFirst();

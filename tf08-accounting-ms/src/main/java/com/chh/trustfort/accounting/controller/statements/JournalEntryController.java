@@ -31,6 +31,23 @@ public class JournalEntryController {
     private final AesService aesService;
     private final Gson gson;
 
+
+
+    @PostMapping(value = ApiPath.INTERNAL_POST_JOURNAL, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> postJournalEntryInternal(@RequestBody JournalEntryRequest dto) {
+        log.info("📥 Received internal journal entry post from Feign client: {}", dto.getReference());
+
+        // 🧪 Call with null user (so plain JSON is returned as String)
+        String responseJson = journalEntryService.createdJournalEntry(dto, null);
+
+        // ✅ Parse the string back to an object before returning
+        Object parsedJson = new Gson().fromJson(responseJson, Object.class);
+
+        return ResponseEntity.ok(parsedJson);
+    }
+
+
+
     @PostMapping(value = ApiPath.JOURNAL_ENTRY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> postJournalEntry(
             @RequestParam String idToken,
@@ -50,6 +67,7 @@ public class JournalEntryController {
         String encryptedResponse = journalEntryService.createJournalEntry(dto, request.appUser);
         return ResponseEntity.ok(encryptedResponse);
     }
+
 
     @PostMapping(value = ApiPath.DOUBLE_ENTRY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> postDoubleEntry(

@@ -1,16 +1,23 @@
 package com.chh.trustfort.accounting.service;
 
+import com.chh.trustfort.accounting.component.ResponseCode;
 import com.chh.trustfort.accounting.exception.ApiException;
+import com.chh.trustfort.accounting.model.AppUser;
 import com.chh.trustfort.accounting.model.EntityCode;
 import com.chh.trustfort.accounting.payload.EntityCodeRequest;
+import com.chh.trustfort.accounting.payload.OmniResponsePayload;
 import com.chh.trustfort.accounting.repository.EntityCodeRepository;
+import com.chh.trustfort.accounting.security.AesService;
+import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -19,14 +26,31 @@ import java.util.Optional;
 public class EntityCodeService {
 
     private final EntityCodeRepository repository;
+    private final AesService aesService;
+    private final MessageSource messageSource;
+    private final Gson gson;
 
-    public EntityCode create(EntityCodeRequest req) {
+    public String create(EntityCodeRequest req, AppUser appUser) {
+        OmniResponsePayload response = new OmniResponsePayload();
+        response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
+        response.setResponseMessage(messageSource.getMessage("failed", null, Locale.ENGLISH));
+
+        if (req == null || req.getCode() == null || req.getSubsidiary() == null) {
+            log.warn("❌ Request or required fields are null");
+            response.setResponseMessage("Invalid request data.");
+            return aesService.encrypt(gson.toJson(response), appUser);
+        }
+
         if (repository.findBySubsidiary(req.getSubsidiary()).isPresent()) {
-            throw new ApiException("Subsidiary already exists", HttpStatus.CONFLICT);
+            log.warn("⚠️ Subsidiary already exists: {}", req.getSubsidiary());
+            response.setResponseMessage("Subsidiary already exists.");
+            return aesService.encrypt(gson.toJson(response), appUser);
         }
 
         if (repository.findByCode(req.getCode()).isPresent()) {
-            throw new ApiException("Code already exists", HttpStatus.CONFLICT);
+            log.warn("⚠️ Code already exists: {}", req.getCode());
+            response.setResponseMessage("Code already exists.");
+            return aesService.encrypt(gson.toJson(response), appUser);
         }
 
         EntityCode entity = EntityCode.builder()
@@ -34,7 +58,14 @@ public class EntityCodeService {
                 .code(req.getCode())
                 .build();
 
-        return repository.save(entity);
+        EntityCode saved = repository.save(entity);
+        log.info("✅ Entity code created successfully: {}", saved.getId());
+
+        response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+        response.setResponseMessage("Entity code created successfully");
+        response.setData(saved);
+
+        return aesService.encrypt(gson.toJson(response), appUser);
     }
 
     public List<EntityCode> getAll() {

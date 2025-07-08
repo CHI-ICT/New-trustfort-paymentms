@@ -14,6 +14,7 @@ import com.chh.trustfort.payment.payload.TokenData;
 import com.chh.trustfort.payment.repository.AppUserRepository;
 import com.chh.trustfort.payment.repository.PaymentReferenceRepository;
 import com.chh.trustfort.payment.security.AesService;
+import com.chh.trustfort.payment.service.ServiceImpl.FlutterwavePaymentService;
 import com.chh.trustfort.payment.service.ServiceImpl.FlutterwavePaymentServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -42,8 +43,8 @@ public class FlutterwavePaymentController {
     private final AesService aesService;
     private final PaymentReferenceRepository paymentReferenceRepository;
     private final Gson gson;
-    private final FlutterwavePaymentServiceImpl flutterwavePaymentService;
-    private final FlutterwavePaymentServiceImpl flutterwavePaymentServiceImpl;
+    private final FlutterwavePaymentService flutterwavePaymentService;
+    private final FlutterwavePaymentService flutterwavePaymentServiceImpl;
 
 
     @PostMapping(value = ApiPath.ENCRYPT_PAYLOAD, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
