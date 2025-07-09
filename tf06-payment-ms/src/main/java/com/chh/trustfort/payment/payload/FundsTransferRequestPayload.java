@@ -5,9 +5,9 @@ import java.math.BigDecimal;
 
 @Data
 public class FundsTransferRequestPayload {
-    private String senderWalletId;
-    private String receiverWalletId;
+    private String senderUserId;
+    private String receiverUserId;
     private BigDecimal amount;
     private String narration;
-    private String transactionPin;
+//    private String transactionPin;
 }

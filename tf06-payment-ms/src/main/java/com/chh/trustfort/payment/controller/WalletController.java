@@ -129,8 +129,8 @@ public class WalletController {
             HttpServletRequest httpRequest) {
 
         String idToken = authorizationHeader.replace("Bearer ", "").trim();
-        log.info("🔐 ID TOKEN: {}", idToken);
-        log.info("📥 RAW PAYLOAD (Base64): {}", requestPayload);
+//        log.info("🔐 ID TOKEN: {}", idToken);
+//        log.info("📥 RAW PAYLOAD (Base64): {}", requestPayload);
 
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
                 Role.CREATE_WALLET.getValue(), requestPayload, httpRequest, idToken
@@ -147,7 +147,7 @@ public class WalletController {
             );
         }
 
-        log.info("📥 Decrypted Payload: {}", request.payload);
+//        log.info("📥 Decrypted Payload: {}", request.payload);
         CreateWalletRequestPayload decryptedPayload = gson.fromJson(request.payload, CreateWalletRequestPayload.class);
         String result = walletService.createWallet(decryptedPayload, request.appUser);
 
@@ -161,8 +161,8 @@ public class WalletController {
             HttpServletRequest httpRequest
     ) {
         String idToken = authorizationHeader.replace("Bearer ", "").trim();
-        log.info("🔐 ID TOKEN: {}", idToken);
-        log.info("📥 RAW PAYLOAD (Base64): {}", requestPayload);
+//        log.info("🔐 ID TOKEN: {}", idToken);
+//        log.info("📥 RAW PAYLOAD (Base64): {}", requestPayload);
 
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
                 Role.RECONCILE_BANK_TRANSFER.getValue(), requestPayload, httpRequest, idToken
@@ -178,7 +178,7 @@ public class WalletController {
             );
         }
 
-        log.info("📥 Decrypted Payload: {}", request.payload);
+//        log.info("📥 Decrypted Payload: {}", request.payload);
         BankTransferReconciliationRequest dto = gson.fromJson(request.payload, BankTransferReconciliationRequest.class);
 
         Optional<PendingBankTransfer> optional = pendingBankTransferRepository
@@ -307,19 +307,34 @@ public class WalletController {
 
 
     @PostMapping(value = ApiPath.TRANSFER_FUNDS, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> transferFunds(@RequestBody String payload, HttpServletRequest httpRequest, @RequestHeader("idToken") String idToken) {
+    public ResponseEntity<?> transferFunds(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
+    ) {
+        String idToken = authorizationHeader.replace("Bearer ", "").trim();
+//        log.info("🔐 ID TOKEN: {}", idToken);
+//        log.info("📥 RAW PAYLOAD (Base64): {}", requestPayload);
 
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.TRANSFER_FUNDS.getValue(), payload, httpRequest, idToken
+                Role.TRANSFER_FUNDS.getValue(), requestPayload, httpRequest, idToken
         );
 
-        if (request.isError) {
-            OmniResponsePayload errorResponse = gson.fromJson(request.payload, OmniResponsePayload.class);
-            return new ResponseEntity<>(SecureResponseUtil.error(
-                    errorResponse.getResponseCode(), errorResponse.getResponseMessage(), String.valueOf(HttpStatus.BAD_REQUEST)
-            ), HttpStatus.OK);
+        // Set IP address for traceability
+        if (request.appUser != null) {
+            request.appUser.setIpAddress(httpRequest.getRemoteAddr());
         }
 
+        if (request.isError) {
+            String decryptedError = aesService.decrypt(request.payload, request.appUser);
+            OmniResponsePayload error = gson.fromJson(decryptedError, OmniResponsePayload.class);
+            return new ResponseEntity<>(
+                    SecureResponseUtil.error(error.getResponseCode(), error.getResponseMessage(), String.valueOf(HttpStatus.BAD_REQUEST)),
+                    HttpStatus.OK
+            );
+        }
+
+        log.info("📥 Decrypted Payload: {}", request.payload);
         FundsTransferRequestPayload transferPayload = gson.fromJson(request.payload, FundsTransferRequestPayload.class);
 
         String encryptedResponse = walletService.transferFunds(
@@ -331,6 +346,7 @@ public class WalletController {
 
         return ResponseEntity.ok(encryptedResponse);
     }
+
 
     @GetMapping(value = ApiPath.CHECK_BALANCE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> checkWalletBalanceByPhoneNumber(

@@ -81,7 +81,7 @@ public class PaystackPaymentServiceImpl implements PaystackPaymentService {
         payload.put("email", email);
         payload.put("amount", request.getAmount().multiply(BigDecimal.valueOf(100)).intValue()); // in kobo
         payload.put("reference", txRef);
-        payload.put("callback_url", "https://webhook.site/9c0dd086-b3a5-46b6-9df7-b43da5d8415b/your-paystack-redirect"); // update if needed
+        payload.put("callback_url", "https://webhook.site/02155d03-f601-4321-a978-8b85daa0b043/your-paystack-redirect"); // update if needed
         payload.put("metadata", Map.of("userId", phone));
 
         HttpHeaders headers = new HttpHeaders();

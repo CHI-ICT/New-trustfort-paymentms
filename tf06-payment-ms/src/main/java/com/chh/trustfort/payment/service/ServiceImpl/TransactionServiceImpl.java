@@ -46,7 +46,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         // 3. Update balance via WalletService
         UpdateWalletBalancePayload payload = new UpdateWalletBalancePayload();
-        payload.setWalletId(requestDto.getWalletId());
+        payload.setUserId(requestDto.getWalletId());
         payload.setAmount(requestDto.getAmount().doubleValue());
 
         String updateResultJson = walletService.updateWalletBalance(payload, idToken, appUser);

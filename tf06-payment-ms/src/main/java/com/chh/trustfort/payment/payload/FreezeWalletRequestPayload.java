@@ -8,6 +8,6 @@ import lombok.Data;
  */
 @Data
 public class FreezeWalletRequestPayload {
-    private String walletId;
+    private String userId;
     private String reason;
 }

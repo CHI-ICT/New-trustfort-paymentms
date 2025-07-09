@@ -52,7 +52,7 @@ public class ReconciliationRetryService {
 
                     // Prepare required inputs for wallet balance update
                     UpdateWalletBalancePayload payload = new UpdateWalletBalancePayload();
-                    payload.setWalletId(entry.getWalletId());
+                    payload.setUserId(entry.getWalletId());
                     payload.setAmount(amount.doubleValue());
 
                     AppUser mockAppUser = new AppUser();

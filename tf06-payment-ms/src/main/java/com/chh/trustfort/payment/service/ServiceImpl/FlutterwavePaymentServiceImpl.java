@@ -86,7 +86,7 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
         payload.put("amount", request.getAmount());
         payload.put("currency", request.getCurrency());
 //        payload.put("redirect_url", "https://www.flutterwave.com");
-        payload.put("redirect_url", "https://webhook.site/9c0dd086-b3a5-46b6-9df7-b43da5d8415b/trustfort/api/v1/flutterwave-redirect");
+        payload.put("redirect_url", "https://webhook.site/02155d03-f601-4321-a978-8b85daa0b043/trustfort/api/v1/flutterwave-redirect");
         payload.put("payment_options", "card");
 
         Map<String, String> customer = new HashMap<>();

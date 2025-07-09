@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class UpdateWalletBalancePayload {
-    private String walletId;
+    private String userId;
     private double amount;
 }

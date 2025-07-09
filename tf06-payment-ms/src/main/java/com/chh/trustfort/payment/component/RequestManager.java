@@ -83,7 +83,7 @@ public class RequestManager {
         }
 
         boolean userHasRole = jwtToken.userHasRole(token, role,appUser.getEncryptionKey());
-        log.info("🔍 Required role: {}", role);
+//        log.info("🔍 Required role: {}", role);
         if (!userHasRole) {
             String message = "You do not have the required permissions to perform this action.";
             oResponse.setResponseCode(ResponseCode.NO_ROLE.getResponseCode());

@@ -6,6 +6,6 @@ import java.math.BigDecimal;
 
 @Data
 public class PaymentReferenceRequestPayload {
-    private String walletId;
+    private String userId;
     private BigDecimal amount;
 }
