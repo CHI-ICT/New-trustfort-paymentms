@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public class FundWalletRequestPayload {
     private BigDecimal amount;
     private String currency;
-    private String walletId;
+    private String userId;
     private PaymentMethod paymentMethod;
 
 

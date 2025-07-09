@@ -53,7 +53,7 @@ public enum Role {
     MOCK_TRANSFER_STATUS("M_T_S"),
     INITIATE_FLW_PAYMENT("I_F_P"),
     GET_ALL_WALLETS_BY_USER_ID("W_B_U"),
-    FLUTTERWAVE_WEBHOOK("F_W");
+    FLUTTERWAVE_WEBHOOK("F_W"), RECONCILE_BANK_TRANSFER("R_BT");
 
 
     private final String role;

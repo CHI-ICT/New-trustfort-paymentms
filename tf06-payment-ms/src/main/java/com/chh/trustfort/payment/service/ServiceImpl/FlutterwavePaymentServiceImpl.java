@@ -51,9 +51,6 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
     private final PaymentFailureLogRepository failureLogRepository;
     private final WalletRepository walletRepository;
     private final WebhookLogRepository webhookLogRepository;
-//    @Value("${accounting.service.url}")
-//    private String accountingServiceUrl;
-
     private final com.chh.trustfort.payment.service.AccountingClient accountingClient;
 
 
@@ -66,10 +63,15 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
         log.info("🔁 Generated Flutterwave Transaction Reference: {}", txRef);
 
         // 📦 Step 2: Fetch wallet and extract userId (which is the phone number)
-        Wallet wallet = walletRepository.findByWalletId(request.getWalletId())
-                .orElseThrow(() -> new RuntimeException("❌ Wallet not found for walletId: " + request.getWalletId()));
+//        Wallet wallet = walletRepository.findByWalletId(request.getWalletId())
+//                .orElseThrow(() -> new RuntimeException("❌ Wallet not found for walletId: " + request.getWalletId()));
 
-        String phone = wallet.getUserId(); // This is the actual phone number
+        Wallet wallet = walletRepository.findByUserId(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("❌ Wallet not found for userId: " + request.getUserId()));
+
+        String phone = request.getUserId();
+
+//        String phone = wallet.getUserId(); // This is the actual phone number
         if (phone == null || phone.trim().isEmpty()) {
             throw new RuntimeException("❌ Cannot initiate payment: Phone number (userId) is missing in Wallet.");
         }
@@ -160,7 +162,7 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
         return aesService.encrypt(gson.toJson(responseMap), appUser);
     }
 
-public boolean verifyFlutterwavePayment(String txRef, String transactionId) {
+    public boolean verifyFlutterwavePayment(String txRef, String transactionId) {
     try {
         log.info("🔍 Verifying Flutterwave Redirect: txRef={}, transactionId={}", txRef, transactionId);
 
@@ -205,7 +207,11 @@ public boolean verifyFlutterwavePayment(String txRef, String transactionId) {
         }
 
         // 🔁 Step 3: Credit wallet
-        Wallet wallet = reference.getUser().getWallets().get(0); // Assuming user has at least one wallet
+        Wallet wallet = reference.getUser().getWallet();
+        if (wallet == null) {
+            log.error("❌ No wallet found for user ID: {}", reference.getUser().getId());
+            return false;
+        }
         boolean credited = walletService.creditWalletByPhone(wallet.getUserId(), paidAmount, txRef, "Redirect-based verification");
 
         if (!credited) {

@@ -58,6 +58,7 @@ public class WalletServiceImpl implements WalletService {
     private final AesService aesService;
     private final PinService pinService;
     private final UsersRepository usersRepository;
+    private final PendingBankTransferRepository pendingBankTransferRepository;
     private final AccountingClient accountingClient;
     private final NotificationService notificationService;
     private final MessageSource messageSource;
@@ -79,7 +80,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public List<WalletDTO> getWalletsByUserId(String userId) {
         log.info("🔎 Querying wallets for userId: {}", userId);
-        List<Wallet> wallets = walletRepository.findByUserId(userId);
+        Optional<Wallet> wallets = walletRepository.findByUserId(userId);
 
         return wallets.stream()
                 .map(w -> WalletDTO.builder()
@@ -102,8 +103,8 @@ public class WalletServiceImpl implements WalletService {
 
         try {
             log.info("🔍 Attempting to fetch wallets for userId (phoneNumber): {}", phoneNumber);
-            List<Wallet> wallets = walletRepository.findByUserId(phoneNumber); // ✅ Already using phoneNumber
-            log.info("📦 Wallets fetched from DB: {}", wallets.size()); // ✅ Safe logging
+            Optional<Wallet> wallets = walletRepository.findByUserId(phoneNumber); // ✅ Already using phoneNumber
+//            log.info("📦 Wallets fetched from DB: {}", wallets.size()); // ✅ Safe logging
             if (wallets.isEmpty()) {
                 log.warn("⚠️ No wallets found for phoneNumber: {}", phoneNumber);
                 return aesService.encrypt(gson.toJson(response), appUser);
@@ -144,14 +145,14 @@ public class WalletServiceImpl implements WalletService {
         response.setMessage("No wallet found for the provided phone number");
 
         try {
-            List<Wallet> wallets = walletRepository.findByUserId(phoneNumber);
+            Optional<Wallet> wallets = walletRepository.findByUserId(phoneNumber);
 
             if (wallets.isEmpty()) {
                 log.warn("❌ No wallet found for phoneNumber: {}", phoneNumber);
                 return aesService.encrypt(gson.toJson(response), appUser);
             }
 
-            Wallet wallet = wallets.get(0); // 👈 First wallet only
+            Wallet wallet = wallets.get(); // 👈 First wallet only
             if (wallet.getStatus() == WalletStatus.SUSPENDED) {
                 response.setMessage("Wallet is frozen and cannot be accessed");
                 return aesService.encrypt(gson.toJson(response), appUser);
@@ -190,7 +191,8 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String narration) {
+    public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String narration)
+    {
         try {
             log.info("🔍 Verifying wallet for phone number: {}", phoneNumber);
 
@@ -388,7 +390,8 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
     @Override
     @Transactional
-    public String transferFunds(FundsTransferRequestPayload payload, String idToken, AppUser appUser, AppUser ecred) {
+    public String transferFunds(FundsTransferRequestPayload payload, String idToken, AppUser appUser, AppUser ecred)
+    {
         // ✅ Fetch sender wallet
         Wallet senderWallet = walletRepository.findByWalletId(payload.getSenderWalletId())
                 .orElseThrow(() -> new WalletException("Sender wallet not found: " + payload.getSenderWalletId()));
@@ -522,17 +525,39 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
 
     public String initiateBankTransferFunding(FundWalletRequestPayload payload, AppUser appUser) {
-        String virtualAcctInfo = "Bank: Zenith\nAccount Number: 0101010101\nAccount Name: TRUSTFORT WALLET\nReference: " + System.currentTimeMillis();
+        String reference = "BTF-" + System.currentTimeMillis(); // Bank Transfer Funding Ref
 
+        // 🔐 Save pending record for later reconciliation
+        PendingBankTransfer pending = PendingBankTransfer.builder()
+                .userId(payload.getUserId())
+                .reference(reference)
+                .userId(appUser.getPhoneNumber())
+                .amount(payload.getAmount())
+                .currency(payload.getCurrency())
+                .status("PENDING")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        pendingBankTransferRepository.save(pending);
+
+        // 📋 Send back bank transfer details
         Map<String, Object> response = new HashMap<>();
         response.put("status", "pending");
+        response.put("reference", reference);
         response.put("message", "Kindly transfer to the bank details below and include the reference.");
-        response.put("bankDetails", virtualAcctInfo);
+        response.put("bankDetails", Map.of(
+                "bankName", "Access Bank",
+                "accountNumber", "0724401480",
+                "accountName", "Ajayi Oloruntobi For Trustfort",
+                "reference", reference,
+                "amount", payload.getAmount()
+        ));
 
         return aesService.encrypt(gson.toJson(response), appUser);
     }
 
-//    @Override
+
+    //    @Override
 //    @Transactional
 //    public String fundWalletInternally(FundWalletRequestPayload payload, String userId, String emailAddress) {
 //        log.info("🔄 Funding wallet for user ID: {}", userId);
@@ -604,26 +629,26 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 //        return aesService.encrypt(gson.toJson(response), new AppUser());
 //        // Return encrypted response for external use
 //    }
-    @Override
-    public String fetchAllWallets(String userId, AppUser user) {
-        List<Wallet> wallets = walletRepository.findByUserId(userId);
-
-        if (wallets.isEmpty()) {
-            ErrorResponse errorResponse = new ErrorResponse(
-                    "No wallets found for user ID: " + userId,
-                    ResponseCode.FAILED_TRANSACTION.getResponseCode()
-            );
-            return aesService.encrypt(gson.toJson(errorResponse), user);
-        }
-
-        WalletResponse walletResponse = new WalletResponse(
-                ResponseCode.SUCCESS.getResponseCode(),
-                "Wallets retrieved successfully",
-                (Wallet) wallets
-        );
-
-        return aesService.encrypt(gson.toJson(walletResponse), user);
-    }
+//    @Override
+//    public String fetchAllWallets(String userId, AppUser user) {
+//        Optional<Wallet> wallets = walletRepository.findByUserId(userId);
+//
+//        if (wallets.isEmpty()) {
+//            ErrorResponse errorResponse = new ErrorResponse(
+//                    "No wallets found for user ID: " + userId,
+//                    ResponseCode.FAILED_TRANSACTION.getResponseCode()
+//            );
+//            return aesService.encrypt(gson.toJson(errorResponse), user);
+//        }
+//
+//        WalletResponse walletResponse = new WalletRespons
+//                ResponseCode.SUCCESS.getResponseCode(),
+//                "Wallets retrieved successfully",
+//                (Wallet) wallets
+//        );
+//
+//        return aesService.encrypt(gson.toJson(walletResponse), user);
+//    }
 
 //    @Override
 //    @Transactional
@@ -766,8 +791,8 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         log.info("🔄 Funding wallet for user ID: {}", appUser.getPhoneNumber());
 
         // 🔍 Step 1: Fetch wallet and validate
-        Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
-                .orElseThrow(() -> new WalletException("❌ Wallet not found for ID: " + payload.getWalletId()));
+        Wallet wallet = walletRepository.findByWalletId(payload.getUserId())
+                .orElseThrow(() -> new WalletException("❌ Wallet not found for ID: " + payload.getUserId()));
 
         if (wallet.getStatus() == WalletStatus.SUSPENDED || wallet.getStatus() == WalletStatus.CLOSED) {
             return aesService.encrypt(gson.toJson(new ErrorResponse("Wallet is not active", ResponseCode.FAILED_TRANSACTION.getResponseCode())), appUser);

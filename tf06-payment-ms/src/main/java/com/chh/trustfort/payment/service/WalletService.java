@@ -29,7 +29,7 @@ public interface WalletService {
 
 //String fundWalletInternally(FundWalletRequestPayload payload, String userId, String emailAddress);
     public String fundWalletInternally(FundWalletRequestPayload payload, AppUser appUser);
-String fetchAllWallets(String userId, AppUser user);
+//String fetchAllWallets(String userId, AppUser user);
 
 public String transferFunds(FundsTransferRequestPayload payload, String idToken, AppUser appUser, AppUser ecred);
 

@@ -39,7 +39,7 @@ public class Wallet implements Serializable {
 //    private AppUser users;
 
     // ✅ Correctly map to Users table with foreign key 'users_id'
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "users_id", nullable = false)
     private Users users;
 

@@ -2,22 +2,33 @@ package com.chh.trustfort.payment.controller;
 
 import com.chh.trustfort.payment.Quintuple;
 import com.chh.trustfort.payment.Responses.ErrorResponse;
+import com.chh.trustfort.payment.Responses.SuccessResponse;
 import com.chh.trustfort.payment.Responses.WalletBalanceResponse;
 import com.chh.trustfort.payment.Util.SecureResponseUtil;
 import com.chh.trustfort.payment.component.RequestManager;
 import com.chh.trustfort.payment.constant.ApiPath;
+import com.chh.trustfort.payment.dto.BankTransferReconciliationRequest;
+import com.chh.trustfort.payment.dto.JournalEntryRequest;
 import com.chh.trustfort.payment.dto.LedgerEntryDTO;
 import com.chh.trustfort.payment.enums.Role;
+import com.chh.trustfort.payment.enums.TransactionStatus;
+import com.chh.trustfort.payment.enums.TransactionType;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
+import com.chh.trustfort.payment.model.PendingBankTransfer;
 import com.chh.trustfort.payment.model.Wallet;
+import com.chh.trustfort.payment.model.WalletLedgerEntry;
 import com.chh.trustfort.payment.payload.*;
 import com.chh.trustfort.payment.repository.AppUserRepository;
+import com.chh.trustfort.payment.repository.LedgerEntryRepository;
+import com.chh.trustfort.payment.repository.PendingBankTransferRepository;
 import com.chh.trustfort.payment.repository.WalletRepository;
 import com.chh.trustfort.payment.security.AesService;
+import com.chh.trustfort.payment.service.NotificationService;
 import com.chh.trustfort.payment.service.WalletService;
 import com.google.gson.Gson;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
@@ -49,8 +60,11 @@ public class WalletController {
     private final Gson gson;
     private final WalletService walletService;
     private final WalletRepository walletRepository;
-    private final AppUserRepository appUserRepository;
+    private final LedgerEntryRepository ledgerEntryRepository;
+    private final PendingBankTransferRepository pendingBankTransferRepository;
     private final AesService aesService;
+    private final com.chh.trustfort.payment.service.AccountingClient accountingClient;
+    private NotificationService notificationService;
 
 
 
@@ -140,6 +154,105 @@ public class WalletController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+    @PostMapping(value = ApiPath.RECONCILE_BANK_TRANSFER, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> reconcileBankTransfer(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody String requestPayload,
+            HttpServletRequest httpRequest
+    ) {
+        String idToken = authorizationHeader.replace("Bearer ", "").trim();
+        log.info("🔐 ID TOKEN: {}", idToken);
+        log.info("📥 RAW PAYLOAD (Base64): {}", requestPayload);
+
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.RECONCILE_BANK_TRANSFER.getValue(), requestPayload, httpRequest, idToken
+        );
+        request.appUser.setIpAddress(httpRequest.getRemoteAddr());
+
+        if (request.isError) {
+            String decryptedError = aesService.decrypt(request.payload, request.appUser);
+            OmniResponsePayload response = gson.fromJson(decryptedError, OmniResponsePayload.class);
+            return new ResponseEntity<>(
+                    SecureResponseUtil.error(response.getResponseCode(), response.getResponseMessage(), String.valueOf(HttpStatus.BAD_REQUEST)),
+                    HttpStatus.OK
+            );
+        }
+
+        log.info("📥 Decrypted Payload: {}", request.payload);
+        BankTransferReconciliationRequest dto = gson.fromJson(request.payload, BankTransferReconciliationRequest.class);
+
+        Optional<PendingBankTransfer> optional = pendingBankTransferRepository
+                .findByReferenceAndStatus(dto.getReference(), "PENDING");
+
+        if (optional.isEmpty()) {
+            return new ResponseEntity<>(
+                    aesService.encrypt(gson.toJson(new ErrorResponse("❌ Reference not found or already processed", "91")), request.appUser),
+                    HttpStatus.OK
+            );
+        }
+
+        PendingBankTransfer pending = optional.get();
+        Wallet wallet = walletRepository.findByWalletId(pending.getWalletId())
+                .orElseThrow(() -> new WalletException("❌ Wallet not found for ID: " + pending.getWalletId()));
+
+        // 💳 Credit wallet
+        wallet.setBalance(wallet.getBalance().add(pending.getAmount()));
+        walletRepository.updateUser(wallet);
+
+        // 🧾 Ledger entry
+        WalletLedgerEntry ledgerEntry = WalletLedgerEntry.builder()
+                .walletId(wallet.getWalletId())
+                .transactionType(TransactionType.CREDIT)
+                .amount(pending.getAmount())
+                .status(TransactionStatus.COMPLETED)
+                .description("Bank Transfer Wallet Funding")
+                .reference(pending.getReference())
+                .build();
+        ledgerEntryRepository.save(ledgerEntry);
+
+        String accountCode = wallet.getAccountCode() != null ? wallet.getAccountCode() : "WALLET-FUNDING";
+
+        // 📒 Journal Entry to accounting
+        JournalEntryRequest journal = new JournalEntryRequest();
+        journal.setWalletId(wallet.getWalletId());
+        journal.setAccountCode(accountCode);
+        journal.setAmount(pending.getAmount());
+        journal.setTransactionType("CREDIT");
+        journal.setReference(pending.getReference());
+        journal.setDescription("Bank Transfer Wallet Funding");
+        journal.setTransactionDate(LocalDateTime.now());
+        journal.setBusinessUnit("TRUSTFORT");
+        journal.setDepartment("WALLET");
+
+        try {
+            String responses = accountingClient.postJournalEntryInternal(journal);  // ✅ Uses internal endpoint
+            log.info("📘 Journal entry posted successfully for txRef {}: {}", responses);
+        } catch (Exception je) {
+            log.error("❌ Failed to post journal entry via Feign for txRef {}: {}", je.getMessage(), je);
+        }
+
+
+//        // ✉️ Notify user
+//        notificationService.sendEmail(
+//                wallet.getEmail(),
+//                "Wallet Funded via Bank Transfer",
+//                "Your wallet was credited with ₦" + pending.getAmount()
+//        );
+
+        // ✅ Mark transfer as completed
+        pending.setStatus("COMPLETED");
+        pending.setCompletedAt(LocalDateTime.now());
+        pendingBankTransferRepository.save(pending);
+
+        SuccessResponse success = new SuccessResponse();
+        success.setResponseCode("00");
+        success.setResponseMessage("✅ Wallet funded successfully via bank transfer");
+        success.setNewBalance(wallet.getBalance());
+
+        return new ResponseEntity<>(aesService.encrypt(gson.toJson(success), request.appUser), HttpStatus.OK);
+    }
+
+
     @PostMapping(value = ApiPath.FUND_WALLET, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> fundWallet(
             @RequestParam String idToken,
@@ -172,25 +285,25 @@ public class WalletController {
     }
 
 
-    @GetMapping(value = ApiPath.FETCH_ALL_WALLETS, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> fetchAllWallets(HttpServletRequest httpRequest) {
-
-        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.FETCH_WALLET.getValue(),
-                "", // No payload needed
-                httpRequest,
-                ApiPath.ID_TOKEN
-        );
-
-        if (request.isError) {
-            return new ResponseEntity<>(request.payload, HttpStatus.OK);
-        }
-
-        AppUser user = request.appUser;
-
-        String encryptedResponse = walletService.fetchAllWallets(String.valueOf(user.getId()), user);
-        return new ResponseEntity<>(encryptedResponse, HttpStatus.OK);
-    }
+//    @GetMapping(value = ApiPath.FETCH_ALL_WALLETS, produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<Object> fetchAllWallets(HttpServletRequest httpRequest) {
+//
+//        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+//                Role.FETCH_WALLET.getValue(),
+//                "", // No payload needed
+//                httpRequest,
+//                ApiPath.ID_TOKEN
+//        );
+//
+//        if (request.isError) {
+//            return new ResponseEntity<>(request.payload, HttpStatus.OK);
+//        }
+//
+//        AppUser user = request.appUser;
+//
+//        String encryptedResponse = walletService.fetchAllWallets(String.valueOf(user.getId()), user);
+//        return new ResponseEntity<>(encryptedResponse, HttpStatus.OK);
+//    }
 
 
     @PostMapping(value = ApiPath.TRANSFER_FUNDS, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

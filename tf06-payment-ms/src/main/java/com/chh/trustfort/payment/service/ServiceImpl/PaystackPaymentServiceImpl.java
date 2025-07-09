@@ -27,6 +27,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,7 @@ public class PaystackPaymentServiceImpl implements PaystackPaymentService {
         log.info("🔁 Generated Paystack Transaction Reference: {}", txRef);
 
         // 🔍 Get wallet and user
-        Wallet wallet = walletRepository.findByWalletId(request.getWalletId())
+        Wallet wallet = walletRepository.findByUserId(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
 
         Users user = wallet.getUsers();
@@ -174,7 +175,7 @@ public class PaystackPaymentServiceImpl implements PaystackPaymentService {
             }
 
             // ✅ Credit Wallet
-            List<Wallet> wallets = user.getWallets();
+            List<Wallet> wallets = Collections.singletonList(user.getWallet());
             if (wallets == null || wallets.isEmpty()) {
                 log.error("❌ No wallet found for user in txRef: {}", txRef);
                 return false;

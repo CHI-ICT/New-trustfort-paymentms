@@ -80,7 +80,7 @@ public class PaystackWebhookServiceImpl implements PaystackWebhookService {
             }
 
             // 💰 Credit wallet
-            Wallet wallet = reference.getUser().getWallets().get(0);
+            Wallet wallet = reference.getUser().getWallet();
             boolean credited = walletService.creditWalletByPhone(wallet.getUserId(), paidAmount, txRef, "Webhook - Paystack");
 
             if (!credited) {

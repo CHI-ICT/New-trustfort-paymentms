@@ -105,5 +105,6 @@ public class ApiPath {
     public static final String INITIATE_PAYSTACK_PAYMENT = "/paystack/initiate";
     public static final String VERIFY_PAYSTACK_PAYMENT = "/paystack/verify";
     public static final String REVERIFY_PAYSTACK = "/paystack/reverify";
+    public static final String RECONCILE_BANK_TRANSFER ="reconcile-bank-transfer";
 
 }

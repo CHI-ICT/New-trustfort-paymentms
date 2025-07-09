@@ -38,7 +38,10 @@ public class Users implements Serializable {
     @Column(name = "phone_number")
     public String phoneNumber;
 
-    // ✅ Add this to map the one-to-many relationship
-    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Wallet> wallets = new ArrayList<>();
+//    // ✅ Add this to map the one-to-many relationship
+//    @OneToOne(mappedBy = "users", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<Wallet> wallets = new ArrayList<>();
+@OneToOne(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+private Wallet wallet;
+
 }

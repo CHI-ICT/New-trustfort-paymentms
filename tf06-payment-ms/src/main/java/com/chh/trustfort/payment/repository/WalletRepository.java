@@ -63,17 +63,34 @@ public class WalletRepository {
         }
     }
 
-    public List<Wallet> findByUserId(String userId) {
-        try {
-            return em.createQuery(
-                            "SELECT w FROM Wallet w WHERE w.userId = :userId", Wallet.class)
-                    .setParameter("userId", userId)
-                    .getResultList();
-        } catch (Exception e) {
-            log.error("❌ Failed to retrieve wallets for userId: {}", userId, e);
-            return Collections.emptyList();
-        }
+//    public List<Wallet> findByUserId(String userId) {
+//        try {
+//            return em.createQuery(
+//                            "SELECT w FROM Wallet w WHERE w.userId = :userId", Wallet.class)
+//                    .setParameter("userId", userId)
+//                    .getResultList();
+//        } catch (Exception e) {
+//            log.error("❌ Failed to retrieve wallets for userId: {}", userId, e);
+//            return Collections.emptyList();
+//        }
+//    }
+public Optional<Wallet> findByUserId(String userId) {
+    try {
+        Wallet wallet = em.createQuery(
+                        "SELECT w FROM Wallet w WHERE w.userId = :userId", Wallet.class)
+                .setParameter("userId", userId)
+                .setMaxResults(1)
+                .getSingleResult();
+
+        return Optional.of(wallet);
+    } catch (NoResultException e) {
+        return Optional.empty();
+    } catch (Exception e) {
+        log.error("❌ Error retrieving wallet by userId: {}", userId, e);
+        return Optional.empty();
     }
+}
+
 
     public Optional<String> findWalletIdByUserId(String userId) {
         try {
