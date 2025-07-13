@@ -8,7 +8,6 @@ import com.chh.trustfort.accounting.model.AppUser;
 import com.google.gson.Gson;
 import org.springframework.core.io.Resource; // ✅ Correct
 
-import com.chh.trustfort.accounting.Responses.EncryptResponse;
 import com.chh.trustfort.accounting.Responses.ReportViewerResponse;
 import com.chh.trustfort.accounting.Utility.ReportDownloadUtil;
 
@@ -16,7 +15,6 @@ import com.chh.trustfort.accounting.constant.ApiPath;
 import com.chh.trustfort.accounting.dto.*;
 import com.chh.trustfort.accounting.security.AesService;
 import com.chh.trustfort.accounting.service.*;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,12 +29,10 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping(ApiPath.BASE_API)
 @RequiredArgsConstructor
-@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Trial Balance", description = "Endpoints for generating trial balance reports")
 @Slf4j
-public class TrialBalanceController {
+public class ReportController {
 
     private final TrialBalanceService trialBalanceService;
     private final FinancialSummaryService financialSummaryService;
@@ -50,24 +46,24 @@ public class TrialBalanceController {
     private final AesService aesService;
     private final Gson gson;
 
-    @PostMapping(value = ApiPath.GET_TRIAL_BALANCE, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> getTrialBalance(
-            @RequestParam String idToken,
-            @RequestBody String requestPayload,
-            HttpServletRequest httpRequest
-    ) {
-        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.TRIAL_BALANCE_VIEW.getValue(), requestPayload, httpRequest, idToken
-        );
-
-        if (request.isError) {
-            return ResponseEntity.badRequest().body(aesService.encrypt(request.payload, request.appUser));
-        }
-
-        TaxDateRangeDTO filter = gson.fromJson(request.payload, TaxDateRangeDTO.class);
-        List<TrialBalanceResponse> response = trialBalanceService.generateTrialBalance(filter.getStartDate(), filter.getEndDate());
-        return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Trial balance generated", response), request.appUser));
-    }
+//    @PostMapping(value = ApiPath.GET_TRIAL_BALANCE, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<String> getTrialBalance(
+//            @RequestParam String idToken,
+//            @RequestBody String requestPayload,
+//            HttpServletRequest httpRequest
+//    ) {
+//        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+//                Role.TRIAL_BALANCE_VIEW.getValue(), requestPayload, httpRequest, idToken
+//        );
+//
+//        if (request.isError) {
+//            return ResponseEntity.badRequest().body(aesService.encrypt(request.payload, request.appUser));
+//        }
+//
+//        TaxDateRangeDTO filter = gson.fromJson(request.payload, TaxDateRangeDTO.class);
+//        List<TrialBalanceResponse> response = trialBalanceService.generateTrialBalance(filter.getStartDate(), filter.getEndDate());
+//        return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Trial balance generated", response), request.appUser));
+//    }
 
     @PostMapping(value = ApiPath.GET_FINANCIAL_SUMMARY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getSummary(
@@ -166,39 +162,41 @@ public class TrialBalanceController {
         return ResponseEntity.ok(aesService.encrypt(SecureResponseUtil.success("Monitoring report", trends), request.appUser));
     }
 
-    @PostMapping(value = ApiPath.DOWNLOAD_REPORT, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = ApiPath.DOWNLOAD_REPORT, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> downloadReport(
-            @RequestParam String idToken,
-            @RequestBody String requestPayload,
+            @RequestHeader(value = "idToken", required = false) String idToken,
+            @RequestHeader("reportType") String reportType,
+            @RequestHeader("format") String format,
+            @RequestHeader("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestHeader("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             HttpServletRequest httpRequest
     ) {
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.DOWNLOAD_REPORT.getValue(), requestPayload, httpRequest, idToken
+                Role.DOWNLOAD_REPORT.getValue(), null, httpRequest, idToken
         );
 
         if (request.isError) {
             return ResponseEntity.badRequest().build();
         }
 
-        DownloadReportRequestDTO dto = gson.fromJson(request.payload, DownloadReportRequestDTO.class);
         StatementFilterDTO filter = new StatementFilterDTO();
-        filter.setStartDate(dto.getStartDate());
-        filter.setEndDate(dto.getEndDate());
+        filter.setStartDate(startDate);
+        filter.setEndDate(endDate);
 
-        List<ReportViewerResponse> reportData = reportViewerService.getReportData(dto.getReportType(), filter);
+        List<ReportViewerResponse> reportData = reportViewerService.getReportData(reportType, filter);
         if (reportData == null || reportData.isEmpty()) {
             throw new RuntimeException("No data available for export");
         }
 
-        String reportTitle = dto.getReportType().toUpperCase().replace("_", " ") + " Report";
+        String reportTitle = reportType.toUpperCase().replace("_", " ") + " Report";
         String fileExtension;
         String contentType;
         Resource exportedFile;
-        ReportDownloadUtil.ExportFormat exportFormat = ReportDownloadUtil.ExportFormat.valueOf(dto.getFormat().toUpperCase());
+        ReportDownloadUtil.ExportFormat exportFormat = ReportDownloadUtil.ExportFormat.valueOf(format.toUpperCase());
 
         switch (exportFormat) {
             case PDF:
-                exportedFile = ReportDownloadUtil.exportAsPdf(reportData, reportTitle, dto.getStartDate(), dto.getEndDate());
+                exportedFile = ReportDownloadUtil.exportAsPdf(reportData, reportTitle, startDate, endDate);
                 contentType = "application/pdf";
                 fileExtension = ".pdf";
                 break;
@@ -213,14 +211,17 @@ public class TrialBalanceController {
                 fileExtension = ".csv";
                 break;
             default:
-                throw new IllegalArgumentException("Unsupported format: " + dto.getFormat());
+                throw new IllegalArgumentException("Unsupported format: " + format);
         }
 
-        String filename = dto.getReportType().toLowerCase() + "_report" + fileExtension;
+        String filename = reportType.toLowerCase() + "_report" + fileExtension;
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(exportedFile);
     }
+
 }
+
+

@@ -56,4 +56,8 @@ public class JournalEntry {
 
     private String reference;
 
+    public ChartOfAccount getAccount() {
+        return account;
+    }
+
 }

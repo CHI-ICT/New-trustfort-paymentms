@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 public class WalletBalanceResponse {
     private String responseCode;
     private String message;
-    private String walletId;
+    private String userId;
     private BigDecimal balance;
     private BigDecimal ledgerBalance;
 

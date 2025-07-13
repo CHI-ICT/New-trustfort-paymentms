@@ -24,7 +24,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 /**
  *
@@ -39,8 +44,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private Gson gson;
 
+//    @Bean
+//    public CorsFilter corsFilter() {
+//        CorsConfiguration config = new CorsConfiguration();
+//        config.setAllowCredentials(true);
+//        config.addAllowedOrigin("*");
+//        config.addAllowedHeader("*");
+//        config.addAllowedMethod("*");
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", config);
+//        return new CorsFilter(source);
+//    }
+
+
     @Override
-    protected void doFilterInternal(HttpServletRequest httpRequest, HttpServletResponse httpResponse, FilterChain chain) throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest httpRequest, HttpServletResponse httpResponse, FilterChain chain)
+            throws IOException, ServletException {
+
+//        // ✅ Skip JWT filter for Swagger and public paths
+//        String path = httpRequest.getRequestURI();
+//        if (path.contains("/swagger-ui") || path.contains("/v3/api-docs") ||
+//                path.contains("/paymentService/swagger-ui") || path.contains("/paymentService/v3/api-docs") ||
+//                path.contains("/accountingService/swagger-ui") || path.contains("/accountingService/v3/api-docs")) {
+//            chain.doFilter(httpRequest, httpResponse);
+//            return;
+//    }
+
+
+
         String authorization = httpRequest.getHeader(HEADER_STRING);
         String username = null;
         String authToken = null;
@@ -89,3 +121,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
 }
+

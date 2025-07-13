@@ -22,7 +22,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/api/v1/accountingService/internal/**","trustfort/api/v1/accountingService/internal/**").permitAll()
+                .antMatchers("/api/v1/accountingService/internal/**",
+                        "trustfort/api/v1/accountingService/internal/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/swagger-resources/**",
+                        "/webjars/**"
+                ).permitAll()
                 .anyRequest().permitAll(); // 🚨 Allows all requests without authentication
     }
 }

@@ -24,5 +24,14 @@ trust:
 eureka:
     client:
         registerWithEureka: true
-        fetchRegistry: true     
+        fetchRegistry: true
+
+springdoc:
+    swagger-ui:
+        urls:
+            - name: PaymentService
+              url: /trustfort/api/v1/paymentService/v3/api-docs
+            - name: AccountingService
+              url: /trustfort/api/v1/accountingService/v3/api-docs
+
         

@@ -8,6 +8,6 @@ import lombok.Data;
  */
 @Data
 public class UnlockFundsRequestPayload {
-    private String walletId;
+    private String userId;
     private String reason;
 }

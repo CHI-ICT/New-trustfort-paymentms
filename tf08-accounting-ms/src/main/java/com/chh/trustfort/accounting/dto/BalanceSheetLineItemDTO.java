@@ -13,5 +13,11 @@ public class BalanceSheetLineItemDTO {
     private String section;
     private String accountName;
     private BigDecimal amount;
+//    private String groupCode;
+//    private String groupName;
+//    private String accountCode;
+//    private String accountName;
+//    private BigDecimal amount;
+
 }
 

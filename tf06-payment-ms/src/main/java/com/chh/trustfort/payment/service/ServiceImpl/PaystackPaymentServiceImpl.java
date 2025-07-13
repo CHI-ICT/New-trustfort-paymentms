@@ -2,6 +2,7 @@ package com.chh.trustfort.payment.service.ServiceImpl;
 
 import com.chh.trustfort.payment.dto.JournalEntryRequest;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
+import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.model.*;
 import com.chh.trustfort.payment.payload.FundWalletRequestPayload;
 import com.chh.trustfort.payment.repository.PaymentFailureLogRepository;
@@ -69,6 +70,11 @@ public class PaystackPaymentServiceImpl implements PaystackPaymentService {
         // 🔍 Get wallet and user
         Wallet wallet = walletRepository.findByUserId(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
+        // 🔐 Step 2.1: Wallet status check
+        if (wallet.getStatus() != WalletStatus.ACTIVE) {
+            log.warn("❌ Wallet is not active. walletId={}, status={}", wallet.getWalletId(), wallet.getStatus());
+            throw new RuntimeException("❌ Cannot initiate payment: Wallet is currently " + wallet.getStatus().name().toLowerCase());
+        }
 
         Users user = wallet.getUsers();
         if (user == null) throw new RuntimeException("Wallet is not linked to a user");

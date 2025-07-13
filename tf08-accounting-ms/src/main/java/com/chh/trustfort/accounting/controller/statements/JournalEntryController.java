@@ -69,14 +69,15 @@ public class JournalEntryController {
     }
 
 
-    @PostMapping(value = ApiPath.DOUBLE_ENTRY, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = ApiPath.DOUBLE_ENTRY, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> postDoubleEntry(
-            @RequestParam String idToken,
+            @RequestParam(required = false) String idToken,  // ✅ optional now
             @RequestBody String requestPayload,
             HttpServletRequest httpRequest
     ) {
+        // Let the RequestManager handle token extraction from header if idToken is null
         Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
-                Role.JOURNAL_ENTRY.getValue(), requestPayload, httpRequest, idToken
+                Role.DOWNLOAD_REPORT.getValue(), requestPayload, httpRequest, idToken
         );
 
         if (request.isError) {
@@ -88,4 +89,5 @@ public class JournalEntryController {
         String encryptedResponse = journalEntryService.recordDoubleEntry(dto, request.appUser);
         return ResponseEntity.ok(encryptedResponse);
     }
+
 }

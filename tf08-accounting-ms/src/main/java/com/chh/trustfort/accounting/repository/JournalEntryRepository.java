@@ -17,9 +17,15 @@ import java.util.List;
 
 public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long>, JournalEntryRepositoryCustom{
 
-    @Query("SELECT COALESCE(SUM(j.amount), 0) FROM JournalEntry j " +
-           "WHERE j.account.classification = :classification " +
-           "AND j.transactionDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT COALESCE(SUM( " +
+            "CASE " +
+            " WHEN j.transactionType = 'DEBIT' AND j.account.normalBalance = 'DEBIT' THEN j.amount " +
+            " WHEN j.transactionType = 'CREDIT' AND j.account.normalBalance = 'CREDIT' THEN j.amount " +
+            " ELSE -j.amount " +
+            "END), 0) " +
+            "FROM JournalEntry j " +
+            "WHERE j.account.classification = :classification " +
+            "AND j.transactionDate BETWEEN :startDate AND :endDate")
     BigDecimal sumAmountByClassificationAndDateRange(@Param("classification") AccountClassification classification,
                                                      @Param("startDate") LocalDate startDate,
                                                      @Param("endDate") LocalDate endDate);
@@ -35,13 +41,17 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
 //            "AND j.transactionDate <= :asOfDate")
 //    BigDecimal sumByClassification(@Param("classification") AccountClassification classification,
 //                                   @Param("asOfDate") LocalDateTime asOfDate); // ✅ Now matches your call
-@Query("SELECT COALESCE(SUM(j.amount), 0) FROM JournalEntry j " +
+@Query("SELECT COALESCE(SUM( " +
+        "CASE " +
+        " WHEN j.transactionType = 'DEBIT' AND j.account.normalBalance = 'DEBIT' THEN j.amount " +
+        " WHEN j.transactionType = 'CREDIT' AND j.account.normalBalance = 'CREDIT' THEN j.amount " +
+        " ELSE -j.amount " +
+        "END), 0) " +
+        "FROM JournalEntry j " +
         "WHERE j.account.classification = :classification " +
         "AND j.transactionDate <= :asOfDate")
 BigDecimal sumByClassification(@Param("classification") AccountClassification classification,
                                @Param("asOfDate") LocalDate asOfDate);
-
-
 
 
     @Query("SELECT j FROM JournalEntry j WHERE j.account.classification = :classification " +
@@ -101,6 +111,16 @@ List<JournalEntry> findByClassificationAndDate(@Param("classification") AccountC
             LocalDate startDate,
             LocalDate endDate
     );
+
+
+
+    @Query("SELECT COALESCE(SUM(CASE WHEN j.transactionType = a.normalBalance THEN j.amount ELSE -j.amount END), 0) " +
+            "FROM JournalEntry j JOIN j.account a " +
+            "WHERE a.classification = :classification AND j.transactionDate <= :asOfDate")
+    BigDecimal computeNetByClassification(@Param("classification") AccountClassification classification,
+                                          @Param("asOfDate") LocalDate asOfDate);
+
+
 
 
 

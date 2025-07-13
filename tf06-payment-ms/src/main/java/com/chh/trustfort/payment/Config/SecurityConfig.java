@@ -28,7 +28,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api/v1/paymentService/webhook/flutterwave",
                         "/trustfort/api/v1/paymentService/flutterwave-redirect",
-                        "/trustfort/api/v1/paymentService/wallet/internal/check-balance").permitAll()
+                        "/trustfort/api/v1/paymentService/wallet/internal/check-balance",
+                        "/v3/api-docs/**",           // Swagger/OpenAPI JSON
+                        "/swagger-ui/**",           // Swagger UI assets
+                        "/swagger-ui.html",         // Swagger UI HTML
+                        "/swagger-resources/**",    // Swagger internal
+                        "/webjars/**"
+                ).permitAll()
                 .anyRequest().permitAll(); // 🚨 Allows all requests without authentication
     }
 

@@ -165,7 +165,7 @@ public class WalletServiceImpl implements WalletService {
 
             response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
             response.setMessage("Wallet balance retrieved successfully");
-            response.setWalletId(wallet.getWalletId());
+            response.setUserId(wallet.getUserId());
             response.setBalance(wallet.getBalance());
 
             return aesService.encrypt(gson.toJson(response), appUser);
@@ -184,7 +184,7 @@ public class WalletServiceImpl implements WalletService {
         WalletBalanceResponse response = new WalletBalanceResponse();
         response.setResponseCode("00");
         response.setMessage("Success");
-        response.setWalletId(wallet.getWalletId()); // ✅ Add this line
+        response.setUserId(wallet.getUserId()); // ✅ Add this line
         response.setBalance(wallet.getBalance());
         response.setLedgerBalance(wallet.getLedgerBalance());
         return response;
@@ -323,7 +323,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     public WalletBalanceResponse getWalletBalance(String walletId, String userId) {
-        log.info("Fetching balance for Wallet ID: {}", walletId);
+        log.info("Fetching balance for Wallet ID: {}", userId);
 
         WalletBalanceResponse response = new WalletBalanceResponse();
         response.setResponseCode(ResponseCode.FAILED_TRANSACTION.getResponseCode());
@@ -331,13 +331,13 @@ public class WalletServiceImpl implements WalletService {
         Wallet wallet = getWalletOrThrow(walletId);
 
         if (wallet.getStatus() == WalletStatus.SUSPENDED) {
-            log.warn("Wallet is frozen: {}", walletId);
+            log.warn("Wallet is frozen: {}", userId);
             response.setMessage("Wallet is frozen and cannot be accessed");
             return response;
         }
 
         if (!wallet.getUserId().equals(userId)) {
-            log.warn("Unauthorized access to wallet: {}", walletId);
+            log.warn("Unauthorized access to wallet: {}", userId);
             response.setMessage("Unauthorized access to this wallet");
             return response;
         }
@@ -349,7 +349,7 @@ public class WalletServiceImpl implements WalletService {
 
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
         response.setMessage("Balance retrieved successfully");
-        response.setWalletId(walletId);
+        response.setUserId(userId);
         response.setBalance(wallet.getBalance());
 
         return response;
@@ -416,9 +416,32 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
             log.info("✅ Authorized user={} owns wallet={}", user.getPhoneNumber(), senderWallet.getWalletId());
 
+            // 🔐 Check if sender wallet is active
+            if (senderWallet.getStatus() != WalletStatus.ACTIVE) {
+                log.warn("❌ Sender wallet is not active. walletId={}, status={}", senderWallet.getWalletId(), senderWallet.getStatus());
+
+                return aesService.encrypt(gson.toJson(
+                        new ErrorResponse("Sender wallet is currently " + senderWallet.getStatus().name().toLowerCase(),
+                                ResponseCode.FAILED_TRANSACTION.getResponseCode())
+                ), ecred);
+            }
+
+            log.info("✅ Authorized user={} owns wallet={}", user.getPhoneNumber(), senderWallet.getWalletId());
+
             // ✅ Fetch receiver wallet
             Wallet receiverWallet = walletRepository.findByUserId(payload.getReceiverUserId())
                     .orElseThrow(() -> new WalletException("❌ Receiver wallet not found: " + payload.getReceiverUserId()));
+
+            // 🔐 Check if receiver wallet is active
+            if (receiverWallet.getStatus() != WalletStatus.ACTIVE) {
+                log.warn("❌ Receiver wallet is not active. walletId={}, status={}", receiverWallet.getWalletId(), receiverWallet.getStatus());
+
+                return aesService.encrypt(gson.toJson(
+                        new ErrorResponse("Receiver wallet is currently " + receiverWallet.getStatus().name().toLowerCase(),
+                                ResponseCode.FAILED_TRANSACTION.getResponseCode())
+                ), ecred);
+            }
+
 
             // ✅ Check balance
             BigDecimal transferAmount = payload.getAmount();
@@ -977,11 +1000,13 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
     @Override
     @Transactional
     public String lockFunds(LockFundsRequestPayload payload, String idToken, AppUser appUser) {
-        Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
-                .orElseThrow(() -> new WalletException("Wallet not found: " + payload.getWalletId()));
+        Wallet wallet = walletRepository.findByUserId(payload.getUserId())
+                .orElseThrow(() -> new WalletException("Wallet not found: " + payload.getUserId()));
 
-        if (!wallet.getUserId().equals(appUser.getId())) {
-            return gson.toJson(new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
+        // 🔐 Step 2.1: Wallet status check
+        if (wallet.getStatus() != WalletStatus.ACTIVE) {
+            log.warn("❌ Wallet is not active. walletId={}, status={}", wallet.getUserId(), wallet.getStatus());
+            throw new RuntimeException("❌ Cannot initiate payment: Wallet is currently " + wallet.getStatus().name().toLowerCase());
         }
 
         if (wallet.getStatus() == WalletStatus.LOCKED) {
@@ -992,11 +1017,11 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         wallet.setUpdatedAt(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
         walletRepository.updateUser(wallet);
 
-        notificationService.sendEmail(
-                appUser.getEmail(),
-                "🔒 Wallet Locked",
-                "Your wallet with ID " + payload.getWalletId() + " has been locked. Contact support if this was not initiated by you."
-        );
+//        notificationService.sendEmail(
+//                appUser.getEmail(),
+//                "🔒 Wallet Locked",
+//                "Your wallet with ID " + payload.getUserId() + " has been locked. Contact support if this was not initiated by you."
+//        );
 
         SuccessResponse response = new SuccessResponse();
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
@@ -1009,26 +1034,26 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
     @Override
     @Transactional
     public String unlockFunds(UnlockFundsRequestPayload payload, String idToken, AppUser appUser) {
-        Wallet wallet = walletRepository.findByWalletId(payload.getWalletId())
-                .orElseThrow(() -> new WalletException("Wallet not found: " + payload.getWalletId()));
+        Wallet wallet = walletRepository.findByUserId(payload.getUserId())
+                .orElseThrow(() -> new WalletException("Wallet not found: " + payload.getUserId()));
 
-        if (!wallet.getUserId().equals(appUser.getId())) {
-            return gson.toJson(new ErrorResponse("Unauthorized access", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
-        }
-
+        // ✅ Only allow unlocking if status is LOCKED
         if (wallet.getStatus() != WalletStatus.LOCKED) {
+            log.warn("⚠️ Wallet is not locked. walletId={}, status={}", wallet.getUserId(), wallet.getStatus());
             return gson.toJson(new ErrorResponse("Wallet is not locked", ResponseCode.FAILED_TRANSACTION.getResponseCode()));
         }
 
+        // 🔓 Unlock the wallet
         wallet.setStatus(WalletStatus.ACTIVE);
         wallet.setUpdatedAt(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
         walletRepository.updateUser(wallet);
 
-        notificationService.sendEmail(
-                appUser.getEmail(),
-                "🔓 Wallet Unlocked",
-                "Your wallet with ID " + payload.getWalletId() + " has been unlocked and is now active."
-        );
+        // ✅ Optional: send notification
+//    notificationService.sendEmail(
+//        appUser.getEmail(),
+//        "🔓 Wallet Unlocked",
+//        "Your wallet with ID " + payload.getUserId() + " has been unlocked and is now active."
+//    );
 
         SuccessResponse response = new SuccessResponse();
         response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
@@ -1037,6 +1062,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
         return gson.toJson(response);
     }
+
 
     @Override
     @Transactional

@@ -1,5 +1,6 @@
 package com.chh.trustfort.accounting.repository;
 
+import com.chh.trustfort.accounting.enums.AccountClassification;
 import com.chh.trustfort.accounting.enums.ExpenseType;
 import com.chh.trustfort.accounting.model.ChartOfAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,4 +22,5 @@ public interface ChartOfAccountAccountRepository extends JpaRepository<ChartOfAc
     List<ChartOfAccount> findCashOrBankAccounts(@Param("keyword") String keyword);
 
     List<ChartOfAccount> findAllByExpenseType(ExpenseType expenseType);
+    List<ChartOfAccount> findByClassificationIn(List<AccountClassification> classifications);
 }

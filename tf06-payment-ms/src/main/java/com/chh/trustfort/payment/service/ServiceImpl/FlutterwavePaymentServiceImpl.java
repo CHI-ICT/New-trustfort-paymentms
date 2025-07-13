@@ -3,6 +3,7 @@ package com.chh.trustfort.payment.service.ServiceImpl;
 import com.chh.trustfort.payment.dto.JournalEntryRequest;
 import com.chh.trustfort.payment.dto.VerifyFlutterwaveRequest;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
+import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.model.*;
 import com.chh.trustfort.payment.payload.FundWalletRequestPayload;
 import com.chh.trustfort.payment.payload.OmniResponsePayload;
@@ -68,6 +69,12 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
 
         Wallet wallet = walletRepository.findByUserId(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("❌ Wallet not found for userId: " + request.getUserId()));
+
+        // 🔐 Step 2.1: Wallet status check
+        if (wallet.getStatus() != WalletStatus.ACTIVE) {
+            log.warn("❌ Wallet is not active. walletId={}, status={}", wallet.getWalletId(), wallet.getStatus());
+            throw new RuntimeException("❌ Cannot initiate payment: Wallet is currently " + wallet.getStatus().name().toLowerCase());
+        }
 
         String phone = request.getUserId();
 
@@ -219,6 +226,8 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
             return false;
         }
         String accountCode = wallet.getAccountCode() != null ? wallet.getAccountCode() : "WALLET-FUNDING";
+        //get from chart of account instead
+        //
 
         // 🔁 Step 4: Post Journal Entry
         JournalEntryRequest journal = new JournalEntryRequest();
