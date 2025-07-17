@@ -1,6 +1,5 @@
 package com.chh.trustfort.payment.service.ServiceImpl;
 
-import com.chh.trustfort.payment.dto.JournalEntryRequest;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
 import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.model.*;
@@ -11,6 +10,8 @@ import com.chh.trustfort.payment.repository.WalletRepository;
 import com.chh.trustfort.payment.repository.WebhookLogRepository;
 import com.chh.trustfort.payment.security.AesService;
 import com.chh.trustfort.payment.service.AccountingClient;
+import com.chh.trustfort.payment.service.FlutterJournalPostingService;
+import com.chh.trustfort.payment.service.PaystackJournalPostingService;
 import com.chh.trustfort.payment.service.WalletService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -52,6 +53,7 @@ public class PaystackPaymentServiceImpl implements PaystackPaymentService {
     private final AesService aesService;
     private final WalletRepository walletRepository;
     private final PaymentReferenceRepository paymentReferenceRepository;
+    private final PaystackJournalPostingService paystackJournalPostingService;
     private WalletService walletService;
 
     @Autowired
@@ -87,7 +89,7 @@ public class PaystackPaymentServiceImpl implements PaystackPaymentService {
         payload.put("email", email);
         payload.put("amount", request.getAmount().multiply(BigDecimal.valueOf(100)).intValue()); // in kobo
         payload.put("reference", txRef);
-        payload.put("callback_url", "https://webhook.site/02155d03-f601-4321-a978-8b85daa0b043/your-paystack-redirect"); // update if needed
+        payload.put("callback_url", "https://webhook.site/56eed0ea-5d33-4733-8366-a9f8074e9e46/your-paystack-redirect"); // update if needed
         payload.put("metadata", Map.of("userId", phone));
 
         HttpHeaders headers = new HttpHeaders();
@@ -196,22 +198,8 @@ public class PaystackPaymentServiceImpl implements PaystackPaymentService {
             }
 
             // ✅ Journal Entry
-            JournalEntryRequest journal = new JournalEntryRequest();
-            journal.setAccountCode(wallet.getAccountCode() != null ? wallet.getAccountCode() : "WALLET-FUNDING");
-            journal.setWalletId(wallet.getWalletId());
-            journal.setTransactionType("CREDIT");
-            journal.setAmount(paidAmount);
-            journal.setReference(txRef);
-            journal.setDescription("Paystack Wallet Funding");
-            journal.setDepartment("WALLET");
-            journal.setBusinessUnit("TRUSTFORT");
-            journal.setTransactionDate(LocalDateTime.now());
+            paystackJournalPostingService.postDoubleEntry(paidAmount, txRef, wallet, "Wallet Credit via Paystack Redirect");
 
-            try {
-                accountingClient.postJournalEntryInternal(journal);
-            } catch (Exception ex) {
-                log.error("❌ Failed to post journal for txRef {}: {}", txRef, ex.getMessage(), ex);
-            }
 
             // ✅ Update reference
             reference.setStatus(ReferenceStatus.VERIFIED);

@@ -140,18 +140,27 @@ public class FlutterwavePaymentController {
         );
 
         if (request.isError || request.appUser == null) {
-            OmniResponsePayload response = gson.fromJson(request.payload, OmniResponsePayload.class);
-            return ResponseEntity.ok(SecureResponseUtil.error(
-                    response.getResponseCode(), response.getResponseMessage(), String.valueOf(HttpStatus.UNAUTHORIZED.value()))
-            );
+            OmniResponsePayload errorResponse = new OmniResponsePayload();
+            errorResponse.setResponseCode("06");
+            errorResponse.setResponseMessage("Unauthorized or invalid session.");
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(errorResponse), null));
         }
 
         // Step 2: Call verification service
         boolean verified = flutterwavePaymentService.verifyFlutterwavePayment(txRef, transactionId);
 
-        // Step 3: Return encrypted result
-        String result = verified ? "Payment verified and wallet credited" : "Verification failed or already verified";
-        return ResponseEntity.ok(aesService.encrypt(result, request.appUser));
+        // Step 3: Build structured response
+        OmniResponsePayload response = new OmniResponsePayload();
+        if (verified) {
+            response.setResponseCode("00");
+            response.setResponseMessage("✅ Payment verified and wallet credited");
+        } else {
+            response.setResponseCode("06");
+            response.setResponseMessage("❌ Verification failed or already verified");
+        }
+
+        // Step 4: Encrypt and return
+        return ResponseEntity.ok(aesService.encrypt(gson.toJson(response), request.appUser));
     }
 
 

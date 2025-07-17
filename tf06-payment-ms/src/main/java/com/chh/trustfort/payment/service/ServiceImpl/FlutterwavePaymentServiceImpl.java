@@ -1,15 +1,12 @@
 package com.chh.trustfort.payment.service.ServiceImpl;
 
-import com.chh.trustfort.payment.dto.JournalEntryRequest;
-import com.chh.trustfort.payment.dto.VerifyFlutterwaveRequest;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
 import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.model.*;
 import com.chh.trustfort.payment.payload.FundWalletRequestPayload;
-import com.chh.trustfort.payment.payload.OmniResponsePayload;
 import com.chh.trustfort.payment.repository.*;
 import com.chh.trustfort.payment.security.AesService;
-import com.chh.trustfort.payment.service.AccountingClient;
+import com.chh.trustfort.payment.service.FlutterJournalPostingService;
 import com.chh.trustfort.payment.service.WalletService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +49,7 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
     private final PaymentFailureLogRepository failureLogRepository;
     private final WalletRepository walletRepository;
     private final WebhookLogRepository webhookLogRepository;
+    private final FlutterJournalPostingService flutterJournalPostingService;
     private final com.chh.trustfort.payment.service.AccountingClient accountingClient;
 
 
@@ -64,9 +62,6 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
         log.info("🔁 Generated Flutterwave Transaction Reference: {}", txRef);
 
         // 📦 Step 2: Fetch wallet and extract userId (which is the phone number)
-//        Wallet wallet = walletRepository.findByWalletId(request.getWalletId())
-//                .orElseThrow(() -> new RuntimeException("❌ Wallet not found for walletId: " + request.getWalletId()));
-
         Wallet wallet = walletRepository.findByUserId(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("❌ Wallet not found for userId: " + request.getUserId()));
 
@@ -93,7 +88,7 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
         payload.put("amount", request.getAmount());
         payload.put("currency", request.getCurrency());
 //        payload.put("redirect_url", "https://www.flutterwave.com");
-        payload.put("redirect_url", "https://webhook.site/02155d03-f601-4321-a978-8b85daa0b043/trustfort/api/v1/flutterwave-redirect");
+        payload.put("redirect_url", "https://webhook.site/56eed0ea-5d33-4733-8366-a9f8074e9e46/trustfort/api/v1/flutterwave-redirect");
         payload.put("payment_options", "card");
 
         Map<String, String> customer = new HashMap<>();
@@ -225,42 +220,21 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
             log.error("❌ Wallet not credited. Aborting journal entry for txRef: {}", txRef);
             return false;
         }
-        String accountCode = wallet.getAccountCode() != null ? wallet.getAccountCode() : "WALLET-FUNDING";
-        //get from chart of account instead
-        //
+        // ✅ Step 5: Double-entry journal
+        flutterJournalPostingService.postDoubleEntry(paidAmount, txRef, wallet, "Wallet Credit via Flutterwave Redirect");
 
-        // 🔁 Step 4: Post Journal Entry
-        JournalEntryRequest journal = new JournalEntryRequest();
-        journal.setAccountCode(accountCode);
-        journal.setWalletId(wallet.getWalletId());
-        journal.setTransactionType("CREDIT");
-        journal.setAmount(paidAmount);
-        journal.setDescription("Flutterwave Funding via Redirect");
-        journal.setReference(txRef);
-        journal.setDepartment("WALLET");
-        journal.setBusinessUnit("TRUSTFORT");
-        journal.setTransactionDate(LocalDateTime.now());
-
-        try {
-            String responses = accountingClient.postJournalEntryInternal(journal);  // ✅ Uses internal endpoint
-            log.info("📘 Journal entry posted successfully for txRef {}: {}", txRef, responses);
-        } catch (Exception je) {
-            log.error("❌ Failed to post journal entry via Feign for txRef {}: {}", txRef, je.getMessage(), je);
-        }
-
-
-        // 🔁 Step 4: Mark reference as verified
+        // ✅ Step 6: Mark reference as VERIFIED
         reference.setStatus(ReferenceStatus.VERIFIED);
         reference.setVerifiedAt(LocalDateTime.now());
         reference.setFlutterwaveTxId(transactionId);
         paymentReferenceRepository.save(reference);
 
         return true;
+
     } catch (Exception e) {
         log.error("❌ Redirect verification failed", e);
         return false;
     }
-
 }
 
     public boolean reverifyAndCredit(PaymentReference reference) {
@@ -361,6 +335,7 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
 
         log.info("✅ Reconciliation complete. Attempted: {}, Credited: {}", total, credited);
     }
+
 
 
 

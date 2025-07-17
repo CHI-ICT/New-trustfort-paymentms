@@ -11,4 +11,8 @@ public interface AccountingClient {
 
     @PostMapping(value = "/internal/journal-entry", consumes = MediaType.APPLICATION_JSON_VALUE)
     String postJournalEntryInternal(@RequestBody JournalEntryRequest request);
+
+
+
+
 }

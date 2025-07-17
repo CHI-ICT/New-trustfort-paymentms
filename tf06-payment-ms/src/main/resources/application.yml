@@ -42,10 +42,10 @@ flutterwave:
 
 
 paystack:
-  secret-key: sk_live_9aeeff47588ebfdcb313d3c5b746159e2e52b055
+  secret-key: sk_test_a70526a7301640d68d4081c440b8860b2cdaee0b
   initiate-url: https://api.paystack.co/transaction/initialize
   verify-url: https://api.paystack.co/transaction/verify
-  callback-url: https://webhook.site/9c0dd086-b3a5-46b6-9df7-b43da5d8415b/webhook-paystack  # Optional override
+#  callback-url: https://webhook.site/9c0dd086-b3a5-46b6-9df7-b43da5d8415b/webhook-paystack  # Optional override
 
 
 

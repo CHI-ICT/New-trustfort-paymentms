@@ -544,9 +544,6 @@ public ResponseEntity<?> processTransactionHistoryRequest(
                 new ErrorResponse("06", "Internal server error")), appUser));
     }
 }
-
-
-
 //    @PostMapping(value = "/withdraw", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 //    public ResponseEntity<?> withdrawFunds(@RequestBody String payload, HttpServletRequest httpRequest, @RequestHeader("idToken") String idToken) {
 //        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(

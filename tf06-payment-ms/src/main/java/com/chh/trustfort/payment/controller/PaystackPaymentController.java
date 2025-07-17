@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -71,15 +72,26 @@ public class PaystackPaymentController {
                 Role.FUND_WALLET.getValue(), null, httpRequest, idToken);
 
         if (request.isError || request.appUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Unauthorized or invalid session.");
+            OmniResponsePayload errorResponse = new OmniResponsePayload();
+            errorResponse.setResponseCode("06");
+            errorResponse.setResponseMessage("Unauthorized or invalid session.");
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(errorResponse), null));
         }
 
         boolean verified = paystackPaymentService.verifyPaystackPayment(txRef);
-        String result = verified ? "✅ Payment verified and wallet credited" : "❌ Verification failed";
 
-        return ResponseEntity.ok(aesService.encrypt(result, request.appUser));
+        OmniResponsePayload response = new OmniResponsePayload();
+        if (verified) {
+            response.setResponseCode("00");
+            response.setResponseMessage("✅ Payment verified and wallet credited");
+        } else {
+            response.setResponseCode("06");
+            response.setResponseMessage("❌ Verification failed");
+        }
+
+        return ResponseEntity.ok(aesService.encrypt(gson.toJson(response), request.appUser));
     }
+
 
     @PostMapping(value = ApiPath.REVERIFY_PAYSTACK, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> retryPayment(

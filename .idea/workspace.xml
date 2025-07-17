@@ -5,31 +5,33 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="19ad55d8-5891-4dc5-81fd-40cc41d44798" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/FlatBalanceSheetRow.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/Responses/TransactionHistoryResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/FlutterJournalPostingService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/JournalPostingService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/PaystackJournalPostingService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/DebitCredit.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf03-gateway-ms/src/main/java/com/chh/trustfort/gateway/WebSecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf03-gateway-ms/src/main/java/com/chh/trustfort/gateway/WebSecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf03-gateway-ms/src/main/java/com/chh/trustfort/gateway/jwt/JwtAuthenticationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf03-gateway-ms/src/main/java/com/chh/trustfort/gateway/jwt/JwtAuthenticationFilter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf03-gateway-ms/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/tf03-gateway-ms/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/Config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/Config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/Responses/WalletBalanceResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/Responses/WalletBalanceResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/payload/LockFundsRequestPayload.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/payload/LockFundsRequestPayload.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/payload/UnlockFundsRequestPayload.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/payload/UnlockFundsRequestPayload.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/FlutterwavePaymentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/FlutterwavePaymentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/PaystackPaymentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/PaystackPaymentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/WalletController.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/WalletController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/AccountingClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/AccountingClient.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/FlutterwavePaymentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/FlutterwavePaymentServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/PaystackPaymentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/PaystackPaymentServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/WalletServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/WalletServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/Config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/Config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/WalletService.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/WalletService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/resources/application.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/Utility/ReportDownloadUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/Utility/ReportDownloadUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/controller/TrialBalanceController.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/controller/ReportController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/controller/statements/JournalEntryController.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/controller/statements/JournalEntryController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/BalanceSheetLineItemDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/BalanceSheetLineItemDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/ReportType.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/ReportType.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/model/JournalEntry.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/model/JournalEntry.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/IncomeStatementResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/IncomeStatementResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/ReportLineItem.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/ReportLineItem.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/AccountClassification.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/AccountClassification.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/repository/ChartOfAccountAccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/repository/ChartOfAccountAccountRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/repository/JournalEntryRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/repository/JournalEntryRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/BalanceSheetExportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/BalanceSheetExportService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/CashFlowStatementService.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/CashFlowStatementService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/EquityStatementService.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/EquityStatementService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/IncomeStatementService.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/IncomeStatementService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/ReportViewerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/ReportViewerService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/serviceImpl/FinancialReportServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/serviceImpl/FinancialReportServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/serviceImpl/ReportExportServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/serviceImpl/ReportExportServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/serviceImpl/ReportViewerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/serviceImpl/ReportViewerServiceImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -137,7 +139,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Application.PaymentApplication">
+  <component name="RunManager" selected="Spring Boot.AccountingApplication">
     <configuration name="AESDecryptor" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.chh.trustfort.payment.security.AESDecryptor" />
       <module name="tf06-payment-ms" />
@@ -284,7 +286,8 @@
       <workItem from="1751876320738" duration="12159000" />
       <workItem from="1751975622183" duration="53533000" />
       <workItem from="1752130730339" duration="26597000" />
-      <workItem from="1752419689756" duration="1940000" />
+      <workItem from="1752419689756" duration="14607000" />
+      <workItem from="1752513937257" duration="26948000" />
     </task>
     <servers />
   </component>

@@ -53,6 +53,7 @@ public class WalletServiceImpl implements WalletService {
     private final LedgerEntryRepository ledgerRepository;
     private final UsersService usersService;
     private final OtpService otpService;
+    private final JournalPostingService journalPostingService;
     private final WalletUtil walletUtil;
     private final AuditLogService auditLogService;
     private final AesService aesService;
@@ -290,7 +291,7 @@ public class WalletServiceImpl implements WalletService {
         wallet.setPhoneNumber(phoneNumber);
         wallet.setAccountNumber(accountNumber);
         wallet.setUsers(users);
-        wallet.setAccountCode("WALLET-FUNDING");
+        wallet.setAccountCode("2001106");
 
 
         wallet = walletRepository.createWallet(wallet);
@@ -861,23 +862,9 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         ledgerEntryRepository.save(ledgerEntry);
 
         // 📒 Step 4: Post Journal Entry to Accounting
-        JournalEntryRequest journal = new JournalEntryRequest();
-        journal.setAccountCode(wallet.getAccountCode() != null ? wallet.getAccountCode() : "WALLET-FUNDING");
-        journal.setAmount(creditAmount);
-        journal.setDescription("Wallet Funding");
-        journal.setTransactionType("CREDIT");
-        journal.setReference(internalRef);
-        journal.setDepartment("WALLET");
-        journal.setBusinessUnit("TRUSTFORT");
-        journal.setTransactionDate(LocalDateTime.now());
-        journal.setWalletId(wallet.getWalletId());
+        // ✅ Journal Entry
+        journalPostingService.postDoubleEntry(creditAmount, internalRef, wallet, "Wallet Credit via Paystack Redirect");
 
-        try {
-            accountingClient.postJournalEntryInternal(journal);
-            log.info("📘 Journal entry posted successfully for manual wallet funding.");
-        } catch (Exception e) {
-            log.error("❌ Failed to post journal entry: {}", e.getMessage(), e);
-        }
 
         // 📧 Step 5: Send email notification
         notificationService.sendEmail(
