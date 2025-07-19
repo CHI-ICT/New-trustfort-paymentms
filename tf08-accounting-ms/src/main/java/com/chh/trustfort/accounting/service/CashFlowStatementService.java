@@ -117,14 +117,16 @@ public class CashFlowStatementService {
 
     public List<ReportViewerResponse> generateCashFlowForViewer(StatementFilterDTO filter) {
         CashFlowStatementDTO dto = generateCashFlowStatement(filter);
+        BigDecimal netChange = dto.getClosingCashBalance().subtract(dto.getOpeningCashBalance());
 
         return List.of(
-                new ReportViewerResponse(Map.of("Activity", "Operating Activities", "Amount", dto.getOperatingActivities())),
-                new ReportViewerResponse(Map.of("Activity", "Investing Activities", "Amount", dto.getInvestingActivities())),
-                new ReportViewerResponse(Map.of("Activity", "Financing Activities", "Amount", dto.getFinancingActivities())),
-                new ReportViewerResponse(Map.of("Activity", "Net Cash Flow", "Amount", dto.getNetCashFlow())),
-                new ReportViewerResponse(Map.of("Activity", "Opening Balance", "Amount", dto.getOpeningCashBalance())),
-                new ReportViewerResponse(Map.of("Activity", "Closing Balance", "Amount", dto.getClosingCashBalance()))
+                new ReportViewerResponse(Map.of("Activity", "Cash flows from Operating Activities", "Amount", dto.getOperatingActivities())),
+                new ReportViewerResponse(Map.of("Activity", "Cash flows from Investing Activities", "Amount", dto.getInvestingActivities())),
+                new ReportViewerResponse(Map.of("Activity", "Cash flows from Financing Activities", "Amount", dto.getFinancingActivities())),
+                new ReportViewerResponse(Map.of("Activity", "Net Increase/(Decrease) in Cash", "Amount", netChange)),
+                new ReportViewerResponse(Map.of("Activity", "Cash and Cash Equivalents at Beginning of Period", "Amount", dto.getOpeningCashBalance())),
+                new ReportViewerResponse(Map.of("Activity", "Cash and Cash Equivalents at End of Period", "Amount", dto.getClosingCashBalance()))
         );
     }
+
 }

@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,9 +28,11 @@ public class EquityStatementService {
     private final JournalEntryRepository journalEntryRepository;
 
     public EquityStatementResponse generateStatement(StatementFilterDTO filter) {
+        // Step 1: Fetch equity entries within the reporting period
         List<JournalEntry> entries = journalEntryRepository.findEquityEntriesBetweenDates(
                 filter.getStartDate(), filter.getEndDate(), AccountClassification.EQUITY);
 
+        // Step 2: Optional filters for department and business unit
         if (filter.getDepartment() != null && !filter.getDepartment().isBlank()) {
             entries = entries.stream()
                     .filter(entry -> filter.getDepartment().equalsIgnoreCase(entry.getDepartment()))
@@ -42,6 +45,7 @@ public class EquityStatementService {
                     .collect(Collectors.toList());
         }
 
+        // Step 3: Categorize entries into components
         BigDecimal retainedEarnings = BigDecimal.ZERO;
         BigDecimal contributions = BigDecimal.ZERO;
         BigDecimal dividends = BigDecimal.ZERO;
@@ -60,8 +64,13 @@ public class EquityStatementService {
             }
         }
 
-        BigDecimal openingEquity = BigDecimal.ZERO;
+        // Step 4: Compute Opening Equity from entries before reporting period
+        BigDecimal openingEquity = journalEntryRepository
+                .findEquityEntriesBeforeDate(filter.getStartDate(), AccountClassification.EQUITY).stream()
+                .map(e -> e.getTransactionType() == TransactionType.DEBIT ? e.getAmount().negate() : e.getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Step 5: Compute closing equity
         BigDecimal closingEquity = openingEquity
                 .add(contributions)
                 .add(retainedEarnings)
@@ -78,12 +87,14 @@ public class EquityStatementService {
 
     public List<ReportViewerResponse> generateEquityStatementForViewer(StatementFilterDTO filter) {
         EquityStatementResponse response = generateStatement(filter);
-        return List.of(
-                new ReportViewerResponse(Map.of("Category", "Opening Equity", "Amount", response.getOpeningEquity())),
-                new ReportViewerResponse(Map.of("Category", "Contributions", "Amount", response.getContributions())),
-                new ReportViewerResponse(Map.of("Category", "Retained Earnings", "Amount", response.getRetainedEarnings())),
-                new ReportViewerResponse(Map.of("Category", "Dividends", "Amount", response.getDividends())),
-                new ReportViewerResponse(Map.of("Category", "Closing Equity", "Amount", response.getClosingEquity()))
-        );
+
+        List<ReportViewerResponse> rows = new ArrayList<>();
+        rows.add(new ReportViewerResponse(Map.of("Description", "Opening Equity", "Amount", response.getOpeningEquity())));
+        rows.add(new ReportViewerResponse(Map.of("Description", "Contributions during the year", "Amount", response.getContributions())));
+        rows.add(new ReportViewerResponse(Map.of("Description", "Retained Earnings", "Amount", response.getRetainedEarnings())));
+        rows.add(new ReportViewerResponse(Map.of("Description", "Dividends Paid", "Amount", response.getDividends().negate()))); // Display as negative
+        rows.add(new ReportViewerResponse(Map.of("Description", "Closing Equity", "Amount", response.getClosingEquity())));
+
+        return rows;
     }
 }

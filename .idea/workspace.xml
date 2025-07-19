@@ -5,26 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="19ad55d8-5891-4dc5-81fd-40cc41d44798" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/Responses/TransactionHistoryResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/FlutterJournalPostingService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/JournalPostingService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/PaystackJournalPostingService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/DebitCredit.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/FlutterwavePaymentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/FlutterwavePaymentController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/PaystackPaymentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/PaystackPaymentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/Responses/TransactionHistoryResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/Responses/TransactionHistoryResponse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/WalletController.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/controller/WalletController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/AccountingClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/AccountingClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/FlutterwavePaymentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/FlutterwavePaymentServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/PaystackPaymentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/PaystackPaymentServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/enums/PaymentMethod.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/enums/PaymentMethod.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/payload/FundWalletRequestPayload.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/payload/FundWalletRequestPayload.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/repository/WalletRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/repository/WalletRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/WalletServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/ServiceImpl/WalletServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/WalletService.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/java/com/chh/trustfort/payment/service/WalletService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tf06-payment-ms/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/tf06-payment-ms/src/main/resources/application.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/Utility/ReportDownloadUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/Utility/ReportDownloadUtil.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/BalanceSheetLineItemDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/BalanceSheetLineItemDTO.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/IncomeStatementResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/IncomeStatementResponse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/ReportLineItem.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/dto/ReportLineItem.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/AccountClassification.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/AccountClassification.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/DebitCredit.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/enums/DebitCredit.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/repository/ChartOfAccountAccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/repository/ChartOfAccountAccountRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/repository/JournalEntryRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/repository/JournalEntryRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/CashFlowStatementService.java" beforeDir="false" afterPath="$PROJECT_DIR$/tf08-accounting-ms/src/main/java/com/chh/trustfort/accounting/service/CashFlowStatementService.java" afterDir="false" />
@@ -139,7 +132,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.AccountingApplication">
+  <component name="RunManager" selected="Spring Boot.PaymentApplication">
     <configuration name="AESDecryptor" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.chh.trustfort.payment.security.AESDecryptor" />
       <module name="tf06-payment-ms" />
@@ -287,7 +280,8 @@
       <workItem from="1751975622183" duration="53533000" />
       <workItem from="1752130730339" duration="26597000" />
       <workItem from="1752419689756" duration="14607000" />
-      <workItem from="1752513937257" duration="26948000" />
+      <workItem from="1752513937257" duration="33355000" />
+      <workItem from="1752831017097" duration="18653000" />
     </task>
     <servers />
   </component>

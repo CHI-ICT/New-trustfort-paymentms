@@ -63,7 +63,24 @@ public class WalletRepository {
         }
     }
 
-//    public List<Wallet> findByUserId(String userId) {
+    public Optional<Wallet> findByUsersId(Long userId) {
+        try {
+            Wallet wallet = em.createQuery(
+                            "SELECT w FROM Wallet w WHERE w.users.id = :userId", Wallet.class)
+                    .setParameter("userId", userId)
+                    .setMaxResults(1)
+                    .getSingleResult();
+            return Optional.of(wallet);
+        } catch (NoResultException e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("❌ Error retrieving wallet by users.id: {}", userId, e);
+            return Optional.empty();
+        }
+    }
+
+
+    //    public List<Wallet> findByUserId(String userId) {
 //        try {
 //            return em.createQuery(
 //                            "SELECT w FROM Wallet w WHERE w.userId = :userId", Wallet.class)

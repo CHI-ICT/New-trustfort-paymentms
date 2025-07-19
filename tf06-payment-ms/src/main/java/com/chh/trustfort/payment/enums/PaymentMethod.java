@@ -4,5 +4,6 @@ public enum PaymentMethod {
     WALLET,
     PAYSTACK,
     FLUTTERWAVE,
-    BANK_TRANSFER
+    BANK_TRANSFER,
+    OPEN_BANKING
 }

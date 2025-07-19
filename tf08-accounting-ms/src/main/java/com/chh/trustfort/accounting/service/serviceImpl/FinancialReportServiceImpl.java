@@ -3,9 +3,13 @@ package com.chh.trustfort.accounting.service.serviceImpl;
 import com.chh.trustfort.accounting.Responses.ReportViewerResponse;
 import com.chh.trustfort.accounting.dto.*;
 import com.chh.trustfort.accounting.enums.AccountClassification;
+import com.chh.trustfort.accounting.enums.DebitCredit;
 import com.chh.trustfort.accounting.enums.ReportType;
 import com.chh.trustfort.accounting.enums.TransactionType;
+import com.chh.trustfort.accounting.model.AccountCategory;
+import com.chh.trustfort.accounting.model.ChartOfAccount;
 import com.chh.trustfort.accounting.model.JournalEntry;
+import com.chh.trustfort.accounting.repository.ChartOfAccountAccountRepository;
 import com.chh.trustfort.accounting.repository.JournalEntryRepository;
 import com.chh.trustfort.accounting.service.BalanceSheetService;
 import com.chh.trustfort.accounting.service.FinancialReportService;
@@ -16,10 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
 public class FinancialReportServiceImpl implements FinancialReportService {
 
     private final JournalEntryRepository journalEntryRepository;
+    private final ChartOfAccountAccountRepository chartOfAccountRepository;
     private final IncomeStatementService incomeStatementService;
     private final BalanceSheetService balanceSheetService;
 
@@ -58,40 +60,91 @@ public class FinancialReportServiceImpl implements FinancialReportService {
         return entries.stream()
                 .collect(Collectors.groupingBy(e -> e.getAccount().getAccountCode(), Collectors.reducing(BigDecimal.ZERO, JournalEntry::getAmount, BigDecimal::add)))
                 .entrySet().stream().map(entry -> {
-                    String accountCode = (String) entry.getKey();
+                    String accountCode = entry.getKey();
                     BigDecimal amount = entry.getValue();
-                    items.add(new ReportLineItem(label, amount, accountCode, null));
+
+                    // ✅ Fetch ChartOfAccount entity
+                    ChartOfAccount account = chartOfAccountRepository.findByAccountCode(accountCode)
+                            .orElseThrow(() -> new RuntimeException("Account not found: " + accountCode));
+
+                    items.add(ReportLineItem.builder()
+                            .label(label)
+                            .amount(amount)
+                            .account(account)
+                            .build());
+
                     return amount;
                 }).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    @Override
-    public BalanceSheetReportDTO generateBalanceSheet(LocalDate asOfDate) {
-        BigDecimal totalAssets = journalEntryRepository.sumByClassification(AccountClassification.ASSET, asOfDate);
-        BigDecimal totalLiabilities = journalEntryRepository.sumByClassification(AccountClassification.LIABILITY, asOfDate);
-        BigDecimal totalEquity = journalEntryRepository.sumByClassification(AccountClassification.EQUITY, asOfDate);
+@Override
+public BalanceSheetReportDTO generateBalanceSheet(LocalDate asOfDate) {
+    List<ChartOfAccount> allAccounts = chartOfAccountRepository.findAllActive(); // Add method if needed
 
-        List<JournalEntry> assetEntries = journalEntryRepository.findByClassificationAndDate(AccountClassification.ASSET, asOfDate);
-        List<JournalEntry> liabilityEntries = journalEntryRepository.findByClassificationAndDate(AccountClassification.LIABILITY, asOfDate);
-        List<JournalEntry> equityEntries = journalEntryRepository.findByClassificationAndDate(AccountClassification.EQUITY, asOfDate);
+    List<BalanceSheetLineItemDTO> lineItems = new ArrayList<>();
 
-        return BalanceSheetReportDTO.builder()
-                .asOfDate(asOfDate)
-                .totalAssets(totalAssets)
-                .totalLiabilities(totalLiabilities)
-                .totalEquity(totalEquity)
-                .totalLiabilitiesAndEquity(totalLiabilities.add(totalEquity))
-                .lineItems(Stream.of(assetEntries, liabilityEntries, equityEntries)
-                        .flatMap(List::stream)
-                        .collect(Collectors.groupingBy(
-                                e -> e.getAccount().getAccountName(),
-                                Collectors.reducing(BigDecimal.ZERO, JournalEntry::getAmount, BigDecimal::add)
-                        ))
-                        .entrySet().stream()
-                        .map(e -> new BalanceSheetLineItemDTO("Balance Sheet", e.getKey(), e.getValue()))
-                        .collect(Collectors.toList()))
-                .build();
+    BigDecimal totalAssets = BigDecimal.ZERO;
+    BigDecimal totalLiabilities = BigDecimal.ZERO;
+    BigDecimal totalEquity = BigDecimal.ZERO;
+
+    for (ChartOfAccount account : allAccounts) {
+        AccountClassification classification = account.getClassification();
+
+        if (classification != AccountClassification.ASSET &&
+                classification != AccountClassification.LIABILITY &&
+                classification != AccountClassification.EQUITY) {
+            continue; // Skip irrelevant CoA entries
+        }
+
+        // Sum journal entries tied to this account up to asOfDate
+        BigDecimal debitSum = journalEntryRepository.sumDebit(account.getId(), asOfDate);
+        BigDecimal creditSum = journalEntryRepository.sumCredit(account.getId(), asOfDate);
+
+        BigDecimal balance = account.getNormalBalance() == TransactionType.DEBIT
+                ? debitSum.subtract(creditSum)
+                : creditSum.subtract(debitSum);
+
+
+        if (balance.compareTo(BigDecimal.ZERO) == 0) continue;
+
+        // Group name from category
+        String groupName = Optional.ofNullable(account.getCategory()).map(AccountCategory::getName).orElse("General");
+
+        lineItems.add(BalanceSheetLineItemDTO.builder()
+                .section(classification.name())
+                .groupCode(String.valueOf(account.getCategory().getId()))
+                .groupName(groupName)
+                .accountCode(account.getAccountCode())
+                .accountName(account.getAccountName())
+                .amount(balance)
+                .build()
+        );
+
+        switch (classification) {
+            case ASSET:
+                totalAssets = totalAssets.add(balance);
+                break;
+            case LIABILITY:
+                totalLiabilities = totalLiabilities.add(balance);
+                break;
+            case EQUITY:
+                totalEquity = totalEquity.add(balance);
+                break;
+        }
+
     }
+
+    return BalanceSheetReportDTO.builder()
+            .asOfDate(asOfDate)
+            .totalAssets(totalAssets)
+            .totalLiabilities(totalLiabilities)
+            .totalEquity(totalEquity)
+            .totalLiabilitiesAndEquity(totalLiabilities.add(totalEquity))
+            .lineItems(lineItems)
+            .build();
+}
+
+
 
     @Override
     public FinancialReportResponse generateCashFlow(LocalDate startDate, LocalDate endDate) {

@@ -23,4 +23,7 @@ public interface ChartOfAccountAccountRepository extends JpaRepository<ChartOfAc
 
     List<ChartOfAccount> findAllByExpenseType(ExpenseType expenseType);
     List<ChartOfAccount> findByClassificationIn(List<AccountClassification> classifications);
+    @Query("SELECT a FROM ChartOfAccount a WHERE a.status = 'ACTIVE'")
+    List<ChartOfAccount> findAllActive();
+
 }

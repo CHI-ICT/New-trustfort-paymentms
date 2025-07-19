@@ -122,7 +122,16 @@ List<JournalEntry> findByClassificationAndDate(@Param("classification") AccountC
 
 
 
+    @Query("SELECT COALESCE(SUM(j.amount), 0) FROM JournalEntry j " +
+            "WHERE j.account.id = :accountId AND j.transactionType = 'DEBIT' AND j.transactionDate <= :asOfDate")
+    BigDecimal sumDebit(@Param("accountId") Long accountId, @Param("asOfDate") LocalDate asOfDate);
 
+    @Query("SELECT COALESCE(SUM(j.amount), 0) FROM JournalEntry j " +
+            "WHERE j.account.id = :accountId AND j.transactionType = 'CREDIT' AND j.transactionDate <= :asOfDate")
+    BigDecimal sumCredit(@Param("accountId") Long accountId, @Param("asOfDate") LocalDate asOfDate);
+
+    @Query("SELECT j FROM JournalEntry j WHERE j.transactionDate < :startDate AND j.account.classification = :classification")
+    List<JournalEntry> findEquityEntriesBeforeDate(@Param("startDate") LocalDate startDate, @Param("classification") AccountClassification classification);
 
 
 }

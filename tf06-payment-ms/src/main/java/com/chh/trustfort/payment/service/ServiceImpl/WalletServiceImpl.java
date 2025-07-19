@@ -18,6 +18,7 @@ import com.chh.trustfort.payment.security.AesService;
 import com.chh.trustfort.payment.service.*;
 import com.google.gson.Gson;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -227,6 +228,11 @@ public class WalletServiceImpl implements WalletService {
             ledger.setNarration(narration != null ? narration : "Flutterwave wallet funding");
 
             ledgerRepository.save(ledger);
+
+
+
+
+
 
             log.info("✅ Wallet credited: {} | Amount: {} | Ref: {}", phoneNumber, amount, reference);
             return true;
@@ -500,7 +506,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
             // ✅ Post journal entries
             LocalDateTime now = LocalDateTime.now();
             JournalEntryRequest debitEntry = new JournalEntryRequest();
-            debitEntry.setAccountCode("WALLET-FUNDING");
+            debitEntry.setAccountCode("2001106");
             debitEntry.setAmount(transferAmount);
             debitEntry.setDescription("Transfer to " + receiverWallet.getUserId());
             debitEntry.setTransactionType("DEBIT");
@@ -510,7 +516,7 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
             accountingClient.postJournalEntryInternal(debitEntry);
 
             JournalEntryRequest creditEntry = new JournalEntryRequest();
-            creditEntry.setAccountCode("WALLET-FUNDING");
+            creditEntry.setAccountCode("2001106");
             creditEntry.setAmount(transferAmount);
             creditEntry.setDescription("Transfer from " + senderWallet.getUserId());
             creditEntry.setTransactionType("CREDIT");
@@ -541,11 +547,35 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
     @Transactional
     public String initiateWalletFunding(FundWalletRequestPayload payload, AppUser appUser) {
         PaymentMethod method = payload.getPaymentMethod();
+        String phoneNumber = appUser.getPhoneNumber();
+
         log.info("⚙️ Initiating wallet funding via method: {}", method);
+        log.info("📞 Sender phone number (from AppUser): {}", phoneNumber);
+
+        if (phoneNumber == null || phoneNumber.isBlank()) {
+            throw new WalletException("❌ Sender phone number is missing or invalid.");
+        }
+
+        // ✅ Find sender wallet using phone from logged-in AppUser
+        Wallet senderWallet = walletRepository.findByUserId(phoneNumber)
+                .orElseThrow(() -> new WalletException("❌ Sender wallet not found for phone: " + phoneNumber));
+
+        // ✅ Find receiver wallet using userId in payload
+        Wallet receiverWallet = walletRepository.findByUserId(payload.getUserId())
+                .orElseThrow(() -> new WalletException("❌ Receiver wallet not found for phone: " + payload.getUserId()));
+
+        log.info("👥 Sender Wallet ID: {} | Receiver Wallet ID: {}", senderWallet.getUserId(), receiverWallet.getUserId());
 
         switch (method) {
             case WALLET:
-                return fundWalletInternally(payload, appUser);
+                FundsTransferRequestPayload transferPayload = new FundsTransferRequestPayload();
+                transferPayload.setSenderUserId(senderWallet.getUserId());
+                transferPayload.setReceiverUserId(receiverWallet.getUserId());
+                transferPayload.setAmount(payload.getAmount());
+                transferPayload.setNarration(payload.getNarration());
+
+                // ✅ Use real logged-in AppUser for encryption
+                return transferFunds(transferPayload, "INTERNAL-CALL", appUser, appUser);
 
             case PAYSTACK:
                 return paystackPaymentService.initiatePaystackPayment(payload, appUser);
@@ -556,6 +586,9 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
             case BANK_TRANSFER:
                 return initiateBankTransferFunding(payload, appUser);
 
+            case OPEN_BANKING:
+                return fundViaOpenBanking(payload, appUser);
+
             default:
                 String errorMsg = "❌ Invalid payment method: " + method;
                 log.warn(errorMsg);
@@ -563,6 +596,24 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
         }
     }
 
+    private String fundViaOpenBanking(FundWalletRequestPayload payload, AppUser appUser) {
+        try {
+            // ✅ Try Paystack first
+            return paystackPaymentService.initiatePaystackPayment(payload, appUser);
+        } catch (Exception paystackEx) {
+            log.warn("⚠️ Paystack failed: {}. Trying Flutterwave...", paystackEx.getMessage());
+
+            try {
+                return flutterwavePaymentService.initiateFlutterwavePayment(payload, appUser);
+            } catch (Exception flutterEx) {
+                log.error("❌ Both gateways failed. Paystack={}, Flutterwave={}",
+                        paystackEx.getMessage(), flutterEx.getMessage());
+                return aesService.encrypt(gson.toJson(
+                        new ErrorResponse("Payment initiation failed on both Paystack and Flutterwave", "91")
+                ), appUser);
+            }
+        }
+    }
 
     public String initiateBankTransferFunding(FundWalletRequestPayload payload, AppUser appUser) {
         String reference = "BTF-" + System.currentTimeMillis(); // Bank Transfer Funding Ref
@@ -595,7 +646,6 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
         return aesService.encrypt(gson.toJson(response), appUser);
     }
-
 
     //    @Override
 //    @Transactional
@@ -863,15 +913,15 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
         // 📒 Step 4: Post Journal Entry to Accounting
         // ✅ Journal Entry
-        journalPostingService.postDoubleEntry(creditAmount, internalRef, wallet, "Wallet Credit via Paystack Redirect");
+        journalPostingService.postDoubleEntry(creditAmount, internalRef, wallet, "Wallet Credit ");
 
 
         // 📧 Step 5: Send email notification
-        notificationService.sendEmail(
-                appUser.getEmail(),
-                "🔺 Wallet Funded",
-                "Your wallet was credited with ₦" + creditAmount + " via manual funding."
-        );
+//        notificationService.sendEmail(
+//                appUser.getEmail(),
+//                "🔺 Wallet Funded",
+//                "Your wallet was credited with ₦" + creditAmount + " via manual funding."
+//        );
 
         // ✅ Step 6: Build success response
         SuccessResponse response = new SuccessResponse();

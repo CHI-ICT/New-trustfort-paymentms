@@ -9,6 +9,7 @@ import com.chh.trustfort.accounting.enums.TransactionType;
 import com.chh.trustfort.accounting.model.JournalEntry;
 import com.chh.trustfort.accounting.repository.JournalEntryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,26 +21,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class IncomeStatementService {
 
     private final JournalEntryRepository journalEntryRepository;
 
     public IncomeStatementResponse generateIncomeStatement(StatementFilterDTO filter) {
-        LocalDate start = filter.getStartDate();
-        LocalDate end = filter.getEndDate();
-
-        // Step 1: Fetch revenue and expense entries from DB
         List<JournalEntry> entries = journalEntryRepository.findByStatementFilters(filter);
 
-        // Step 2: Apply additional filters
-        if (filter.getDepartment() != null) {
+        // Apply filters
+        if (filter.getDepartment() != null && !filter.getDepartment().isBlank()) {
             entries = entries.stream()
                     .filter(e -> filter.getDepartment().equalsIgnoreCase(e.getDepartment()))
                     .collect(Collectors.toList());
         }
 
-        if (filter.getBusinessUnit() != null) {
+        if (filter.getBusinessUnit() != null && !filter.getBusinessUnit().isBlank()) {
             entries = entries.stream()
                     .filter(e -> filter.getBusinessUnit().equalsIgnoreCase(e.getBusinessUnit()))
                     .collect(Collectors.toList());
@@ -63,39 +61,69 @@ public class IncomeStatementService {
                     .collect(Collectors.toList());
         }
 
-        // Step 3: Aggregate totals
-        BigDecimal totalRevenue = entries.stream()
-                .filter(e -> e.getAccount().getClassification() == AccountClassification.REVENUE)
-                .map(e -> e.getTransactionType() == TransactionType.DEBIT ? e.getAmount().negate() : e.getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Totals
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        BigDecimal totalExpenses = BigDecimal.ZERO;
 
-        BigDecimal totalExpenses = entries.stream()
-                .filter(e -> e.getAccount().getClassification() == AccountClassification.EXPENSE)
-                .map(e -> e.getTransactionType() == TransactionType.DEBIT ? e.getAmount() : e.getAmount().negate())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Line items
+        List<ReportLineItem> revenueItems = new ArrayList<>();
+        List<ReportLineItem> expenseItems = new ArrayList<>();
+
+        for (JournalEntry entry : entries) {
+            AccountClassification classification = entry.getAccount().getClassification();
+            if (classification == null) {
+                log.warn("🚨 Account classification missing for account: {}", entry.getAccount().getAccountName());
+                continue;
+            }
+            BigDecimal amount = entry.getTransactionType() == TransactionType.CREDIT
+                    ? entry.getAmount()
+                    : entry.getAmount().negate(); // DEBIT values are negative
+
+            if (classification == AccountClassification.REVENUE) {
+                BigDecimal normalized = amount.abs(); // Show positive revenue
+                totalRevenue = totalRevenue.add(normalized);
+                revenueItems.add(ReportLineItem.builder()
+                        .label(entry.getAccount().getAccountName())
+                        .amount(normalized)
+                        .account(entry.getAccount())
+                        .build());
+            }
+
+            if (classification == AccountClassification.EXPENSE) {
+                BigDecimal normalized = amount.abs(); // Show positive expense
+                totalExpenses = totalExpenses.add(normalized);
+                expenseItems.add(ReportLineItem.builder()
+                        .label(entry.getAccount().getAccountName())
+                        .amount(normalized)
+                        .account(entry.getAccount())
+                        .build());
+            }
+        }
 
         BigDecimal netIncome = totalRevenue.subtract(totalExpenses);
 
-        // Step 4: Build response
-        IncomeStatementResponse response = new IncomeStatementResponse();
-        response.setTotalRevenue(totalRevenue);
-        response.setTotalExpenses(totalExpenses);
-        response.setNetIncome(netIncome);
-
-        return response;
+        return IncomeStatementResponse.builder()
+                .totalRevenue(totalRevenue)
+                .totalExpenses(totalExpenses)
+                .netIncome(netIncome)
+                .revenueItems(revenueItems)
+                .expenseItems(expenseItems)
+                .build();
     }
+
 
     public List<ReportViewerResponse> generateIncomeStatementForViewer(StatementFilterDTO filter) {
         IncomeStatementResponse response = generateIncomeStatement(filter);
-
         List<ReportViewerResponse> viewerResponses = new ArrayList<>();
 
         if (response.getRevenueItems() != null) {
             for (ReportLineItem item : response.getRevenueItems()) {
                 Map<String, Object> fields = new LinkedHashMap<>();
-                fields.put("Category", "REVENUE");
-                fields.put("Item", item.getLabel());
-                fields.put("Amount", item.getAmount());
+                fields.put("section", "REVENUE");
+                fields.put("groupName", item.getAccount().getClassification().name());
+                fields.put("accountCode", item.getAccount().getAccountCode());
+                fields.put("accountName", item.getAccount().getAccountName());
+                fields.put("amount", item.getAmount());
                 viewerResponses.add(new ReportViewerResponse(fields));
             }
         }
@@ -103,24 +131,26 @@ public class IncomeStatementService {
         if (response.getExpenseItems() != null) {
             for (ReportLineItem item : response.getExpenseItems()) {
                 Map<String, Object> fields = new LinkedHashMap<>();
-                fields.put("Category", "EXPENSE");
-                fields.put("Item", item.getLabel());
-                fields.put("Amount", item.getAmount());
+                fields.put("section", "EXPENSE");
+                fields.put("groupName", item.getAccount().getClassification().name());
+                fields.put("accountCode", item.getAccount().getAccountCode());
+                fields.put("accountName", item.getAccount().getAccountName());
+                fields.put("amount", item.getAmount());
                 viewerResponses.add(new ReportViewerResponse(fields));
             }
         }
 
-        // Optionally, add summary at bottom
+        // Add final summary
         Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("Category", "SUMMARY");
-        summary.put("Total Revenue", response.getTotalRevenue());
-        summary.put("Total Expenses", response.getTotalExpenses());
-        summary.put("Net Income", response.getNetIncome());
+        summary.put("section", "SUMMARY");
+        summary.put("groupName", "");
+        summary.put("accountCode", "");
+        summary.put("accountName", "Net Income");
+        summary.put("amount", response.getNetIncome());
         viewerResponses.add(new ReportViewerResponse(summary));
 
         return viewerResponses;
     }
-
 
 }
 

@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -255,7 +257,7 @@ public class WalletController {
 
     @PostMapping(value = ApiPath.FUND_WALLET, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> fundWallet(
-            @RequestParam String idToken,
+            @RequestHeader String idToken,
             @RequestBody String requestPayload,
             HttpServletRequest httpRequest
     ) {
@@ -277,12 +279,16 @@ public class WalletController {
         AppUser appUser = request.appUser;
         FundWalletRequestPayload payload = gson.fromJson(request.payload, FundWalletRequestPayload.class);
 
-        // 🚀 Step 3: Delegate to wallet service's payment method router
-        String encryptedResponse = walletService.initiateWalletFunding(payload, appUser);
+        // ✅ Extract sender's phone number from idToken and patch into AppUser
+        String decryptedIdToken = aesService.decrypt(idToken, appUser);
+        JsonObject tokenJson = JsonParser.parseString(decryptedIdToken).getAsJsonObject();
+        String phoneNumber = tokenJson.getAsJsonObject("data").get("phoneNumber").getAsString();
+        appUser.setPhoneNumber(phoneNumber);  // 🔥 This line fixes the crash
 
-        // 📤 Step 4: Return encrypted response
+        String encryptedResponse = walletService.initiateWalletFunding(payload, appUser);
         return ResponseEntity.ok(encryptedResponse);
     }
+
 
 
 //    @GetMapping(value = ApiPath.FETCH_ALL_WALLETS, produces = MediaType.APPLICATION_JSON_VALUE)

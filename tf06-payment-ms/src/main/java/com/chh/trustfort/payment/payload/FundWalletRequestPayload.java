@@ -7,12 +7,10 @@ import java.math.BigDecimal;
 
 @Data
 public class FundWalletRequestPayload {
+    private String userId; // Always the RECEIVER (i.e. who is getting the funds)
     private BigDecimal amount;
     private String currency;
-    private String userId;
-    private PaymentMethod paymentMethod;
-
-
-
-
+    private PaymentMethod paymentMethod; // WALLET, PAYSTACK, FLUTTERWAVE, BANK_TRANSFER
+    private String narration;
 }
+

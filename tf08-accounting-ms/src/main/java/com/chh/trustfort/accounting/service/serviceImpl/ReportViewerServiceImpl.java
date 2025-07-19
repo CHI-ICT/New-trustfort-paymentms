@@ -60,28 +60,18 @@ public class ReportViewerServiceImpl implements ReportViewerService {
     }
 
     public List<ReportViewerResponse> generateBalanceSheetViewerData(StatementFilterDTO filter) {
-        LocalDate asOfDate = filter.getEndDate(); // Use endDate as asOfDate
+        LocalDate asOfDate = filter.getEndDate();
         BalanceSheetReportDTO dto = financialReportService.generateBalanceSheet(asOfDate);
 
         List<ReportViewerResponse> responses = new ArrayList<>();
 
-        // Add summary line
-        Map<String, Object> summaryFields = new LinkedHashMap<>();
-        summaryFields.put("As of Date", dto.getAsOfDate());
-        summaryFields.put("Total Assets", dto.getTotalAssets());
-        summaryFields.put("Total Liabilities", dto.getTotalLiabilities());
-        summaryFields.put("Total Equity", dto.getTotalEquity());
-        summaryFields.put("Total Liabilities + Equity", dto.getTotalLiabilitiesAndEquity());
-
-        ReportViewerResponse summaryRow = new ReportViewerResponse();
-        summaryRow.setFields(summaryFields);
-        responses.add(summaryRow);
-
-        // Add each line item
         for (BalanceSheetLineItemDTO item : dto.getLineItems()) {
             Map<String, Object> line = new LinkedHashMap<>();
-            line.put("Account Name", item.getAccountName());
-            line.put("Amount", item.getAmount());
+            line.put("section", item.getSection());
+            line.put("groupName", item.getGroupName());
+            line.put("accountCode", item.getAccountCode());
+            line.put("accountName", item.getAccountName());
+            line.put("amount", item.getAmount());
 
             ReportViewerResponse itemRow = new ReportViewerResponse();
             itemRow.setFields(line);

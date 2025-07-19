@@ -5,6 +5,7 @@ public enum AccountClassification {
     LIABILITY("2000"),
     EQUITY("3000"),
     REVENUE("4000"),
+    INCOME("4000"),
     EXPENSE("5000"),
     OTHER("9000");
 

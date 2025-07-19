@@ -1,5 +1,6 @@
 package com.chh.trustfort.accounting.dto;
 
+import com.chh.trustfort.accounting.model.ChartOfAccount;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +15,6 @@ import java.time.LocalDate;
 public class ReportLineItem {
     private String label;
     private BigDecimal amount;
-    private String accountCode;
-    private String department;
+    private ChartOfAccount account; // assuming ChartOfAccount contains code/name/classification
+
 }

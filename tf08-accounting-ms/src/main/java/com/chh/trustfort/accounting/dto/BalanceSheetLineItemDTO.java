@@ -10,7 +10,10 @@ import java.math.BigDecimal;
 @Data
 @Builder
 public class BalanceSheetLineItemDTO {
-    private String section;
+    private String section; // "ASSETS", "LIABILITIES", "EQUITY"
+    private String groupCode;
+    private String groupName;
+    private String accountCode;
     private String accountName;
     private BigDecimal amount;
 //    private String groupCode;
