@@ -28,6 +28,7 @@ public class WalletLedgerEntry {
     @Column(name = "wallet_id", nullable = false)
     private String walletId;
 
+
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false)
     private TransactionType transactionType; // e.g., CREDIT, DEBIT, etc.

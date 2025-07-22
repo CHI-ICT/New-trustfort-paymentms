@@ -36,8 +36,8 @@ public String transferFunds(FundsTransferRequestPayload payload, String idToken,
 public WalletBalanceResponse getWalletBalance(String walletId, String userId);
 
 //public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId);
-ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
-        String walletId, LocalDate startDate, LocalDate endDate, String userId);
+ResponseEntity<String> getTransactionHistory(
+        String walletId, LocalDate startDate, LocalDate endDate, String userId, AppUser appUser);
 
 //public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser);
 

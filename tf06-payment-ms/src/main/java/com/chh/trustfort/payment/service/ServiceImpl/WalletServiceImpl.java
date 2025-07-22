@@ -79,6 +79,18 @@ public class WalletServiceImpl implements WalletService {
                 .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
     }
 
+    private String buildEncryptedResponse(String responseCode, String responseMessage, Object data, AppUser appUser) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("responseCode", responseCode);
+        response.put("responseMessage", responseMessage);
+        if (data != null) {
+            response.put("data", data);
+        }
+        return aesService.encrypt(gson.toJson(response), appUser);
+    }
+
+
+
     @Override
     public List<WalletDTO> getWalletsByUserId(String userId) {
         log.info("🔎 Querying wallets for userId: {}", userId);
@@ -375,31 +387,48 @@ public class WalletServiceImpl implements WalletService {
 //        return ResponseEntity.ok(entries); // ✅ wrap the list properly
 //    }
 @Override
-public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
-        String walletId, LocalDate startDate, LocalDate endDate, String userId) {
+public ResponseEntity<String> getTransactionHistory(
+        String walletId, LocalDate startDate, LocalDate endDate, String userId, AppUser appUser) {
 
     Wallet wallet = walletRepository.findByWalletId(walletId)
             .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
 
     if (!wallet.getUserId().equals(userId)) {
-        throw new WalletException("Unauthorized access to this wallet");
+        return ResponseEntity.ok(buildEncryptedResponse("06", "Unauthorized access to this wallet", null, appUser));
     }
 
-    List<WalletLedgerEntry> entries = ledgerEntryRepository.findByWalletId(walletId);
+    List<WalletLedgerEntry> entries = ledgerEntryRepository.findByWalletId(userId);
 
-    // ✅ Convert entities to DTOs
     List<LedgerEntryDTO> dtos = entries.stream()
             .map(LedgerEntryDTO::fromEntity)
             .collect(Collectors.toList());
 
-    return ResponseEntity.ok(dtos);
+    return ResponseEntity.ok(buildEncryptedResponse("00", "Transaction history retrieved successfully", dtos, appUser));
 }
+
 
     @Override
     @Transactional
     public String transferFunds(FundsTransferRequestPayload payload, String idToken, AppUser appUser, AppUser ecred) {
         log.info("🔁 Initiating fund transfer from: {} to: {} amount: {}",
                 payload.getSenderUserId(), payload.getReceiverUserId(), payload.getAmount());
+
+        // ❌ Check if sender has any wallet at all
+        if (!walletRepository.existsByUserId(payload.getSenderUserId())) {
+            log.warn("❌ No wallet found for sender phone number: {}", payload.getSenderUserId());
+            return aesService.encrypt(gson.toJson(
+                    new ErrorResponse("You do not have an active wallet. Please create one first.", "06")
+            ), ecred);
+        }
+
+        // ❌ Check if receiver has any wallet
+        if (!walletRepository.existsByUserId(payload.getReceiverUserId())) {
+            log.warn("❌ No wallet found for receiver phone number: {}", payload.getReceiverUserId());
+            return aesService.encrypt(gson.toJson(
+                    new ErrorResponse("Receiver does not have an active wallet.", "06")
+            ), ecred);
+        }
+
 
         try {
             // ✅ Lookup sender user by phone number
@@ -434,6 +463,8 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
             }
 
             log.info("✅ Authorized user={} owns wallet={}", user.getPhoneNumber(), senderWallet.getWalletId());
+
+
 
             // ✅ Fetch receiver wallet
             Wallet receiverWallet = walletRepository.findByUserId(payload.getReceiverUserId())
@@ -558,11 +589,16 @@ public ResponseEntity<List<LedgerEntryDTO>> getTransactionHistory(
 
         // ✅ Find sender wallet using phone from logged-in AppUser
         Wallet senderWallet = walletRepository.findByUserId(phoneNumber)
-                .orElseThrow(() -> new WalletException("❌ Sender wallet not found for phone: " + phoneNumber));
+                .orElse(null);
+        if (senderWallet == null || senderWallet.getStatus() != WalletStatus.ACTIVE) {
+            throw new WalletException("❌ Sender does not have an active wallet.");
+        }
 
-        // ✅ Find receiver wallet using userId in payload
         Wallet receiverWallet = walletRepository.findByUserId(payload.getUserId())
-                .orElseThrow(() -> new WalletException("❌ Receiver wallet not found for phone: " + payload.getUserId()));
+                .orElse(null);
+        if (receiverWallet == null || receiverWallet.getStatus() != WalletStatus.ACTIVE) {
+            throw new WalletException("❌ Receiver does not have an active wallet.");
+        }
 
         log.info("👥 Sender Wallet ID: {} | Receiver Wallet ID: {}", senderWallet.getUserId(), receiverWallet.getUserId());
 

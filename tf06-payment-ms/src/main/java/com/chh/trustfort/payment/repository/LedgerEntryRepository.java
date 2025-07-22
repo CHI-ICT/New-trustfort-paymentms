@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Repository
 public interface LedgerEntryRepository extends JpaRepository<WalletLedgerEntry, Long> {
-    List<WalletLedgerEntry> findByWalletId(String walletId);
+    List<WalletLedgerEntry> findByWalletId(String userId);
 
     // ✅ Add this method to fetch entries by status
     List<WalletLedgerEntry> findByStatus(TransactionStatus status);
