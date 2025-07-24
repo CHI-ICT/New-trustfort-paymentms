@@ -114,4 +114,6 @@ public class ApiPath {
     public static final String UNIFIED_PURCHASE = "/purchase-product";
 
     public static final String VERIFY_FLW_PRODUCT_PAYMENT = "/verify-product-flw";
+    public static final String PAYMENT_OPTIONS = "/payment-options";
+
 }

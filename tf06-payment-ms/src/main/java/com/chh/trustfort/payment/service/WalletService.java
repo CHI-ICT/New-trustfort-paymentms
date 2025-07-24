@@ -5,6 +5,8 @@ import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
 import com.chh.trustfort.payment.dto.LedgerEntryDTO;
 import com.chh.trustfort.payment.dto.ProductPurchaseDTO;
 import com.chh.trustfort.payment.dto.WalletDTO;
+import com.chh.trustfort.payment.enums.TransactionStatus;
+import com.chh.trustfort.payment.enums.TransactionType;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
 import com.chh.trustfort.payment.payload.*;
@@ -38,7 +40,8 @@ public WalletBalanceResponse getWalletBalance(String walletId, String userId);
 
 //public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId);
 ResponseEntity<String> getTransactionHistory(
-        String walletId, LocalDate startDate, LocalDate endDate, String userId, AppUser appUser);
+        String walletId, LocalDate startDate, LocalDate endDate, String userId, TransactionType transactionType,
+        TransactionStatus status, AppUser appUser);
 
 //public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser);
 

@@ -7,10 +7,8 @@ import com.chh.trustfort.payment.Responses.WalletBalanceResponse;
 import com.chh.trustfort.payment.Util.SecureResponseUtil;
 import com.chh.trustfort.payment.component.RequestManager;
 import com.chh.trustfort.payment.constant.ApiPath;
-import com.chh.trustfort.payment.dto.BankTransferReconciliationRequest;
-import com.chh.trustfort.payment.dto.JournalEntryRequest;
-import com.chh.trustfort.payment.dto.LedgerEntryDTO;
-import com.chh.trustfort.payment.dto.ProductPurchaseDTO;
+import com.chh.trustfort.payment.dto.*;
+import com.chh.trustfort.payment.enums.PaymentMethod;
 import com.chh.trustfort.payment.enums.Role;
 import com.chh.trustfort.payment.enums.TransactionStatus;
 import com.chh.trustfort.payment.enums.TransactionType;
@@ -30,10 +28,8 @@ import com.chh.trustfort.payment.service.WalletService;
 import com.google.gson.Gson;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.gson.JsonObject;
@@ -302,6 +298,59 @@ public class WalletController {
         return ResponseEntity.ok(encryptedResponse);
     }
 
+    @GetMapping(value = ApiPath.PAYMENT_OPTIONS, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getPaymentOptions(
+            @RequestHeader("Authorization") String idToken,
+            HttpServletRequest httpRequest
+    ) {
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.FUND_WALLET.getValue(), // Or Role.FUND_WALLET.getValue()
+                null,
+                httpRequest,
+                idToken
+        );
+
+        if (request.isError) {
+            OmniResponsePayload response = gson.fromJson(
+                    aesService.decrypt(request.payload, request.appUser),
+                    OmniResponsePayload.class
+            );
+
+            return ResponseEntity.ok(
+                    aesService.encrypt(SecureResponseUtil.error(
+                            response.getResponseMessage(),
+                            response.getResponseCode(),
+                            "UNAUTHORIZED"
+                    ), request.appUser)
+            );
+        }
+
+        log.info("📋 Fetching list of available payment options...");
+
+        // Build payment method list
+        List<PaymentOptionDTO> options = Arrays.stream(PaymentMethod.values())
+                .map(method -> new PaymentOptionDTO(method.name(), getDescription(method)))
+                .collect(Collectors.toList());
+
+        // Standard response map
+        Map<String, Object> response = new HashMap<>();
+        response.put("responseCode", "00");
+        response.put("responseMessage", "Available payment methods");
+        response.put("data", options);
+
+        String encryptedResponse = aesService.encrypt(gson.toJson(response), request.appUser);
+        return ResponseEntity.ok(encryptedResponse);
+    }
+
+    private String getDescription(PaymentMethod method) {
+        return switch (method) {
+            case WALLET -> "Pay with Wallet Balance";
+            case PAYSTACK -> "Pay with Card (via Paystack)";
+            case FLUTTERWAVE -> "Pay with Card (via Flutterwave)";
+            case BANK_TRANSFER -> "Pay via Bank Transfer";
+            case OPEN_BANKING -> "Pay via Open Banking";
+        };
+    }
 
 
 //    @GetMapping(value = ApiPath.FETCH_ALL_WALLETS, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -527,9 +576,11 @@ public ResponseEntity<String> processTransactionHistoryRequest(
         @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
         @RequestParam("phoneNumber") String phoneNumber,
+        @RequestParam(value = "transactionType", required = false) TransactionType transactionType,
+        @RequestParam(value = "status", required = false) TransactionStatus status,
         @RequestHeader("Authorization") String jwtToken,
-        HttpServletRequest httpRequest) {
-
+        HttpServletRequest httpRequest
+) {
     Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
             Role.TRANSACTION_HISTORY.getValue(), null, httpRequest, jwtToken
     );
@@ -539,25 +590,25 @@ public ResponseEntity<String> processTransactionHistoryRequest(
     }
 
     AppUser appUser = request.appUser;
-    log.info("🔍 PhoneNumber passed in request param: {}", phoneNumber);
+    log.info("🔍 Fetching transactions for phoneNumber: {}", phoneNumber);
 
     Optional<Wallet> walletOpt = walletRepository.findByUserId(phoneNumber).stream().findFirst();
     if (!walletOpt.isPresent()) {
-        log.warn("❌ No wallet found for phoneNumber: {}", phoneNumber);
-        return ResponseEntity.ok(buildEncryptedResponse("06", "Wallet not found for user", null, appUser));
+        return ResponseEntity.ok(buildEncryptedResponse("06", "Wallet not found", null, appUser));
     }
 
     String walletId = walletOpt.get().getWalletId();
 
     try {
-        return walletService.getTransactionHistory(walletId, startDate, endDate, phoneNumber, appUser);
+        return walletService.getTransactionHistory(walletId, startDate, endDate, phoneNumber, transactionType, status, appUser);
     } catch (WalletException e) {
         return ResponseEntity.ok(buildEncryptedResponse("06", e.getMessage(), null, appUser));
     } catch (Exception e) {
-        log.error("❌ Error retrieving transaction history: {}", e.getMessage(), e);
+        log.error("❌ Error retrieving transaction history", e);
         return ResponseEntity.ok(buildEncryptedResponse("06", "Internal server error", null, appUser));
     }
 }
+
 
 //    @PostMapping(value = "/withdraw", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 //    public ResponseEntity<?> withdrawFunds(@RequestBody String payload, HttpServletRequest httpRequest, @RequestHeader("idToken") String idToken) {

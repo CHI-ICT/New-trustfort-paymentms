@@ -387,7 +387,8 @@ public class WalletServiceImpl implements WalletService {
 //    }
 @Override
 public ResponseEntity<String> getTransactionHistory(
-        String walletId, LocalDate startDate, LocalDate endDate, String userId, AppUser appUser) {
+        String walletId, LocalDate startDate, LocalDate endDate, String userId,TransactionType transactionType,
+        TransactionStatus status, AppUser appUser) {
 
     Wallet wallet = walletRepository.findByWalletId(walletId)
             .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
@@ -396,7 +397,13 @@ public ResponseEntity<String> getTransactionHistory(
         return ResponseEntity.ok(buildEncryptedResponse("06", "Unauthorized access to this wallet", null, appUser));
     }
 
-    List<WalletLedgerEntry> entries = ledgerEntryRepository.findByWalletId(userId);
+    List<WalletLedgerEntry> entries = ledgerEntryRepository.findByWalletId(userId).stream()
+            .filter(entry -> !entry.getCreatedAt().toLocalDate().isBefore(startDate) &&
+                    !entry.getCreatedAt().toLocalDate().isAfter(endDate))
+            .filter(entry -> transactionType == null || entry.getTransactionType() == transactionType)
+            .filter(entry -> status == null || entry.getStatus() == status)
+            .collect(Collectors.toList());
+
 
     List<LedgerEntryDTO> dtos = entries.stream()
             .map(LedgerEntryDTO::fromEntity)
@@ -518,10 +525,6 @@ public ResponseEntity<String> getTransactionHistory(
             return aesService.encrypt(gson.toJson(new ErrorResponse("Internal error: " + ex.getMessage(), "99")), ecred);
         }
     }
-
-
-
-
 
     @Override
     @Transactional
