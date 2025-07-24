@@ -107,4 +107,11 @@ public class ApiPath {
     public static final String REVERIFY_PAYSTACK = "/paystack/reverify";
     public static final String RECONCILE_BANK_TRANSFER ="reconcile-bank-transfer";
 
+    public static final String INITIATE_PRODUCT_PURCHASE = "/intiate-product-purchase";
+    public static final String VERIFY_PRODUCT_PAYMENT = "/paystack/verify-product-payment";
+
+    public static final String PURCHASE_WITH_WALLET = "purchase-with-wallet";
+    public static final String UNIFIED_PURCHASE = "/purchase-product";
+
+    public static final String VERIFY_FLW_PRODUCT_PAYMENT = "/verify-product-flw";
 }

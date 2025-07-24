@@ -1,7 +1,9 @@
 package com.chh.trustfort.payment.model;
 
+import com.chh.trustfort.payment.dto.PaymentType;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "payment_references")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentReference {
@@ -36,7 +39,14 @@ public class PaymentReference {
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private PaymentType type;
+
+
     private String currency;
+
+    private String customerEmail;
 
     @Enumerated(EnumType.STRING)
     private ReferenceStatus status;

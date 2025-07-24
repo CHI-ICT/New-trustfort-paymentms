@@ -10,6 +10,7 @@ import com.chh.trustfort.payment.constant.ApiPath;
 import com.chh.trustfort.payment.dto.BankTransferReconciliationRequest;
 import com.chh.trustfort.payment.dto.JournalEntryRequest;
 import com.chh.trustfort.payment.dto.LedgerEntryDTO;
+import com.chh.trustfort.payment.dto.ProductPurchaseDTO;
 import com.chh.trustfort.payment.enums.Role;
 import com.chh.trustfort.payment.enums.TransactionStatus;
 import com.chh.trustfort.payment.enums.TransactionType;
@@ -581,6 +582,24 @@ public ResponseEntity<String> processTransactionHistoryRequest(
 //
 //        return ResponseEntity.ok(encryptedResponse);
 //    }
+
+
+    @PostMapping(value = ApiPath.PURCHASE_WITH_WALLET, consumes = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<?> purchaseProductFromWallet(@RequestHeader String idToken,
+                                                       @RequestBody String requestPayload,
+                                                       HttpServletRequest request) {
+        Quintuple<Boolean, String, String, AppUser, String> validated = requestManager.validateRequest(
+                Role.FUND_WALLET.getValue(), null, request, idToken);
+
+        if (validated.isError || validated.appUser == null) {
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(new ErrorResponse("Unauthorized", "06")), null));
+        }
+
+        AppUser appUser = validated.appUser;
+        ProductPurchaseDTO dto = gson.fromJson(aesService.decrypt(requestPayload, appUser), ProductPurchaseDTO.class);
+        String encryptedResponse = walletService.deductWalletForProductPurchase(dto, appUser, appUser);
+        return ResponseEntity.ok(encryptedResponse);
+    }
 
 
     @PostMapping(value = ApiPath.FREEZE_WALLET, consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

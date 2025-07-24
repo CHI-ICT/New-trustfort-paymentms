@@ -1,6 +1,7 @@
 package com.chh.trustfort.payment.controller;
 
 import com.chh.trustfort.payment.Quintuple;
+import com.chh.trustfort.payment.Responses.ErrorResponse;
 import com.chh.trustfort.payment.Util.SecureResponseUtil;
 import com.chh.trustfort.payment.component.RequestManager;
 import com.chh.trustfort.payment.constant.ApiPath;
@@ -249,6 +250,37 @@ public class FlutterwavePaymentController {
         return ResponseEntity.ok(aesService.encrypt(responseMsg, request.appUser));
     }
 
+
+    @GetMapping(value = ApiPath.VERIFY_FLW_PRODUCT_PAYMENT, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> verifyFlutterwaveProductPayment(
+            @RequestParam String txRef,
+            @RequestParam String transactionId,
+            @RequestHeader String idToken,
+            HttpServletRequest httpRequest
+    ) {
+        log.info("🔍 Verifying Flutterwave product payment for txRef: {}", txRef);
+
+        Quintuple<Boolean, String, String, AppUser, String> request = requestManager.validateRequest(
+                Role.FUND_WALLET.getValue(), null, httpRequest, idToken);
+
+        if (request.isError || request.appUser == null) {
+            return ResponseEntity.ok(aesService.encrypt(gson.toJson(
+                    new ErrorResponse("Unauthorized", "06")), null));
+        }
+
+        boolean verified = flutterwavePaymentService.verifyFlutterwaveProductPayment(txRef, transactionId);
+
+        OmniResponsePayload response = new OmniResponsePayload();
+        if (verified) {
+            response.setResponseCode("00");
+            response.setResponseMessage("✅ Flutterwave product payment verified");
+        } else {
+            response.setResponseCode("06");
+            response.setResponseMessage("❌ Verification failed for Flutterwave product payment");
+        }
+
+        return ResponseEntity.ok(aesService.encrypt(gson.toJson(response), request.appUser));
+    }
 
 }
 

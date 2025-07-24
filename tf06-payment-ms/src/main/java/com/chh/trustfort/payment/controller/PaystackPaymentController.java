@@ -114,4 +114,5 @@ public class PaystackPaymentController {
 
         return ResponseEntity.ok(aesService.encrypt(msg, request.appUser));
     }
+
 }

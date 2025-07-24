@@ -4,10 +4,8 @@ import com.chh.trustfort.payment.Responses.*;
 //import com.chh.trustfort.payment.component.AccountingClient;
 import com.chh.trustfort.payment.component.ResponseCode;
 import com.chh.trustfort.payment.component.WalletUtil;
+import com.chh.trustfort.payment.dto.*;
 import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
-import com.chh.trustfort.payment.dto.JournalEntryRequest;
-import com.chh.trustfort.payment.dto.LedgerEntryDTO;
-import com.chh.trustfort.payment.dto.WalletDTO;
 import com.chh.trustfort.payment.enums.*;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.*;
@@ -65,6 +63,7 @@ public class WalletServiceImpl implements WalletService {
     private final NotificationService notificationService;
     private final MessageSource messageSource;
     private final LedgerEntryRepository ledgerEntryRepository;
+    private final PurchaseIntentRepository purchaseIntentRepository;
     private final PaymentReferenceRepository paymentReferenceRepository;
     private final PaystackPaymentService paystackPaymentService;
     private final FlutterwavePaymentService flutterwavePaymentService;
@@ -405,6 +404,123 @@ public ResponseEntity<String> getTransactionHistory(
 
     return ResponseEntity.ok(buildEncryptedResponse("00", "Transaction history retrieved successfully", dtos, appUser));
 }
+
+    @Override
+    @Transactional
+    public String deductWalletForProductPurchase(ProductPurchaseDTO payload, AppUser appUser, AppUser ecred) {
+        log.info("🛒 Initiating wallet deduction for product: {} | User: {} | Amount: {}",
+                payload.getProductName(), payload.getUserId(), payload.getAmount());
+
+        try {
+            // ✅ Fetch user and wallet
+            Users user = usersRepository.findByPhoneNumber(payload.getUserId())
+                    .orElseThrow(() -> new WalletException("❌ User not found: " + payload.getUserId()));
+
+            Wallet wallet = walletRepository.findByUserId(payload.getUserId())
+                    .orElseThrow(() -> new WalletException("❌ Wallet not found for: " + payload.getUserId()));
+
+            if (!wallet.getUsers().getId().equals(user.getId())) {
+                return aesService.encrypt(gson.toJson(new ErrorResponse("Unauthorized access", "06")), ecred);
+            }
+
+            if (wallet.getStatus() != WalletStatus.ACTIVE) {
+                return aesService.encrypt(gson.toJson(new ErrorResponse("Wallet is not active", "06")), ecred);
+            }
+
+            // ✅ Check balance
+            if (wallet.getBalance().compareTo(payload.getAmount()) < 0) {
+                return aesService.encrypt(gson.toJson(new ErrorResponse("Insufficient funds", "06")), ecred);
+            }
+
+            // ✅ Debit wallet
+            UpdateWalletBalancePayload debitPayload = new UpdateWalletBalancePayload();
+            debitPayload.setUserId(wallet.getUserId());
+            debitPayload.setAmount(payload.getAmount().negate().doubleValue());
+
+            String debitResultJson = updateWalletBalance(debitPayload, "INTERNAL-CALL", appUser);
+            JsonObject debitResult = gson.fromJson(debitResultJson, JsonObject.class);
+
+            if (!debitResult.get("responseCode").getAsString().equals(ResponseCode.SUCCESS.getResponseCode())) {
+                return aesService.encrypt(debitResultJson, ecred);
+            }
+
+            // ✅ Save PurchaseIntent
+            String txRef = "WALLET-" + System.currentTimeMillis();
+            PurchaseIntent intent = PurchaseIntent.builder()
+                    .userId(payload.getUserId())
+                    .amount(payload.getAmount())
+                    .stringifiedData(payload.getStringifiedData())
+                    .status("COMPLETED")
+                    .txRef(txRef)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            purchaseIntentRepository.save(intent);
+
+            PaymentReference reference = new PaymentReference();
+            reference.setTxRef(txRef);
+            reference.setReferenceCode(txRef);
+            reference.setAmount(payload.getAmount());
+            reference.setCurrency("NGN");
+            reference.setStatus(ReferenceStatus.VERIFIED);
+            reference.setGateway("WALLET");
+            reference.setVerifiedAt(LocalDateTime.now());
+            reference.setUser(user);
+            reference.setCustomerEmail(user.getEmail());
+            reference.setType(PaymentType.PRODUCT);
+            reference.setCreatedAt(LocalDateTime.now());
+
+            paymentReferenceRepository.save(reference);
+
+
+            // ✅ Wallet Ledger
+            WalletLedgerEntry ledgerEntry = new WalletLedgerEntry();
+            ledgerEntry.setWalletId(wallet.getUserId());
+            ledgerEntry.setTransactionType(TransactionType.DEBIT);
+            ledgerEntry.setAmount(payload.getAmount());
+            ledgerEntry.setStatus(TransactionStatus.COMPLETED);
+            ledgerEntry.setDescription("Product Purchase: " + payload.getProductName());
+            ledgerEntryRepository.save(ledgerEntry);
+
+            // ✅ Double-entry journal
+            LocalDateTime now = LocalDateTime.now();
+
+            JournalEntryRequest debitEntry = new JournalEntryRequest();
+            debitEntry.setAccountCode(wallet.getAccountCode()); // 🔴 DEBIT from wallet
+            debitEntry.setAmount(payload.getAmount());
+            debitEntry.setDescription("Product purchase from wallet: " + payload.getProductName());
+            debitEntry.setTransactionType("DEBIT");
+            debitEntry.setDepartment("Wallet");
+            debitEntry.setBusinessUnit("Retail");
+            debitEntry.setTransactionDate(now);
+            accountingClient.postJournalEntryInternal(debitEntry);
+
+            JournalEntryRequest creditEntry = new JournalEntryRequest();
+            creditEntry.setAccountCode("2001106"); // 🔵 CREDIT to product revenue account (e.g. PRODUCT_SALES)
+            creditEntry.setAmount(payload.getAmount());
+            creditEntry.setDescription("Product sale credited from wallet of " + wallet.getUserId());
+            creditEntry.setTransactionType("CREDIT");
+            creditEntry.setDepartment("Sales");
+            creditEntry.setBusinessUnit("Retail");
+            creditEntry.setTransactionDate(now);
+            accountingClient.postJournalEntryInternal(creditEntry);
+
+            // ✅ Response
+            SuccessResponse success = new SuccessResponse();
+            success.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
+            success.setResponseMessage("Product purchase processed from wallet");
+            success.setNewBalance(debitResult.get("newBalance").getAsBigDecimal());
+
+            return aesService.encrypt(gson.toJson(success), ecred);
+
+        } catch (Exception ex) {
+            log.error("❌ Error in wallet product purchase: {}", ex.getMessage(), ex);
+            return aesService.encrypt(gson.toJson(new ErrorResponse("Internal error: " + ex.getMessage(), "99")), ecred);
+        }
+    }
+
+
+
 
 
     @Override

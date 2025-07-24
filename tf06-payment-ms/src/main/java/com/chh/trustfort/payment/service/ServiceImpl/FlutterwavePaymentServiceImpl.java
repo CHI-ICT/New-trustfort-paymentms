@@ -1,5 +1,7 @@
 package com.chh.trustfort.payment.service.ServiceImpl;
 
+import com.chh.trustfort.payment.dto.PaymentType;
+import com.chh.trustfort.payment.dto.PurchaseIntentDTO;
 import com.chh.trustfort.payment.enums.ReferenceStatus;
 import com.chh.trustfort.payment.enums.WalletStatus;
 import com.chh.trustfort.payment.model.*;
@@ -336,7 +338,136 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
         log.info("✅ Reconciliation complete. Attempted: {}, Credited: {}", total, credited);
     }
 
+    @Override
+    public String initiateFlutterwavePaymentForProduct(PurchaseIntentDTO dto, String txRef, AppUser appUser) {
+        log.info("🌊 Initiating Flutterwave product purchase payment with txRef: {}", txRef);
 
+        String email = appUser.getEmail() != null ? appUser.getEmail() : dto.getUserId() + "@chi.com";
+
+        // 📦 Build Flutterwave payment payload
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("tx_ref", txRef);
+        payload.put("amount", dto.getAmount());
+        payload.put("currency", "NGN");
+        payload.put("redirect_url", "https://webhook.site/YOUR-FLUTTERWAVE-CALLBACK");
+        payload.put("customer", Map.of(
+                "email", email,
+                "phonenumber", dto.getUserId(),
+                "name", dto.getUserId()
+        ));
+        payload.put("meta", Map.of("userId", dto.getUserId(), "intent", "PRODUCT_PURCHASE"));
+
+        // 🌐 Send request to Flutterwave
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(FLW_SECRET_KEY);
+
+        HttpEntity<String> entity = new HttpEntity<>(gson.toJson(payload), headers);
+        log.info("📤 Sending Flutterwave request: {}", gson.toJson(payload));
+
+        ResponseEntity<String> response = restTemplate.postForEntity(FLW_PAYMENT_URL, entity, String.class);
+        log.info("📥 Flutterwave raw response: {}", response.getBody());
+
+        JsonObject body = JsonParser.parseString(response.getBody()).getAsJsonObject();
+        JsonObject data = body.getAsJsonObject("data");
+
+        if (data == null || !data.has("link")) {
+            throw new RuntimeException("No payment link returned from Flutterwave");
+        }
+
+        // ✅ Save Payment Reference
+        PaymentReference ref = PaymentReference.builder()
+                .referenceCode(txRef)
+                .amount(dto.getAmount())
+                .currency("NGN")
+//                .userId(appUser.getId())
+                .txRef(txRef)
+                .gateway("FLUTTERWAVE") // 🔴 FIXED
+                .status(ReferenceStatus.valueOf("PENDING"))
+                .customerEmail(email)
+                .type(PaymentType.valueOf("PRODUCT"))
+                .createdAt(LocalDateTime.now())
+                .build();
+
+
+        paymentReferenceRepository.save(ref);
+
+        // 📤 Return encrypted response
+        Map<String, String> responseMap = new HashMap<>();
+        responseMap.put("status", "success");
+        responseMap.put("paymentLink", data.get("link").getAsString());
+        responseMap.put("reference", txRef);
+
+        return aesService.encrypt(gson.toJson(responseMap), appUser);
+    }
+
+    @Override
+    public boolean verifyFlutterwaveProductPayment(String txRef, String transactionId) {
+        try {
+            log.info("🔍 Verifying Flutterwave PRODUCT payment: txRef={}, transactionId={}", txRef, transactionId);
+
+            // 🔁 Step 1: Lookup reference
+            PaymentReference reference = paymentReferenceRepository.findByTxRef(txRef)
+                    .orElseThrow(() -> new RuntimeException("❌ No payment reference found for txRef: " + txRef));
+
+            if (ReferenceStatus.VERIFIED.equals(reference.getStatus())) {
+                log.warn("⚠️ Reference already verified: {}", txRef);
+                return true;
+            }
+
+            // 🔁 Step 2: Call Flutterwave verify endpoint
+            String url = "https://api.flutterwave.com/v3/transactions/" + transactionId + "/verify";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(FLW_SECRET_KEY);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            JsonObject data = JsonParser.parseString(response.getBody())
+                    .getAsJsonObject()
+                    .getAsJsonObject("data");
+
+            if (data == null) return false;
+
+            String responseTxRef = data.get("tx_ref").getAsString();
+            String status = data.get("status").getAsString();
+            BigDecimal paidAmount = data.get("amount").getAsBigDecimal();
+            String currency = data.get("currency").getAsString();
+
+            if (!"successful".equalsIgnoreCase(status)
+                    || !responseTxRef.equals(txRef)
+                    || paidAmount.compareTo(reference.getAmount()) < 0
+                    || !currency.equalsIgnoreCase(reference.getCurrency())) {
+
+                log.warn("⚠️ Product payment verification failed for txRef: {}", txRef);
+                return false;
+            }
+
+            // ✅ Step 3: Post journal only (no wallet credit)
+            Users user = reference.getUser();
+            Wallet wallet = walletRepository.findByUserId(user.getPhoneNumber())
+                    .orElseThrow(() -> new RuntimeException("Wallet not found for user"));
+
+            flutterJournalPostingService.postDoubleEntry(
+                    paidAmount,
+                    txRef,
+                    wallet,
+                    "Product Payment via Flutterwave"
+            );
+
+            // ✅ Step 4: Update reference
+            reference.setStatus(ReferenceStatus.VERIFIED);
+            reference.setVerifiedAt(LocalDateTime.now());
+            reference.setFlutterwaveTxId(transactionId);
+            paymentReferenceRepository.save(reference);
+
+            return true;
+
+        } catch (Exception e) {
+            log.error("❌ Flutterwave product payment verification failed for txRef {}", txRef, e);
+            return false;
+        }
+    }
 
 
 }

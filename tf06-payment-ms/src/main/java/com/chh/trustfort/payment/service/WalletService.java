@@ -3,6 +3,7 @@ package com.chh.trustfort.payment.service;
 import com.chh.trustfort.payment.Responses.WalletBalanceResponse;
 import com.chh.trustfort.payment.dto.ConfirmBankTransferRequest;
 import com.chh.trustfort.payment.dto.LedgerEntryDTO;
+import com.chh.trustfort.payment.dto.ProductPurchaseDTO;
 import com.chh.trustfort.payment.dto.WalletDTO;
 import com.chh.trustfort.payment.exception.WalletException;
 import com.chh.trustfort.payment.model.AppUser;
@@ -26,7 +27,7 @@ public interface WalletService {
     String createWallet(CreateWalletRequestPayload requestPayload, AppUser appUser);
 
     String initiateWalletFunding(FundWalletRequestPayload payload, AppUser appUser);
-
+    String deductWalletForProductPurchase(ProductPurchaseDTO payload, AppUser appUser, AppUser ecred);
 //String fundWalletInternally(FundWalletRequestPayload payload, String userId, String emailAddress);
     public String fundWalletInternally(FundWalletRequestPayload payload, AppUser appUser);
 //String fetchAllWallets(String userId, AppUser user);
