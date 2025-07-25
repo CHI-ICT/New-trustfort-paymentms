@@ -110,7 +110,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     public String getWalletsByPhoneNumber(String phoneNumber, AppUser appUser) {
-        com.chh.trustfort.payment.dto.wallet.GetWalletResponsePayload response = new com.chh.trustfort.payment.dto.wallet.GetWalletResponsePayload();
+        GetWalletResponsePayload response = new GetWalletResponsePayload();
         response.setResponseCode("06");
         response.setResponseMessage("No wallets found");
 
@@ -123,8 +123,8 @@ public class WalletServiceImpl implements WalletService {
                 return aesService.encrypt(gson.toJson(response), appUser);
             }
 
-            List<com.chh.trustfort.payment.dto.wallet.GetWalletResponsePayload.WalletDTO> walletDTOs = wallets.stream()
-                    .map(w -> com.chh.trustfort.payment.dto.wallet.GetWalletResponsePayload.WalletDTO.builder()
+            List<GetWalletResponsePayload.WalletDTO> walletDTOs = wallets.stream()
+                    .map(w -> GetWalletResponsePayload.WalletDTO.builder()
                             .walletId(w.getWalletId())
                             .accountNumber(w.getAccountNumber())
                             .currency(w.getCurrency())

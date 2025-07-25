@@ -343,14 +343,22 @@ public class WalletController {
     }
 
     private String getDescription(PaymentMethod method) {
-        return switch (method) {
-            case WALLET -> "Pay with Wallet Balance";
-            case PAYSTACK -> "Pay with Card (via Paystack)";
-            case FLUTTERWAVE -> "Pay with Card (via Flutterwave)";
-            case BANK_TRANSFER -> "Pay via Bank Transfer";
-            case OPEN_BANKING -> "Pay via Open Banking";
-        };
-    }
+        switch (method) {
+            case WALLET:
+                return "Pay with Wallet Balance";
+            case PAYSTACK:
+                return "Pay with Card (via Paystack)";
+            case FLUTTERWAVE:
+                return "Pay with Card (via Flutterwave)";
+            case BANK_TRANSFER:
+                return "Pay via Bank Transfer";
+            case OPEN_BANKING:
+                return "Pay via Open Banking";
+            default:
+                return "Unknown Payment Method";
+        }
+
+}
 
 
 //    @GetMapping(value = ApiPath.FETCH_ALL_WALLETS, produces = MediaType.APPLICATION_JSON_VALUE)

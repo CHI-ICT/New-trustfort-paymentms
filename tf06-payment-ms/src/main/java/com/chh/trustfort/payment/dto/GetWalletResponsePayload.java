@@ -1,4 +1,4 @@
-package com.chh.trustfort.payment.dto.wallet;
+package com.chh.trustfort.payment.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
