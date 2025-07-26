@@ -41,7 +41,8 @@ public WalletBalanceResponse getWalletBalance(String walletId, String userId);
 //public ResponseEntity<List<LedgerEntry>> getTransactionHistory(String walletId, LocalDate startDate, LocalDate endDate, String userId);
 ResponseEntity<String> getTransactionHistory(
         String walletId, LocalDate startDate, LocalDate endDate, String userId, TransactionType transactionType,
-        TransactionStatus status, AppUser appUser);
+        TransactionStatus status,   String transactionReference,
+        String sessionId,AppUser appUser);
 
 //public String withdrawFunds(WithdrawFundsRequestPayload payload, String userId, String email, String idToken, AppUser appUser);
 

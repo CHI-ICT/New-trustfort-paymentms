@@ -586,6 +586,8 @@ public ResponseEntity<String> processTransactionHistoryRequest(
         @RequestParam("phoneNumber") String phoneNumber,
         @RequestParam(value = "transactionType", required = false) TransactionType transactionType,
         @RequestParam(value = "status", required = false) TransactionStatus status,
+        @RequestParam(value = "transactionReference", required = false) String transactionReference,
+        @RequestParam(value = "sessionId", required = false) String sessionId,
         @RequestHeader("Authorization") String jwtToken,
         HttpServletRequest httpRequest
 ) {
@@ -608,7 +610,7 @@ public ResponseEntity<String> processTransactionHistoryRequest(
     String walletId = walletOpt.get().getWalletId();
 
     try {
-        return walletService.getTransactionHistory(walletId, startDate, endDate, phoneNumber, transactionType, status, appUser);
+        return walletService.getTransactionHistory(walletId, startDate, endDate, phoneNumber, transactionType, status,transactionReference, sessionId, appUser);
     } catch (WalletException e) {
         return ResponseEntity.ok(buildEncryptedResponse("06", e.getMessage(), null, appUser));
     } catch (Exception e) {

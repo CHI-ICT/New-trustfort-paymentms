@@ -60,4 +60,8 @@ public class WalletLedgerEntry {
     @Column(name = "narration")
     private String narration;
 
+    @Column(name = "session_id")
+    private String sessionId;
+
+
 }

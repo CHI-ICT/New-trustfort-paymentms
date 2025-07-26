@@ -22,6 +22,8 @@ public class LedgerEntryDTO {
     private String transactionType;
     private String status;
     private LocalDateTime transactionDate;
+    private String sessionId;
+
 
     public static LedgerEntryDTO fromEntity(WalletLedgerEntry entry) {
         return new LedgerEntryDTO(
@@ -31,7 +33,8 @@ public class LedgerEntryDTO {
             entry.getNarration(),
             entry.getTransactionType().name(),
             entry.getStatus().name(),
-            entry.getCreatedAt()
+            entry.getCreatedAt(),
+                entry.getSessionId()
         );
     }
 }

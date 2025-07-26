@@ -388,7 +388,8 @@ public class WalletServiceImpl implements WalletService {
 @Override
 public ResponseEntity<String> getTransactionHistory(
         String walletId, LocalDate startDate, LocalDate endDate, String userId,TransactionType transactionType,
-        TransactionStatus status, AppUser appUser) {
+        TransactionStatus status,   String transactionReference,
+        String sessionId,AppUser appUser) {
 
     Wallet wallet = walletRepository.findByWalletId(walletId)
             .orElseThrow(() -> new WalletException("Wallet not found for ID: " + walletId));
@@ -402,8 +403,11 @@ public ResponseEntity<String> getTransactionHistory(
                     !entry.getCreatedAt().toLocalDate().isAfter(endDate))
             .filter(entry -> transactionType == null || entry.getTransactionType() == transactionType)
             .filter(entry -> status == null || entry.getStatus() == status)
+            .filter(entry -> transactionReference == null || transactionReference.isBlank() ||
+                    transactionReference.equalsIgnoreCase(entry.getTransactionReference()))
+            .filter(entry -> sessionId == null || sessionId.isBlank() ||
+                    sessionId.equalsIgnoreCase(entry.getSessionId()))
             .collect(Collectors.toList());
-
 
     List<LedgerEntryDTO> dtos = entries.stream()
             .map(LedgerEntryDTO::fromEntity)
