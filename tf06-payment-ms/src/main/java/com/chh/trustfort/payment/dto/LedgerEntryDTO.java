@@ -18,7 +18,7 @@ public class LedgerEntryDTO {
     private String walletId;
     private BigDecimal amount;
     private String transactionReference;
-    private String narration;
+    private String description;
     private String transactionType;
     private String status;
     private LocalDateTime transactionDate;
@@ -30,11 +30,13 @@ public class LedgerEntryDTO {
             entry.getWalletId(),
             entry.getAmount(),
             entry.getTransactionReference(),
-            entry.getNarration(),
+            entry.getDescription(),
             entry.getTransactionType().name(),
             entry.getStatus().name(),
             entry.getCreatedAt(),
                 entry.getSessionId()
         );
     }
+
+
 }

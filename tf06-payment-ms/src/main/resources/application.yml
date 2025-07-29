@@ -83,7 +83,10 @@ admin:
 #accounting:
 #  service:
 #    url: https://localhost:8445/trustfort/api/v1/accountingService
-ACCOUNTING_SERVICE_URL: https://localhost:8445/trustfort/api/v1/accountingService
+#ACCOUNTING_SERVICE_URL: https://localhost:8445/trustfort/api/v1/accountingService
+
+ACCOUNTING_SERVICE_URL: ${ACCOUNTING_SERVICE_URL}
+
 
 
 

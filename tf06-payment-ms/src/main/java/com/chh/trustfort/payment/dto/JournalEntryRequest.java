@@ -36,6 +36,7 @@ public class JournalEntryRequest {
         private String reference;
         private String department;
         private String businessUnit;
+        private String sessionId;
 
 }
 

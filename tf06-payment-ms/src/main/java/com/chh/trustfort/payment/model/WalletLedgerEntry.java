@@ -51,14 +51,12 @@ public class WalletLedgerEntry {
     @JoinColumn(name = "wallet_fk", referencedColumnName = "id")
     private Wallet wallet;
 
-    @Column(name = "transaction_reference", unique = true)
+    @Column(name = "transaction_reference", unique = false)
     private String transactionReference;
 
     @Column(name = "reference", unique = true)
     private String reference;
 
-    @Column(name = "narration")
-    private String narration;
 
     @Column(name = "session_id")
     private String sessionId;

@@ -349,7 +349,7 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
         payload.put("tx_ref", txRef);
         payload.put("amount", dto.getAmount());
         payload.put("currency", "NGN");
-        payload.put("redirect_url", "https://webhook.site/YOUR-FLUTTERWAVE-CALLBACK");
+        payload.put("callback_url", "https://webhook.site/655ceb1d-56e9-49c5-a20e-050a9d31f6df/your-flutter-redirect"); // update if needed
         payload.put("customer", Map.of(
                 "email", email,
                 "phonenumber", dto.getUserId(),

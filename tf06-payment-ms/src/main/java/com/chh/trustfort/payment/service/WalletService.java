@@ -22,7 +22,7 @@ import java.util.List;
  */
 public interface WalletService {
     List<WalletDTO> getWalletsByUserId(String userId);
-    public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String narration);
+    public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String description);
     WalletBalanceResponse checkBalancePlain(String phoneNumber);
     String checkBalanceByPhoneNumber(String phoneNumber, AppUser appUser);
     String getWalletsByPhoneNumber(String phoneNumber, AppUser appUser);

@@ -8,6 +8,6 @@ public class FundsTransferRequestPayload {
     private String senderUserId;
     private String receiverUserId;
     private BigDecimal amount;
-    private String narration;
+    private String description;
 //    private String transactionPin;
 }

@@ -11,6 +11,6 @@ public class FundWalletRequestPayload {
     private BigDecimal amount;
     private String currency;
     private PaymentMethod paymentMethod; // WALLET, PAYSTACK, FLUTTERWAVE, BANK_TRANSFER
-    private String narration;
+    private String description;
 }
 

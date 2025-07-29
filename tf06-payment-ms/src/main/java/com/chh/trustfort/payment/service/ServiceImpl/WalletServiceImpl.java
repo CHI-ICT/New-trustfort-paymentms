@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -204,7 +205,7 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String narration)
+    public boolean creditWalletByPhone(String phoneNumber, BigDecimal amount, String reference, String description)
     {
         try {
             log.info("🔍 Verifying wallet for phone number: {}", phoneNumber);
@@ -236,7 +237,7 @@ public class WalletServiceImpl implements WalletService {
             ledger.setTransactionReference(reference);
             ledger.setTransactionType(TransactionType.CREDIT);
             ledger.setStatus(TransactionStatus.COMPLETED);
-            ledger.setNarration(narration != null ? narration : "Flutterwave wallet funding");
+            ledger.setDescription(description != null ? description : "Flutterwave wallet funding");
 
             ledgerRepository.save(ledger);
 
@@ -399,15 +400,16 @@ public ResponseEntity<String> getTransactionHistory(
     }
 
     List<WalletLedgerEntry> entries = ledgerEntryRepository.findByWalletId(userId).stream()
-            .filter(entry -> !entry.getCreatedAt().toLocalDate().isBefore(startDate) &&
-                    !entry.getCreatedAt().toLocalDate().isAfter(endDate))
+            .filter(entry -> !entry.getCreatedAt().toLocalDate().isBefore(startDate)
+                    && !entry.getCreatedAt().toLocalDate().isAfter(endDate))
             .filter(entry -> transactionType == null || entry.getTransactionType() == transactionType)
             .filter(entry -> status == null || entry.getStatus() == status)
-            .filter(entry -> transactionReference == null || transactionReference.isBlank() ||
-                    transactionReference.equalsIgnoreCase(entry.getTransactionReference()))
-            .filter(entry -> sessionId == null || sessionId.isBlank() ||
-                    sessionId.equalsIgnoreCase(entry.getSessionId()))
+            .filter(entry -> transactionReference == null || transactionReference.isBlank()
+                    || transactionReference.equalsIgnoreCase(Optional.ofNullable(entry.getTransactionReference()).orElse("")))
+            .filter(entry -> sessionId == null || sessionId.isBlank()
+                    || sessionId.equalsIgnoreCase(Optional.ofNullable(entry.getSessionId()).orElse("")))
             .collect(Collectors.toList());
+
 
     List<LedgerEntryDTO> dtos = entries.stream()
             .map(LedgerEntryDTO::fromEntity)
@@ -522,13 +524,31 @@ public ResponseEntity<String> getTransactionHistory(
             success.setResponseMessage("Product purchase processed from wallet");
             success.setNewBalance(debitResult.get("newBalance").getAsBigDecimal());
 
+            success.setTransactionReference(txRef);
+            success.setProductName(payload.getProductName());
+            success.setAmount(payload.getAmount());
+            success.setCurrency("NGN");
+            success.setPaymentMethod("WALLET");
+            success.setGatewayResponse("Wallet debited successfully");
+            success.setTransactionTime(LocalDateTime.now().toString());
+
             return aesService.encrypt(gson.toJson(success), ecred);
+
+
 
         } catch (Exception ex) {
             log.error("❌ Error in wallet product purchase: {}", ex.getMessage(), ex);
             return aesService.encrypt(gson.toJson(new ErrorResponse("Internal error: " + ex.getMessage(), "99")), ecred);
         }
     }
+
+    public String generateSimpleTransactionRef() {
+        String prefix = "WALLET";
+        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        int random = new Random().nextInt(9000) + 1000; // 1000–9999
+        return prefix + "-" + date + "-" + random;
+    }
+
 
     @Override
     @Transactional
@@ -554,6 +574,10 @@ public ResponseEntity<String> getTransactionHistory(
 
 
         try {
+
+            String sessionId = "WALLET-SESSION-" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + "-" + String.format("%04d", new Random().nextInt(10000));
+
+            String txRef = generateSimpleTransactionRef();
             // ✅ Lookup sender user by phone number
             Users user = usersRepository.findByPhoneNumber(payload.getSenderUserId())
                     .orElseThrow(() -> new WalletException("❌ User entity not found for phone number: " + payload.getSenderUserId()));
@@ -646,6 +670,8 @@ public ResponseEntity<String> getTransactionHistory(
             senderEntry.setAmount(transferAmount);
             senderEntry.setStatus(TransactionStatus.COMPLETED);
             senderEntry.setDescription("Transfer to " + receiverWallet.getUserId());
+            senderEntry.setTransactionReference(txRef);
+            senderEntry.setSessionId(sessionId);
             ledgerEntryRepository.save(senderEntry);
 
             // ✅ Ledger entry for receiver
@@ -655,6 +681,8 @@ public ResponseEntity<String> getTransactionHistory(
             receiverEntry.setAmount(transferAmount);
             receiverEntry.setStatus(TransactionStatus.COMPLETED);
             receiverEntry.setDescription("Transfer from " + senderWallet.getUserId());
+            receiverEntry.setTransactionReference(txRef);
+            receiverEntry.setSessionId(sessionId);
             ledgerEntryRepository.save(receiverEntry);
 
             // ✅ Post journal entries
@@ -667,6 +695,7 @@ public ResponseEntity<String> getTransactionHistory(
             debitEntry.setDepartment("Wallet");
             debitEntry.setBusinessUnit("Retail");
             debitEntry.setTransactionDate(now);
+            debitEntry.setSessionId(sessionId);
             accountingClient.postJournalEntryInternal(debitEntry);
 
             JournalEntryRequest creditEntry = new JournalEntryRequest();
@@ -677,6 +706,7 @@ public ResponseEntity<String> getTransactionHistory(
             creditEntry.setDepartment("Wallet");
             creditEntry.setBusinessUnit("Retail");
             creditEntry.setTransactionDate(now);
+            creditEntry.setSessionId(sessionId);
             accountingClient.postJournalEntryInternal(creditEntry);
 
             // ✅ Build and return success response
@@ -684,6 +714,8 @@ public ResponseEntity<String> getTransactionHistory(
             response.setResponseCode(ResponseCode.SUCCESS.getResponseCode());
             response.setResponseMessage("Transfer processed successfully");
             response.setNewBalance(debitResult.get("newBalance").getAsBigDecimal());
+            response.setTransactionReference(txRef);
+
 
             log.info("✅ Transfer completed successfully.");
             return aesService.encrypt(gson.toJson(response), ecred);
@@ -731,7 +763,7 @@ public ResponseEntity<String> getTransactionHistory(
                 transferPayload.setSenderUserId(senderWallet.getUserId());
                 transferPayload.setReceiverUserId(receiverWallet.getUserId());
                 transferPayload.setAmount(payload.getAmount());
-                transferPayload.setNarration(payload.getNarration());
+                transferPayload.setDescription(payload.getDescription());
 
                 // ✅ Use real logged-in AppUser for encryption
                 return transferFunds(transferPayload, "INTERNAL-CALL", appUser, appUser);
