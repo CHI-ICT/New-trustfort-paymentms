@@ -40,7 +40,6 @@ import java.util.Optional;
 public class FlutterwavePaymentController {
 
     private final RequestManager requestManager;
-    private final AppUserRepository appUserRepository;
     private final AesService aesService;
     private final PaymentReferenceRepository paymentReferenceRepository;
     private final Gson gson;

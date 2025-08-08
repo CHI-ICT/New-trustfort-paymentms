@@ -8,6 +8,7 @@ import com.chh.trustfort.payment.model.*;
 import com.chh.trustfort.payment.payload.FundWalletRequestPayload;
 import com.chh.trustfort.payment.repository.*;
 import com.chh.trustfort.payment.security.AesService;
+import com.chh.trustfort.payment.service.AccountingClient;
 import com.chh.trustfort.payment.service.FlutterJournalPostingService;
 import com.chh.trustfort.payment.service.WalletService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,6 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
     private final WalletRepository walletRepository;
     private final WebhookLogRepository webhookLogRepository;
     private final FlutterJournalPostingService flutterJournalPostingService;
-    private final com.chh.trustfort.payment.service.AccountingClient accountingClient;
 
 
 
@@ -349,7 +349,7 @@ public class FlutterwavePaymentServiceImpl implements FlutterwavePaymentService 
         payload.put("tx_ref", txRef);
         payload.put("amount", dto.getAmount());
         payload.put("currency", "NGN");
-        payload.put("callback_url", "https://webhook.site/655ceb1d-56e9-49c5-a20e-050a9d31f6df/your-flutter-redirect"); // update if needed
+        payload.put("callback_url", "3/your-flutter-redirect"); // update if needed
         payload.put("customer", Map.of(
                 "email", email,
                 "phonenumber", dto.getUserId(),
